@@ -2016,7 +2016,7 @@ $('nickForm').onsubmit=async e=>{e.preventDefault();const v=$('nickIn').value.tr
   const people={...(S.people||{})};if(v)people[G.login]=v;else delete people[G.login];
   if(await store.put('info','people',people))toast('השם נשמר')};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&G.token)loadFeed()});
-if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if('serviceWorker' in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})});
 </script>
 </body>
 </html>
