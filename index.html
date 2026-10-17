@@ -398,6 +398,17 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .qitem .meta{font-weight:700;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .qitem .go{color:var(--ink-2);line-height:0}
 .wrap{padding-block:0 160px}
+.credit{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.credit .ric{width:40px;height:40px;border-radius:12px}.credit .ric svg{width:20px;height:20px}
+.credit .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.credit .col b{font-weight:700;font-size:16px}.credit .col small{font-size:12px;color:var(--ink-2)}
+.credit .sumcol{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.credit .sum{font-weight:800;font-size:18px;white-space:nowrap}
+.lastadd{align-self:flex-start;display:inline-flex;align-items:baseline;gap:6px;padding:3px 10px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:14px}
+.lastadd small{font-weight:600;font-size:11px;opacity:.85}
+.vgrp{width:100%;text-align:right;cursor:pointer;min-height:40px}
+.vgrp .chev{display:inline-grid;margin-inline-start:6px;vertical-align:middle;transition:transform .25s}
+.vgrp .chev svg{width:14px;height:14px}
+.vgrp[aria-expanded="false"] .chev{transform:rotate(90deg)}
+.vgrp small{font-weight:600}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
 .confetti i{position:absolute;width:8px;height:12px;border-radius:2px;margin:-6px 0 0 -4px}
 .foldhead{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;text-align:right}
@@ -662,6 +673,7 @@ body{margin:0}img{max-width:100%}
   <!-- MONTH -->
   <section class="tab" id="t-home">
     <div id="hero"></div>
+    <div id="hCredit"></div>
     <div id="hGroups" style="display:flex;flex-direction:column;gap:12px"></div>
     <div id="hSummary" class="totals">
       <div class="t1"><span>סה"כ הוצאות</span><span class="num" id="hTotal"></span></div>
@@ -789,7 +801,7 @@ const label=n=>DISPLAY_NAMES[n]||n;
 const STATUSES=[{k:'לקנות',c:'st-buy',m:'●'},{k:'נקנה',c:'st-done',m:'✓'},{k:'לקבל',c:'st-gift',m:'◆'},{k:'לבדוק',c:'st-check',m:'?'},{k:'לא חובה',c:'st-opt',m:'○'}];
 const BABY_CATS=['','שינה וריהוט','עגלה ורכב','האכלה','הנקה','טיפול והחתלה','בגדים וטקסטיל','כביסה ומתכלים','משחק והתפתחות'];
 
-const S={months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={vOpen:{},months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -860,9 +872,10 @@ const RI={
   bed:'<path d="M3 18v-8M3 14h18v4M21 18v-3a3 3 0 0 0-3-3h-7v2"/><circle cx="7" cy="11.5" r="1.8"/>',
   shirt:'<path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3c-.5 1.5-2 2.5-4 2.5S8.5 4.5 8 3z"/>',
   bottle:'<path d="M10 2h4M10.5 2v3l-2 3v12a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2V8l-2-3V2"/><path d="M8.5 12h7M8.5 16h7"/>',
+  card:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/>',
   dot:'<circle cx="12" cy="12" r="3.2"/>'
 };
-const RI_WORDS=[['גוגל','cloud'],['טלפון','phone'],['נטפליקס','tv'],['צאט','sparkle'],['קלוד','sparkle'],['ביטוח','shield'],['רייזאפ','chart'],['ספוטיפיי','music'],['אינטרנט','wifi'],['שכירות','home'],['כללית','heart'],['ארנונה','building'],['ועד','building'],['חשמל','zap'],['מים','drop'],['גז','flame'],['ריכוז','layers'],['גמל','piggy'],['חירום','buoy'],['לידה','baby'],['מעון','baby'],['השקעות','trend'],['גדולות','box'],['קניות','cart'],['אוכל','food'],['משתנות','receipt'],['רכב','car'],['דלק','car'],['פנגו','parking'],['מוביט','parking'],['תאילנד','plane'],['מזומן','cash']];
+const RI_WORDS=[['אשראי','card'],['גוגל','cloud'],['טלפון','phone'],['נטפליקס','tv'],['צאט','sparkle'],['קלוד','sparkle'],['ביטוח','shield'],['רייזאפ','chart'],['ספוטיפיי','music'],['אינטרנט','wifi'],['שכירות','home'],['כללית','heart'],['ארנונה','building'],['ועד','building'],['חשמל','zap'],['מים','drop'],['גז','flame'],['ריכוז','layers'],['גמל','piggy'],['חירום','buoy'],['לידה','baby'],['מעון','baby'],['השקעות','trend'],['גדולות','box'],['קניות','cart'],['אוכל','food'],['משתנות','receipt'],['רכב','car'],['דלק','car'],['פנגו','parking'],['מוביט','parking'],['תאילנד','plane'],['מזומן','cash']];
 const BABY_ICON={'שינה וריהוט':'bed','עגלה ורכב':'car','האכלה':'bottle','הנקה':'heart','טיפול והחתלה':'drop','בגדים וטקסטיל':'shirt','כביסה ומתכלים':'box','משחק והתפתחות':'sparkle'};
 const riKey=n=>RI[n]?n:(RI_WORDS.find(([w])=>String(n||'').includes(w))||[0,'dot'])[1];
 const riSvg=n=>`<svg viewBox="0 0 24 24" aria-hidden="true">${RI[riKey(n)]}</svg>`;
@@ -1237,6 +1250,7 @@ function renderHome(){
     $('hero').innerHTML='<div class="skel sk-hero" aria-label="טוען"></div>';$('hGroups').innerHTML='<div class="skel sk-card"></div><div class="skel sk-card"></div><div class="skel sk-card"></div>';return;
   }
   if(!c){
+    $('hCredit').innerHTML='';
     const prev=[...Object.keys(S.months)].filter(k=>k<S.month).sort().pop();
     $('hero').innerHTML=`<div class="emptyhero"><span class="ic">${I.page}</span><span class="disp" style="font-weight:700;font-size:18px">דף חדש בחודש חדש</span><span class="muted" style="font-size:15px">עוד לא נרשמו נתונים ל${esc(monthLabel(S.month))}.</span>${prev?`<button class="btn" id="cloneMonth">יצירת החודש עם השורות של ${esc(monthLabel(prev))}, בלי סכומים</button>`:''}</div>`;
     $('hGroups').innerHTML='';
@@ -1253,7 +1267,12 @@ function renderHome(){
   const ring=spentPct===null?'':`<span class="ringwrap" aria-label="יצאו ${spentPct}% מההכנסה"><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fg${spentPct>100?' over':''}" cx="18" cy="18" r="15.9" style="--to:${Math.max(0,100-Math.min(100,spentPct))}"/></svg><span class="rv num"><b>${spentPct}%</b><small>יצאו</small></span></span>`;
   const now=new Date(),isCur=S.month===monthKey(now);
   const daysLeft=isCur?new Date(now.getFullYear(),now.getMonth()+1,0).getDate()-now.getDate()+1:0;
-  const days=isCur&&f!==null?`<div class="daysleft num">${I.clock}<span>עוד ${daysLeft} ימים בחודש${f>0?` · העודף שווה כ־<b>${ils(Math.floor(f/daysLeft))}</b> ליום`:''}</span></div>`:'';
+  const days=isCur&&f!==null?`<div class="daysleft num">${I.clock}<span>עוד ${daysLeft} ימים בחודש</span></div>`:'';
+  const cr=has(c.m.credit)?Number(c.m.credit):null,pcm=S.months[shiftMonth(S.month,-1)];
+  const crSeries=Object.keys(S.months).filter(k=>k<=S.month).sort().slice(-6).map(k=>S.months[k].credit).filter(has).map(Number);
+  $('hCredit').innerHTML=cr===null?'':`<section class="card credit"><span class="ric" aria-hidden="true" style="background:var(--other-soft);color:var(--other)">${riSvg('אשראי')}</span>
+    <span class="col"><b>אשראי החודש</b><small>לפי שורת "אשראי" בגיליון${trendChip(cr,pcm&&has(pcm.credit)?Number(pcm.credit):null,false)}</small></span>
+    <span class="sumcol"><span class="sum num" ${cnt('credit',cr)}>${ils(cr)}</span>${spark(crSeries)}</span></section>`;
   $('hero').innerHTML=`<button class="bare hero" id="heroBtn" aria-label="תזרים החודש, לחיצה לעריכת הכנסה">
     <div class="hd"><b>תזרים החודש</b><span class="edit">עריכת הכנסה${I.pencil}</span></div>
     <div class="big">${f===null?`<span class="flow muted">—</span><span class="muted" style="font-size:14px">אין הכנסה רשומה. לחצו כאן להוספה</span>`:
@@ -1313,15 +1332,17 @@ function renderExp(){
   const last=L.vs.filter(v=>has(v.amount)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
   const summary=L.rv!==null?`נרשמו ${fmt(L.sum)} מתוך ${fmt(L.rv)} בשורה · <b class="${L.over?'neg':''}">${L.over?`${fmt(L.sum-L.rv)} מעל`:`נשארו ${fmt(L.rv-L.sum)}`}</b>`:`נרשמו ${ils(L.sum)}`;
   $('ePanel').innerHTML=`<div class="ph"><div class="col"><h2>${esc(rn)}</h2><div class="sum num">${summary}${L.starSum?` · ועוד ${ils(L.starSum)} לא נספרים`:''}</div>
+      ${last?`<span class="lastadd num" aria-label="נוסף לאחרונה: ${esc(ils(last.amount))}">+ ${ils(last.amount)} <small>נוסף לאחרונה</small></span>`:''}
       ${rn===CASH?'<div class="small muted">הוצאות שיצאו במזומן. לא נספרות בסה"כ, כי הן כבר ירדו מהמשכורות.</div>':''}
       <span class="bar6${L.over?' over':''}" aria-hidden="true">${L.over?'':`<i style="width:${L.rv?Math.min(100,L.sum/L.rv*100):0}%"></i>`}</span></div>
-      <span style="position:relative;flex:none">${last?`<span class="bubble" aria-label="נוסף לאחרונה: ${esc(ils(last.amount))}"><span class="plus" aria-hidden="true">+</span><span class="val num">${ils(last.amount)}</span></span>`:''}${arc(LIST_ART[rn],true,rn===CASH?moneyRain():'')}</span></div>
+      <span style="position:relative;flex:none">${arc(LIST_ART[rn],true,rn===CASH?moneyRain():'')}</span></div>
     ${L.vs.length>8?`<div class="vsearch"><input class="in" id="vSearch" type="search" placeholder="חיפוש ברשימה" value="${esc(S.vq||'')}" aria-label="חיפוש ברשימה" autocomplete="off"></div>`:''}
-    ${L.vs.length?groupByDate(L.vs.filter(v=>!S.vq||String(v.name).includes(S.vq))).map(([g,vs])=>`<div class="vgrp">${esc(g)}<span class="num">${ils(varSum(vs))}</span></div>`+vs.map(v=>{const armed=S.armVar===v.id;
+    ${L.vs.length?groupByDate(L.vs.filter(v=>!S.vq||String(v.name).includes(S.vq))).map(([g,vs])=>{const open=S.vq||(S.vOpen[g]??g!=='מהגיליון');
+      return `<button class="bare vgrp" data-vgrp="${esc(g)}" aria-expanded="${!!open}"><span>${esc(g)} <small class="num">· ${vs.length}</small></span><span class="num">${ils(varSum(vs))}<span class="chev" aria-hidden="true">${I.chevD}</span></span></button>`+(open?vs.map(v=>{const armed=S.armVar===v.id;
       return `<div class="vitem${newCls('variable',v.id)}" data-vid="${esc(v.id)}">${v.by?`<img class="who" data-uid="${esc(v.by)}" alt="">`:ric(rn,(LIST_ART[rn]||[])[1])}
         <span class="col"><span class="nm">${esc(v.name)}${v.star?'<span class="tag-other">לא נספר</span>':''}</span>${v.date?`<span class="dt">${new Date(v.date+'T12:00').toLocaleDateString('he-IL',{day:'numeric',month:'numeric'})}</span>`:''}</span>
         <span class="amt num${v.star||!has(v.amount)?' mute':''}">${has(v.amount)?ils(v.amount):'בלי סכום'}</span>
-        <button class="bare del${armed?' arm':''}" data-del-var="${esc(v.id)}" aria-label="${armed?'אישור מחיקה':'מחיקה'}">${armed?'למחוק?':I.trash}</button></div>`}).join('')).join('')||'<div class="emptyline">לא נמצאו פריטים.</div>'
+        <button class="bare del${armed?' arm':''}" data-del-var="${esc(v.id)}" aria-label="${armed?'אישור מחיקה':'מחיקה'}">${armed?'למחוק?':I.trash}</button></div>`}).join(''):'')}).join('')||'<div class="emptyline">לא נמצאו פריטים.</div>'
       :'<div class="emptyline">עוד אין פריטים ברשימה הזו החודש.</div>'}`;
 }
 function renderBaby(){
@@ -1741,6 +1762,8 @@ $('expForm').onsubmit=e=>{e.preventDefault();const name=$('eName').value.trim();
     toast(after.over&&!before.over?`שימו לב: "${data.row===VAR_ROW?'משתנות':data.row}" עברה את המסגרת ב־${fmt(after.sum-after.rv)} ₪`:'ההוצאה נוספה')});$('eAmount').value='';$('eName').value=''};
 document.addEventListener('click',e=>{
   const er=e.target.closest('[data-erow]');if(er){S.expRow=er.dataset.erow;renderExp();return}
+  const vg=e.target.closest('[data-vgrp]');if(vg){const g=vg.dataset.vgrp;S.vOpen[g]=vg.getAttribute('aria-expanded')!=='true';renderExp();fillAvatars();
+    if(S.vOpen[g]){const h=document.querySelector(`[data-vgrp="${CSS.escape(g)}"]`);const els=[];let n=h&&h.nextElementSibling;while(n&&n.classList.contains('vitem')){els.push(n);n=n.nextElementSibling}popIn(els)}return}
   if(e.target.closest('#expFold')){const f=$('expForm'),open=f.classList.toggle('folded')===false;$('expFold').setAttribute('aria-expanded',open);if(open)setTimeout(()=>$('eAmount').focus(),50);return}
   const ag=e.target.closest('[data-again]');if(ag){const data={name:ag.dataset.again,done:false,priceStatus:'pending',createdAt:Date.now()};if(S.uid)data.by=S.uid;store.add('grocery',data);if(navigator.vibrate)navigator.vibrate(8);return}
   const ev=e.target.closest('[data-eview]');if(ev){S.expView=ev.dataset.eview;S.armVar=null;renderExp();fillAvatars();swapPanel($('ePanel'));return}
@@ -1832,17 +1855,19 @@ function monthCheer(){
   setTimeout(()=>cheer(`${monthLabel(k)} נסגר בפלוס: ${fmt(c.flow)} ₪`),450);
 }
 
-/* ---------- swipe sideways to change month ---------- */
+/* ---------- swipe sideways to move between tabs ---------- */
 const SW={x:null,y:0,t:0};
 document.addEventListener('touchstart',e=>{SW.x=null;
-  if(e.touches.length!==1||!['home','exp','ins'].includes(S.tab)||!$('sheet').hidden||Q.open)return;
-  if(e.target.closest('.tablist,.chips,.cands,input,textarea,select,[data-grip],.login,.segbar,.vitem,.chart'))return;
+  if(e.touches.length!==1||!$('sheet').hidden||Q.open)return;
+  if(e.target.closest('.tablist,.chips,.cands,input,textarea,select,[data-grip],.login,.vitem,.chart,.gitem,.again'))return;
   SW.x=e.touches[0].clientX;SW.y=e.touches[0].clientY;SW.t=Date.now()},{passive:true});
 document.addEventListener('touchend',e=>{
   if(SW.x===null||PTR.on)return;const t=e.changedTouches[0],dx=t.clientX-SW.x,dy=t.clientY-SW.y;SW.x=null;
   if(Math.abs(dx)<70||Math.abs(dy)>45||Date.now()-SW.t>700)return;
-  // finger to the left brings in the month on the right (the previous one, in a right-to-left calendar)
-  if(dx<0)$('mPrev').click();else $('mNext').click();
+  // the tab bar runs right to left: a finger moving left brings in the tab on the right (the previous one)
+  const order=['home','exp','baby','shop','sav','ins'],i=order.indexOf(S.tab),j=i+(dx<0?-1:1);
+  if(j<0||j>=order.length)return;
+  document.querySelector(`nav.tabs [data-tab="${order[j]}"]`).click();enterTab($('t-'+order[j]),dx<0?-28:28);
   if(navigator.vibrate)navigator.vibrate(6);
 },{passive:true});
 
