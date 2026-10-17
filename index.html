@@ -398,6 +398,12 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .qitem .meta{font-weight:700;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .qitem .go{color:var(--ink-2);line-height:0}
 .wrap{padding-block:0 160px}
+.qty{direction:ltr;unicode-bidi:isolate;display:inline-block;margin-inline-start:6px;padding:0 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:12px;line-height:20px;vertical-align:middle;text-decoration:none}
+.gitem .price .unit{font-size:11px;color:var(--ink-2);font-weight:500}
+.stepper{display:flex;align-items:center;gap:0;align-self:flex-start;border:1.5px solid var(--accent);border-radius:var(--r-btn);overflow:hidden}
+.stepper button{width:52px;height:52px;font:800 24px var(--font-body);color:var(--accent);display:grid;place-items:center}
+.stepper button:active{background:var(--accent-soft)}
+.stepper input{width:64px;height:52px;border:0;border-inline:1px solid var(--line);background:var(--bg);text-align:center;font-weight:800;font-size:22px;color:var(--ink);outline:none}
 .gedit{flex:none;width:36px;height:44px;display:grid;place-items:center;color:var(--ink-2);border-radius:10px}
 .gedit svg{width:16px;height:16px}
 .gitem .price .manual{font-weight:700;font-size:10px;color:var(--other);background:var(--other-soft);border-radius:999px;padding:0 6px}
@@ -1034,7 +1040,7 @@ function noteFor(op,col,id,data){
     if(op==='del')return prev?`נמחקה הוצאה ב${rowLbl(prev.row)}: ${prev.name}`:null;
     return prev?`עודכנה הוצאה: ${prev.name}`:null;
   }
-  if(col==='grocery')return op==='add'?`נוסף לרשימת הסופר: ${d.name}`:null;
+  if(col==='grocery')return op==='add'?`נוסף לרשימת הסופר: ${d.name}${d.qty>1?` ×${d.qty}`:''}`:null;
   if(col==='purchases')return op==='put'?`הסתיימה קנייה: ${d.name||'קנייה'} · ${ils(d.total)} · ${(d.items||[]).length} פריטים`:null;
   if(col==='baby'){
     if(op==='add')return `נוסף לרשימת התינוק: ${d.name}`;
@@ -1381,36 +1387,42 @@ const gKey=i=>has(i.order)?Number(i.order):(i.createdAt||0);
 const openGrocery=()=>S.grocery.filter(i=>!i.done).sort((a,b)=>gKey(a)-gKey(b));
 const GRIP='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
 const gPrice=i=>has(i.price)?Number(i.price):i.product?Number(i.product.price):null;
+const gQty=i=>Math.max(1,Math.round(Number(i.qty)||1));
+const gLine=i=>gPrice(i)===null?null:Math.round(gPrice(i)*gQty(i)*100)/100;
+const qtyTag=i=>gQty(i)>1?`<span class="qty num">×${gQty(i)}</span>`:'';
 function gItemHtml(i){
   const ck=`<button class="bare ck" data-toggle="${esc(i.id)}" aria-label="${i.done?'ביטול סימון':'סימון'} ${esc(i.name)}" aria-pressed="${!!i.done}"><span>${I.check}</span></button>`;
   const who=i.by?`<img class="who" data-uid="${esc(i.by)}" alt="">`:'';
   const nw=newCls('grocery',i.id),pr=gPrice(i),manual=has(i.price);
   const edit=`<button class="bare gedit" data-gedit="${esc(i.id)}" aria-label="עריכה או מחיקה: ${esc(i.name)}">${I.pencil}</button>`;
-  const priceEl=pr!==null?`<span class="num">${ils(pr)}</span>${manual?'<span class="manual">ידני</span>':''}`:'';
-  if(i.done)return `<div class="gitem done${nw}">${ck}<span class="col"><b>${esc(i.name)}</b></span>${pr!==null?`<span class="price">${priceEl}</span>`:''}${edit}</div>`;
+  const q=gQty(i),priceEl=pr!==null?`<span class="num">${ils(gLine(i))}</span>${q>1?`<small class="unit num">${ils(pr)} ליח׳</small>`:''}${manual?'<span class="manual">ידני</span>':''}`:'';
+  if(i.done)return `<div class="gitem done${nw}">${ck}<span class="col"><b>${esc(i.name)}${qtyTag(i)}</b></span>${pr!==null?`<span class="price">${priceEl}</span>`:''}${edit}</div>`;
   const grip=`<button class="bare grip" data-grip="${esc(i.id)}" aria-label="גרירה לשינוי סדר: ${esc(i.name)}. אפשר גם חצים למעלה ולמטה">${GRIP}</button>`;
-  if(i.product)return `<div class="gitem${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><b>${esc(i.name)}</b><span class="meta">${esc(i.product.name)}</span></span><span class="price">${priceEl}<button class="bare link" data-repick="${esc(i.id)}">החלפה</button></span>${who}${edit}${grip}</div>`;
+  if(i.product)return `<div class="gitem${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><b>${esc(i.name)}${qtyTag(i)}</b><span class="meta">${esc(i.product.name)}</span></span><span class="price">${priceEl}<button class="bare link" data-repick="${esc(i.id)}">החלפה</button></span>${who}${edit}${grip}</div>`;
   const c=i.candidates||[];
-  if((i.priceStatus==='choose'||S.picking[i.id])&&c.length&&!manual)return `<div class="gitem choose${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><span class="pickhd"><b>${esc(i.name)}</b><span class="pickpill">בחר מוצר</span></span>
+  if((i.priceStatus==='choose'||S.picking[i.id])&&c.length&&!manual)return `<div class="gitem choose${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><span class="pickhd"><b>${esc(i.name)}${qtyTag(i)}</b><span class="pickpill">בחר מוצר</span></span>
     <span class="cands" role="radiogroup" aria-label="מוצר מרמי לוי">${c.map((p,k)=>`<button class="bare cand" role="radio" aria-checked="false" data-pick="${esc(i.id)}" data-k="${k}"><span>${esc(p.name)}</span><span class="num">${ils(p.price)}</span></button>`).join('')}</span></span>${who}${edit}${grip}</div>`;
-  if(manual)return `<div class="gitem${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><b>${esc(i.name)}</b><span class="meta">מחיר שהוזן ידנית</span></span><span class="price">${priceEl}</span>${who}${edit}${grip}</div>`;
+  if(manual)return `<div class="gitem${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><b>${esc(i.name)}${qtyTag(i)}</b><span class="meta">מחיר שהוזן ידנית</span></span><span class="price">${priceEl}</span>${who}${edit}${grip}</div>`;
   const wait=i.priceStatus==='notfound'?'לא נמצא ברמי לוי. אפשר להזין מחיר בעיפרון':'מחפש מחיר ברמי לוי · עד כמה דקות';
-  return `<div class="gitem${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><b>${esc(i.name)}</b><span class="wait">${I.clock}${wait}</span></span>${who}${edit}${grip}</div>`;
+  return `<div class="gitem${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><b>${esc(i.name)}${qtyTag(i)}</b><span class="wait">${I.clock}${wait}</span></span>${who}${edit}${grip}</div>`;
 }
 // edit one item: name, price (empty = Rami Levy's again), or remove it from the list
 function gItemSheet(it){
   if(!it)return;
   openSheet('עריכת מוצר',`
    <div class="field"><label class="lbl" for="giName">שם</label><input class="in" id="giName" value="${esc(it.name)}"></div>
-   <div class="field"><label class="lbl" for="giPrice">מחיר</label><div class="amountbox"><input class="num" id="giPrice" inputmode="decimal" value="${gPrice(it)??''}" placeholder="אין מחיר"><span>₪</span></div>
+   <div class="field"><span class="lbl" id="giQtyL">כמות</span><div class="stepper" role="group" aria-labelledby="giQtyL"><button type="button" class="bare" id="giMinus" aria-label="פחות">−</button><input class="num" id="giQty" inputmode="numeric" value="${gQty(it)}" aria-label="כמות"><button type="button" class="bare" id="giPlus" aria-label="עוד">+</button></div></div>
+   <div class="field"><label class="lbl" for="giPrice">מחיר ליחידה</label><div class="amountbox"><input class="num" id="giPrice" inputmode="decimal" value="${gPrice(it)??''}" placeholder="אין מחיר"><span>₪</span></div>
      <div class="small muted num">${it.product?`מחיר רמי לוי: ${ils(it.product.price)} · ${esc(it.product.name)}`:'אין מחיר מרמי לוי למוצר הזה.'}${has(it.price)&&it.product?` <button class="bare link" id="giReset" type="button">חזרה למחיר רמי לוי</button>`:''}</div></div>
    <div class="actions"><button class="btn" id="giSave">שמירה</button><button class="btn ghost" id="giCancel">ביטול</button></div>
    <button class="bare danger-link" id="giDel">מחיקת המוצר מהרשימה</button>`);
   $('giCancel').onclick=closeSheet;
+  const qv=()=>Math.max(1,Math.round(Number($('giQty').value)||1));
+  $('giMinus').onclick=()=>{$('giQty').value=Math.max(1,qv()-1);buzz(5)};$('giPlus').onclick=()=>{$('giQty').value=qv()+1;buzz(5)};
   const r=$('giReset');if(r)r.onclick=()=>{closeSheet();store.update('grocery',it.id,{price:null});toast('חזר למחיר רמי לוי')};
   $('giSave').onclick=()=>{
     const name=$('giName').value.trim();if(!name){$('giName').focus();return}
-    const v=parseAmt($('giPrice').value),data={};
+    const v=parseAmt($('giPrice').value),data={qty:qv()};
     if(name!==it.name){data.name=name;if(!it.product){data.priceStatus='pending';data.candidates=[]}}
     // the same number as Rami Levy's is not a manual price, so it keeps following Rami Levy
     data.price=v===null||(it.product&&v===Number(it.product.price))?null:v;
@@ -1449,7 +1461,7 @@ function renderShop(){
   const again=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
   $('gAgain').hidden=!again.length;
   $('gAgain').innerHTML=again.length?`<span class="lbl">קנינו שוב?</span><div class="chips">${again.map(([n,c])=>`<button type="button" class="chip" data-again="${esc(n)}">+ ${esc(n)}${c>1?`<span class="cnt num">${c}</span>`:''}</button>`).join('')}</div>`:'';
-  const priced=open.filter(i=>gPrice(i)!==null),sum=priced.reduce((t,i)=>t+gPrice(i),0);
+  const priced=open.filter(i=>gPrice(i)!==null),sum=priced.reduce((t,i)=>t+gLine(i),0);
   $('gTotal').hidden=!open.length;
   $('gTotal').innerHTML=open.length?`<div class="t1"><span>סה"כ משוער</span><span class="num">${ils(sum)}</span></div>${priced.length<open.length?`<div class="warn num">${open.length-priced.length} פריטים עוד בלי מחיר</div>`:''}`:'';
   $('gFinish').hidden=!done.length;
@@ -1457,13 +1469,13 @@ function renderShop(){
   $('gClear').classList.remove('arm');$('gClear').textContent=`ניקוי ${done.length} פריטים בלי לשמור קנייה`;
   renderPast();
 }
-const pastPrice=it=>has(it.price)?Number(it.price):it.product?Number(it.product.price):null;
+const pastPrice=it=>{const u=has(it.price)?Number(it.price):it.product?Number(it.product.price):null;return u===null?null:Math.round(u*gQty(it)*100)/100};
 function renderPast(){
   const ps=[...S.purchases].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   $('gPast').innerHTML=ps.length?ps.map(p=>{const open=!!S.openPurchase[p.id],items=p.items||[];
     const d=p.date?new Date(p.date+'T12:00').toLocaleDateString('he-IL',{day:'numeric',month:'numeric',year:'numeric'}):'';
     return `<button class="bare ph-row" data-purchase="${esc(p.id)}" aria-expanded="${open}"><span class="col"><b>${esc(p.name||'קנייה')}</b><small class="num">${d} · ${items.length} פריטים</small></span><span class="sum num">${ils(p.total)}</span><span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></button>
-      ${open?`<div class="pd">${items.map(it=>`<div class="lrow"><span class="nm">${esc(it.name)}${it.product?`<small>${esc(it.product.name)}</small>`:''}</span><span class="leader" aria-hidden="true"></span><span class="amt num${pastPrice(it)===null?' mute':''}">${pastPrice(it)===null?'בלי מחיר':ils(pastPrice(it))}</span></div>`).join('')}
+      ${open?`<div class="pd">${items.map(it=>`<div class="lrow"><span class="nm">${esc(it.name)}${qtyTag(it)}${it.product?`<small>${esc(it.product.name)}</small>`:''}</span><span class="leader" aria-hidden="true"></span><span class="amt num${pastPrice(it)===null?' mute':''}">${pastPrice(it)===null?'בלי מחיר':ils(pastPrice(it))}</span></div>`).join('')}
         <div class="foot num"><span>לפי המחירים ברשימה: ${ils(p.rlTotal||0)}</span><span>שולם: ${ils(p.total)}</span></div>
         <div class="pedit"><button class="bare link" data-pedit="${esc(p.id)}">${I.pencil} עריכת הסכום ששולם</button></div></div>`:''}`}).join('')
     :'<div class="emptyline" style="border-top:0">עוד אין קניות שמורות. מסמנים פריטים בווי ולוחצים "סיים קנייה".</div>';
@@ -1510,10 +1522,10 @@ document.addEventListener('keydown',e=>{
 const SHOP_ROW='קניות/פארם';
 function finishSheet(){
   const items=S.grocery.filter(g=>g.done).sort((a,b)=>gKey(a)-gKey(b));if(!items.length)return;
-  const rl=Math.round(items.filter(i=>gPrice(i)!==null).reduce((t,i)=>t+gPrice(i),0)*100)/100;
+  const rl=Math.round(items.filter(i=>gPrice(i)!==null).reduce((t,i)=>t+gLine(i),0)*100)/100;
   const noPrice=items.filter(i=>gPrice(i)===null).length,mk=monthKey(new Date());
   openSheet('סיום קנייה',`
-   <div class="plist">${items.map(i=>`<div class="lrow"><span class="nm">${esc(i.name)}</span><span class="leader" aria-hidden="true"></span><span class="amt num${gPrice(i)===null?' mute':''}">${gPrice(i)===null?'בלי מחיר':ils(gPrice(i))}</span></div>`).join('')}</div>
+   <div class="plist">${items.map(i=>`<div class="lrow"><span class="nm">${esc(i.name)}${qtyTag(i)}</span><span class="leader" aria-hidden="true"></span><span class="amt num${gPrice(i)===null?' mute':''}">${gPrice(i)===null?'בלי מחיר':ils(gLine(i))}</span></div>`).join('')}</div>
    <div class="small muted num">סה"כ משוער: ${ils(rl)}${noPrice?` · ${noPrice} פריטים בלי מחיר לא נספרו`:''}</div>
    <div class="field"><label class="lbl" for="fsAmt">כמה שולם בפועל</label><div class="amountbox"><input class="num" id="fsAmt" inputmode="decimal" value="${rl||''}"><span>₪</span></div></div>
    <div class="field"><label class="lbl" for="fsName">תיאור</label><input class="in" id="fsName" value="קניית סופר"></div>
@@ -1523,7 +1535,7 @@ function finishSheet(){
   $('fsSave').onclick=async()=>{
     const amount=parseAmt($('fsAmt').value);if(amount===null){$('fsAmt').focus();toast('כתבו כמה שולם');return}
     const name=$('fsName').value.trim()||'קניית סופר',pid='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),now=Date.now();
-    const purchase={date:today(),month:mk,name,total:amount,rlTotal:rl,createdAt:now,items:items.map(i=>({name:i.name,product:i.product||null,price:gPrice(i)}))};
+    const purchase={date:today(),month:mk,name,total:amount,rlTotal:rl,createdAt:now,items:items.map(i=>({name:i.name,product:i.product||null,price:gPrice(i),qty:gQty(i)}))};
     const line={month:mk,row:SHOP_ROW,name,amount,date:today(),createdAt:now,purchaseId:pid,source:'app'};
     if(S.uid){purchase.by=S.uid;line.by=S.uid}
     $('fsSave').disabled=true;closeSheet();
@@ -1871,7 +1883,8 @@ document.addEventListener('click',e=>{
 $('addRow').onclick=()=>{if(!calc(S.month)){store.setMonth(S.month,{income:null,rows:[]}).then(()=>rowSheet(null));return}rowSheet(null)};
 $('bAdd').onclick=()=>babySheet(null);
 $('svAdd').onclick=()=>holdingSheet(null);
-$('gForm').onsubmit=e=>{e.preventDefault();const name=$('gName').value.trim();if(!name)return;const data={name,done:false,priceStatus:'pending',createdAt:Date.now()};if(S.uid)data.by=S.uid;store.add('grocery',data);$('gName').value='';$('gName').focus()};
+function parseQty(t){let m=t.match(/^(\d{1,3})\s+(.+)$/);if(m)return [m[2].trim(),Number(m[1])];m=t.match(/^(.+?)\s*[x×*]\s*(\d{1,3})$/i);if(m)return [m[1].trim(),Number(m[2])];return [t,1]}
+$('gForm').onsubmit=e=>{e.preventDefault();const raw=$('gName').value.trim();if(!raw)return;const [name,qty]=parseQty(raw);const data={name,done:false,priceStatus:'pending',createdAt:Date.now()};if(qty>1)data.qty=qty;if(S.uid)data.by=S.uid;store.add('grocery',data);$('gName').value='';$('gName').focus()};
 $('gFinishBtn').onclick=finishSheet;
 $('gClear').onclick=()=>{const b=$('gClear');if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='ללחוץ שוב לאישור';return}b.classList.remove('arm');S.grocery.filter(g=>g.done).forEach(g=>store.del('grocery',g.id))};
 /* ---------- quick add: a menu with submenus (opened beside, slides in) ---------- */
