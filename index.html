@@ -398,6 +398,11 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .qitem .meta{font-weight:700;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .qitem .go{color:var(--ink-2);line-height:0}
 .wrap{padding-block:0 160px}
+.cush{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:var(--surface-2)}
+.cush-hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px}.cush-hd>b{font:900 20px var(--font-display);color:var(--other)}
+.tbar.big{height:10px}.cush .tbar i{background:var(--other)}
+.alloc{display:flex;gap:2px;height:8px;border-radius:999px;overflow:hidden;margin-top:6px}.alloc i{display:block;height:100%}
+@media (prefers-reduced-motion:no-preference){section.tab.enter .cush .tbar i{animation:barin 1s cubic-bezier(.2,.8,.2,1) both;animation-delay:.25s}}
 .credit{display:flex;align-items:center;gap:12px;padding:12px 14px}
 .credit .ric{width:40px;height:40px;border-radius:12px}.credit .ric svg{width:20px;height:20px}
 .credit .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.credit .col b{font-weight:700;font-size:16px}.credit .col small{font-size:12px;color:var(--ink-2)}
@@ -953,7 +958,7 @@ async function gh(path,opt={}){
 }
 function applyCol(col,docs){
   if(col==='months')S.months=docs;
-  else if(col==='info'){S.fp=docs.firstPurchase||null;S.people=docs.people||{}}
+  else if(col==='info'){S.fp=docs.firstPurchase||null;S.people=docs.people||{};S.plan=docs.plan2027||null}
   else S[col]=Object.entries(docs).map(([id,d])=>({id,...d}));
 }
 function cacheSave(){const o={};COLS.forEach(c=>{if(G.files[c])o[c]=G.files[c].docs});lsSet('hb_cache',JSON.stringify(o))}
@@ -1548,6 +1553,46 @@ const GOALS={
   girl:{tradeStart:7000,tradeMonthly:500,state:58,parent:58,grants:[['מענק לידה',2103],['מענק הורים',2000]]},
   y2027:{flowTotal:57055,leftAfterUses:38703,taxRefund:14000,refunds:3100,rentFromApr:6000}
 };
+/* the cushion, from the 2027 tab: target = 3 months of the plan's expenses (all rows, Google to Chat included);
+   the savings table is all spoken for, so the cushion grows only from the monthly surplus */
+function planCalc(P){
+  const ms=P.months.map(m=>({...m,spend:m.total+m.extra,surplus:m.income-m.total-m.extra}));
+  const annual=ms.reduce((t,m)=>t+m.spend,0),target=Math.round(annual/ms.length*3);
+  const apt=P.apartment,early=ms.filter(m=>apt.from.includes(m.k)),late=ms.filter(m=>!apt.from.includes(m.k));
+  const earlySur=early.reduce((t,m)=>t+m.surplus,0),earlyLeft=Math.max(0,earlySur-apt.total),lateSur=late.reduce((t,m)=>t+Math.max(0,m.surplus),0);
+  const emerg=Object.values(P.emergency||{}).reduce((t,v)=>t+v,0),total=earlyLeft+lateSur+emerg;
+  // month by month: what the cushion holds at the end of each month if every surplus goes to it
+  let acc=0;const path=ms.map((m,i)=>{acc+=apt.from.includes(m.k)?(i===early.length-1?earlyLeft:0):Math.max(0,m.surplus);acc+=(P.emergency||{})[m.k]||0;return {k:m.k,acc}});
+  const reach=path.find(x=>x.acc>=target);
+  const tight=ms.filter(m=>!apt.from.includes(m.k)&&m.surplus<1000);
+  return {ms,annual,target,earlySur,earlyLeft,lateSur,emerg,total,path,reach,tight,gap:Math.max(0,target-total)};
+}
+function cushionCard(nowLine,em,left,leftSum){
+  const P=S.plan;
+  if(!P)return `<article class="ins goalc goal"><div class="body"><div class="gh"><span class="tag">1 · כרית ביטחון</span></div><h3>להגיע ל־3 חודשי הוצאות</h3><div class="now num">${nowLine}</div></div></article>`;
+  const R=planCalc(P),sv=P.savings,pct=Math.min(100,Math.round(R.total/R.target*100));
+  const uses=[...sv.uses,['הכנסה תחיה',sv.tchiya]],cols=['--seg-fixed','--other','--clay','--accent'];
+  const mlab=k=>monthLabel(k);
+  return `<article class="ins goalc goal"><div class="body">
+    <div class="gh"><span class="tag">1 · כרית ביטחון</span><span class="tgt num">יעד ${ils(R.target)}</span></div>
+    <h3>להגיע ל־3 חודשי הוצאות</h3>
+    <div class="now num">${nowLine}${em?`<br>בשורת "קופת חירום" רשום החודש ${ils(em.a)}${em.star?' (*)':''}.`:''}</div>
+    <div class="cush">
+      <div class="cush-hd num"><span>לפי תוכנית 2027 הכרית תגיע ל־<b>${ils(R.total)}</b> עד ${esc(mlab(R.ms[R.ms.length-1].k))}</span><b>${pct}%</b></div>
+      <span class="tbar big" aria-hidden="true"><i style="width:${pct}%"></i></span>
+      <div class="small muted num">${R.reach?`היעד מושג ב${esc(mlab(R.reach.k))}.`:`חסרים עוד ${ils(R.gap)} כדי להגיע ליעד.`}</div>
+    </div>
+    <details class="more"><summary>מאיפה זה מגיע</summary><ul class="num">
+      <li><b>החיסכון שכבר יש (${ils(sv.total)}) כולו מיועד:</b> ${uses.map(u=>`${esc(u[0])} ${ils(u[1])}`).join(', ')}. ${ils(sv.tchiya)} הם ${esc(sv.tchiyaLabel)} (${ils(sv.tchiya/7)} בחודש). לכן מהסכום הזה לא נכנס כלום לכרית.
+        <span class="alloc" aria-hidden="true">${uses.map((u,i)=>`<i style="width:${u[1]/sv.total*100}%;background:var(${cols[i]})"></i>`).join('')}</span></li>
+      <li><b>דצמבר עד מרץ:</b> עודף של ${ils(R.earlySur)}. מתוכו ${ils(P.apartment.total)} להוצאות הדירה (${P.apartment.items.filter(x=>x[1]&&x[1]!=='None').map(x=>`${esc(x[0])} ${esc(String(x[1]).replace('.0',''))}`).join(', ')}), ונשארים ${ils(R.earlyLeft)} לכרית.</li>
+      <li><b>אפריל עד דצמבר 2027:</b> עוד ${ils(R.lateSur)} מהעודף החודשי.${R.tight.length?` החודשים הצפופים: ${R.tight.map(m=>`${esc(mlab(m.k))} ${ils(m.surplus)}`).join(', ')}.`:''}</li>
+      ${R.emerg?`<li><b>שורת "קופת חירום":</b> ${Object.entries(P.emergency).map(([k,v])=>`${esc(mlab(k))} ${ils(v)}`).join(', ')}.</li>`:''}
+      ${leftSum?`<li><b>מה שנשאר במסגרות החודש:</b> ${left.map(x=>`${esc(x[0])} ${ils(x[1])}`).join(', ')}. אם זה יישאר עד סוף החודש, עוד <b>${ils(leftSum)}</b> לכרית.</li>`:''}
+    </ul></details>
+    <div class="src">היעד: 3 חודשי הוצאות לפי לשונית 2027, ${ils(R.annual)} ב־${R.ms.length} חודשים (כ־${ils(Math.round(R.annual/R.ms.length))} בחודש), כולל גוגל, טלפון, נטפליקס וצאט. שורת הסה"כ בגיליון לא סופרת אותן (חוץ מיוני), ולכן העודף כאן נמוך מעט מהתזרים שבגיליון.</div>
+  </div></article>`;
+}
 function monthsBetween(k,y,m){const [a,b]=k.split('-').map(Number);return Math.max(0,(y-a)*12+(m-b))}
 function renderGoals(){
   const k=S.month,c=calc(k),G=GOALS;
@@ -1567,18 +1612,7 @@ function renderGoals(){
   const gemelAt=G.equity.gemel+toJan*G.equity.gemelMonthly,hishAt=G.equity.hishtalmut+toJan*G.equity.hishtalmutMonthly;
   const grants=G.girl.grants.reduce((t,g)=>t+g[1],0);
   $('goals').innerHTML=`
-  <article class="ins goalc goal"><div class="body">
-    <div class="gh"><span class="tag">1 · כרית ביטחון</span><span class="tgt num">יעד ${ils(G.cushion.target)}</span></div>
-    <h3>להגיע ל־3 חודשי הוצאות</h3>
-    <div class="now num">${nowLine}${em?`<br>בשורת "קופת חירום" רשום החודש ${ils(em.a)}${em.star?' (*)':''}.`:'<br>בשורת "קופת חירום" אין סכום החודש.'}</div>
-    <details class="more"><summary>עוד פרטים</summary><ul class="num">
-      ${leftSum?`<li><b>מה שנשאר במסגרות:</b> ${left.map(x=>`${esc(x[0])} ${ils(x[1])}`).join(', ')}. אם זה יישאר עד סוף החודש, עוד <b>${ils(leftSum)}</b> לכרית.</li>`:''}
-      <li><b>החזר מס הכנסה:</b> ${ils(G.y2027.taxRefund)} מרשימת החיסכונות של 2027 מכסים לבד ${Math.round(G.y2027.taxRefund/G.cushion.target*100)}% מהיעד.</li>
-      <li><b>מה שנשאר אחרי השימושים המתוכננים:</b> בגיליון 2027 נשארים ${ils(G.y2027.leftAfterUses)} אחרי רכב, גשר שיניים וקנייה ראשונה, כלומר ${Math.round(G.y2027.leftAfterUses/G.cushion.target*100)}% מהיעד.</li>
-      <li><b>התזרים של 2027:</b> כל 13 החודשים מתוכננים בפלוס, ${ils(G.y2027.flowTotal)} בסך הכול. זה כמעט בדיוק היעד, אם העודפים לא מתפזרים.</li>
-    </ul></details>
-    <div class="src">היעד: ${G.cushion.basis}. הסכום שכבר יש תדעו אחרי הלידה.</div>
-  </div></article>
+  ${cushionCard(nowLine,em,left,leftSum)}
   <article class="ins goalc goal"><div class="body">
     <div class="gh"><span class="tag">2 · הון עצמי</span><span class="tgt">בית למגורים או להשקעה</span></div>
     <h3>כמה יכול להצטבר עד ${G.equity.hishtalmutYear}</h3>
@@ -1596,7 +1630,7 @@ function renderGoals(){
     <h3>תיק מסחר וחיסכון לכל ילד</h3>
     <div class="now num">התוכנית שלכם: הפקדה ראשונה של <b>${ils(G.girl.tradeStart)}</b> לתיק מסחר, ואחר כך <b>${ils(G.girl.tradeMonthly)}</b> בחודש. בנוסף, בחיסכון לכל ילד המדינה מפקידה ${ils(G.girl.state)} בחודש, ואתם מוסיפים עוד ${ils(G.girl.parent)} שיורדים מקצבת הילדים: ${ils(G.girl.state+G.girl.parent)} בחודש למסלול בסיכון גבוה.</div>
     <details class="more"><summary>עוד פרטים</summary><ul class="num">
-      <li><b>ההפקדה הראשונה:</b> ${G.girl.grants.map(g=>`${g[0]} ${ils(g[1])}`).join(' ו')} מגיליון 2027 מכסים ${ils(grants)}. נשארים ${ils(G.girl.tradeStart-grants)}.</li>
+      <li><b>ההפקדה הראשונה:</b> ${G.girl.grants.map(g=>`${g[0]} ${ils(g[1])}`).join(' ו')} רשומים בטבלת החסכונות של 2027, אבל הטבלה כולה כבר מיועדת: לרכב, לגשר, לקנייה הראשונה ולהכנסה של תחיה בחופשת הלידה. כלומר ל־${ils(G.girl.tradeStart)} של ההפקדה הראשונה עוד אין מקור מסומן בגיליון.</li>
       <li><b>ה־500 בחודש:</b> ${flow>0?(flow>=G.girl.tradeMonthly?`העודף של ${monthLabel(k)} מכסה אותם.`:`העודף של ${monthLabel(k)} (${ils(flow)}) מכסה רק חלק.`):'בחודש בלי עודף, אפשר לקחת אותם מהחיסכון בקיצוץ המנויים (155 ₪ בחודש) ומהמסגרת שנשארה בקניות.'}</li>
       <li><b>הפקדה אוטומטית:</b> הוראת קבע ביום שאחרי המשכורת, כדי שה־500 ייצאו לפני שהחודש מתחיל.</li>
     </ul></details>
