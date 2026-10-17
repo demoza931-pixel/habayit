@@ -398,6 +398,39 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .qitem .meta{font-weight:700;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .qitem .go{color:var(--ink-2);line-height:0}
 .wrap{padding-block:0 160px}
+:root{--chart-pos:#1A7F5A;--chart-neg:#C0392B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--chart-pos:#36A87A;--chart-neg:#E2674F}}
+:root[data-theme="dark"]{--chart-pos:#36A87A;--chart-neg:#E2674F}
+.chartcard{position:relative;padding:12px 10px 8px;overflow:hidden}
+.chart svg{display:block;width:100%;height:auto}
+.chart .zero{stroke:var(--leader);stroke-width:1}
+.chart .bar path{fill:var(--chart-pos)}.chart .bar.neg path{fill:var(--chart-neg)}
+.chart .bar .hit{fill:transparent;cursor:pointer}
+.chart .bar.sel path,.chart .bar.cur path{stroke:var(--surface);stroke-width:2;paint-order:stroke}
+.chart .bar.sel path{filter:brightness(1.12)}
+.chart text{font:600 10px var(--font-body);fill:var(--ink-2)}
+.chart .vl{font-weight:700;fill:var(--ink);direction:ltr;unicode-bidi:embed}
+.chart .ml.on{fill:var(--accent);font-weight:800}
+.ctip{position:absolute;z-index:2;background:var(--ink);color:var(--bg);font-size:13px;font-weight:700;padding:5px 10px;border-radius:10px;white-space:nowrap;pointer-events:none}
+.tableview{margin-top:6px}.tableview summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--accent);min-height:36px;display:flex;align-items:center;padding:0 6px}
+.tableview .flows{margin-top:6px}
+.tb{display:flex;align-items:center;gap:10px;padding:8px 6px}
+.tb .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.tb .tl{display:flex;justify-content:space-between;gap:8px;font-size:14px}.tb .tl b{font-weight:600}.tb .tl .num{font-weight:700}
+.tb small{font-size:11px;color:var(--ink-2)}
+.tbar{display:block;height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.tbar i{display:block;height:100%;border-radius:999px;background:var(--chart-pos);transform-origin:right}
+details.more summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--accent);min-height:36px;display:flex;align-items:center;list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:"";width:7px;height:7px;border-left:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);margin-inline-start:8px;transition:transform .25s}
+details.more[open] summary::after{transform:rotate(135deg)}
+@media (prefers-reduced-motion:no-preference){
+  section.tab.enter .chart .bar path{animation:colgrow .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 50ms + .15s);transform-box:fill-box;transform-origin:center bottom}
+  section.tab.enter .chart .bar.neg path{transform-origin:center top}
+  @keyframes colgrow{from{transform:scaleY(0)}}
+  section.tab.enter .tbar i{animation:barin .8s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 70ms + .2s)}
+  details.more[open] ul{animation:popin .3s ease-out}
+}
 .hero .big{align-items:center}
 .hmeta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:-4px}
 .ringwrap{position:relative;width:54px;height:54px;flex:none}
@@ -668,19 +701,14 @@ body{margin:0}img{max-width:100%}
 
     <div id="goals" style="display:flex;flex-direction:column;gap:12px"></div>
     <h2 class="sec" style="margin-top:8px">תזרים לפי חודש</h2>
-    <div class="small muted">משכורות פחות סה"כ, בחודשים שבהם רשומה הכנסה. מחושב מהנתונים באפליקציה.</div>
-    <div class="flows num" id="iFlows"></div>
+    <div class="small muted">משכורות פחות סה"כ, בחודשים שבהם רשומה הכנסה. לחיצה על עמודה מציגה את הסכום.</div>
+    <section class="card chartcard"><div class="chart" id="iChart" role="img"></div><div class="ctip num" id="iTip" hidden></div>
+      <details class="tableview"><summary>הצגה כטבלה</summary><div class="flows num" id="iFlows"></div></details></section>
+    <h2 class="sec" style="margin-top:8px" id="iTopTitle">לאן הלך הכסף החודש</h2>
+    <section class="card chartcard" id="iTop"></section>
     <h2 class="sec" style="margin-top:8px">מה כדאי לדעת</h2>
-    <div class="small muted">כל המספרים כאן הועתקו מ"טבלת הוצאות" ומ"רשימת קניות לתינוק", נכון ל־17.10.2026.</div>
-    <article class="ins mid"><div class="body"><span class="tag">● אוקטובר 2026</span><h3>הוצאות משתנות פי 3 מהרגיל</h3><p class="num">"הוצאות משתנות" באוקטובר: 8,543.4 ₪, לעומת 2,821 ברוב החודשים. בפירוט: מוצצים 3,000, שילב 1,948, תוספות שיער לצמות 938, תזרים *איקאה 800, שולה 400, אלי אקספרס 336, כרית הרין והנקה 294.5, זארה יוון 239, העברה בביט 230, נקסט 218, מדריכת התפתחות 110, פאן סיטי 20, הסטוק 9.9. טסט לרכב רשום בלי סכום. בנוסף יצאו 1,900 ₪ במזומן (סקירה שלישית 1,600, אירוע 300), והמשכורות ירדו בהתאם מ־22,512 ל־20,612. התזרים של אוקטובר: ‎+1,067.6 ₪.</p></div></article>
-    <article class="ins hi"><div class="body"><span class="tag">▲ ספטמבר 2026</span><h3>החודש היחיד שיצא במינוס</h3><p class="num">בספטמבר ההוצאות היו 22,127 ₪ מול משכורות של 22,048: מינוס 79 ₪. בתוך הסכום יש 7,200 ₪ של חיסכון: פיקדון לידה 5,000, השקעות 1,000, הוצאות גדולות 1,200.</p></div></article>
-    <article class="ins mid"><div class="body"><span class="tag">● 2027</span><h3>כל החודשים בפלוס, חלקם על הקצה</h3><p class="num">בגיליון 2027 נוספו ההכנסות: תחיה 5,529 עד 15,000 ויוסף 13,000 עד 15,500, סה"כ 18,529 עד 30,500 בחודש. התזרים המתוכנן חיובי בכל 13 החודשים ומסתכם ב־57,055 ₪. החודשים הצפופים: אפריל ומאי 921, יוני 529, ונובמבר 392 (חודש תאילנד, הוצאות 30,108). מאפריל השכירות עולה ל־6,000 ₪.</p></div></article>
-    <article class="ins ok"><div class="body"><span class="tag">✓ קנייה ראשונה</span><h3>נשארו 6,640 ₪ מתוך 15,000</h3><p class="num">לפי גיליון 2027 נלקחו 8,360 ₪ לקנייה ראשונה, ונשארו 6,640 ₪. ברשימת התינוק 64 מתוך 86 פריטים מסומנים "נקנה", ו־17 מהם במחיר 0 ₪.</p></div></article>
-    <article class="ins mid"><div class="body"><span class="tag">● מה עוד לקנות</span><h3>3,260 ₪ בפריטים עם מחיר</h3><p class="num">בסטטוס "לקנות": מזרן מיטה 1,500, טרנגים 1,000, אמבטיית תינוק 380, בגדי גוף 200, פח חיתולים 120, שמן שקדים 60, מנשא 0. מזגן, מטהר אוויר וטיפות ברזל עוד בלי מחיר.</p></div></article>
-    <article class="ins mid"><div class="body"><span class="tag">● מול ההערכה</span><h3>איפה המחיר עבר את המקסימום</h3><p class="num">מצלמה ומוניטור נשימה 3,000 ₪ מול מקסימום 2,000. מזרן 1,500 מול 1,000. כובעים, גרביים וכפפות 450 מול 90. כרית הנקה 331 מול 250. תיק לעגלה 400 מול 300. מנגד, מיטת תינוק 395 מול 700.</p></div></article>
-    <article class="ins ok"><div class="body"><span class="tag">✓ מנויים</span><h3>155 ₪ בחודש פחות מנובמבר 2025</h3><p class="num">טלפון ירד מ־140 ל־80 ₪ וספוטיפיי מ־56 ל־24 (מיולי), רייזאפ (55) הופסק אחרי מרץ, וצאט/קלוד ירד מ־70 ל־62 (ממרץ, בכל חודש). בגיליון 2027 השורה עדיין נקראת "צאט" ורשום בה 70, והטלפון רשום 140 עד מאי.</p></div></article>
-    <article class="ins ok"><div class="body"><span class="tag">✓ הגיליון</span><h3>הסה"כ בטבלה ובאפליקציה זהה עכשיו</h3><p class="num">תא הסה"כ בגיליון 2026 סופר עכשיו את כל השורות, כולל גוגל, טלפון, נטפליקס וצאט/קלוד. הסכומים בטבלה ובאפליקציה זהים: אוקטובר 19,544.4 ₪, ספטמבר 22,127 ₪. גם תא ה־#REF! נעלם.</p></div></article>
-    <article class="ins mid"><div class="body"><span class="tag">● לבדוק בטבלה</span><h3>דברים שאני לא בטוח לגביהם</h3><p class="num">"מסרק" ברשימת התינוק רשום ב־1,948 ₪, אותו סכום כמו שילב. "תאילנד" מופיע ב־2027 גם כ־1,666 ₪ בחודש וגם כ־20,000 ₪ ברשימת החיסכונות. בגיליון 2027 השורות חיתולים, מגבונים וביגוד והנעלה בלי סכום.</p></div></article>
+    <div class="small muted">מחושב מהנתונים באפליקציה בכל פעם שהם משתנים.</div>
+    <div id="iCards" style="display:flex;flex-direction:column;gap:12px"></div>
     <form class="field" id="nickForm" style="margin-top:8px"><label class="lbl" for="nickIn">השם שלי בהתראות</label><div class="addline"><input class="in" id="nickIn" maxlength="20" autocomplete="off" placeholder="השם שבן/בת הזוג יראו"><button class="btn" type="submit">שמירה</button></div></form>
     <h2 class="sec" style="margin-top:8px">סנכרון עם הגיליון</h2>
     <section class="card synclog" id="syncLog"></section>
@@ -1467,40 +1495,102 @@ function renderGoals(){
     <div class="gh"><span class="tag">1 · כרית ביטחון</span><span class="tgt num">יעד ${ils(G.cushion.target)}</span></div>
     <h3>להגיע ל־3 חודשי הוצאות</h3>
     <div class="now num">${nowLine}${em?`<br>בשורת "קופת חירום" רשום החודש ${ils(em.a)}${em.star?' (*)':''}.`:'<br>בשורת "קופת חירום" אין סכום החודש.'}</div>
-    <ul class="num">
+    <details class="more"><summary>עוד פרטים</summary><ul class="num">
       ${leftSum?`<li><b>מה שנשאר במסגרות:</b> ${left.map(x=>`${esc(x[0])} ${ils(x[1])}`).join(', ')}. אם זה יישאר עד סוף החודש, עוד <b>${ils(leftSum)}</b> לכרית.</li>`:''}
       <li><b>החזר מס הכנסה:</b> ${ils(G.y2027.taxRefund)} מרשימת החיסכונות של 2027 מכסים לבד ${Math.round(G.y2027.taxRefund/G.cushion.target*100)}% מהיעד.</li>
       <li><b>מה שנשאר אחרי השימושים המתוכננים:</b> בגיליון 2027 נשארים ${ils(G.y2027.leftAfterUses)} אחרי רכב, גשר שיניים וקנייה ראשונה, כלומר ${Math.round(G.y2027.leftAfterUses/G.cushion.target*100)}% מהיעד.</li>
       <li><b>התזרים של 2027:</b> כל 13 החודשים מתוכננים בפלוס, ${ils(G.y2027.flowTotal)} בסך הכול. זה כמעט בדיוק היעד, אם העודפים לא מתפזרים.</li>
-    </ul>
+    </ul></details>
     <div class="src">היעד: ${G.cushion.basis}. הסכום שכבר יש תדעו אחרי הלידה.</div>
   </div></article>
   <article class="ins goalc goal"><div class="body">
     <div class="gh"><span class="tag">2 · הון עצמי</span><span class="tgt">בית למגורים או להשקעה</span></div>
     <h3>כמה יכול להצטבר עד ${G.equity.hishtalmutYear}</h3>
     <div class="now num">עד ינואר ${G.equity.hishtalmutYear}, בלי תשואה: קופת גמל <b>${ils(gemelAt)}</b> וקרן השתלמות <b>${ils(hishAt)}</b>. ביחד <b>${ils(gemelAt+hishAt)}</b>, ועם ההלוואה <b>${ils(gemelAt+hishAt+G.equity.loan)}</b>.</div>
-    <ul class="num">
+    <details class="more"><summary>עוד פרטים</summary><ul class="num">
       <li><b>ההלוואה מארגון נכי צה"ל:</b> ${ils(G.equity.loan)} בלי ריבית, וההחזר יורד מהקצבה (${ils(G.equity.loanRepay)} בחודש). כלומר ${Math.round(G.equity.loan/G.equity.loanRepay)} חודשים (כ־${Math.floor(G.equity.loan/G.equity.loanRepay/12)} שנים ו־${Math.round(G.equity.loan/G.equity.loanRepay%12)} חודשים). בתקופה הזו ההפקדה החודשית לקופת הגמל מהקצבה נעצרת. כדאי לקחת אותה רק ביום הקנייה, כדי שהגמל ימשיך לצבור עד אז.</li>
       ${inv?`<li><b>שורת "השקעות":</b> החודש ${ils(inv.a)}${inv.star?' (*)':''}. אם היא נמשכת עד ${G.equity.hishtalmutYear}, זה עוד כ־${ils(toJan*inv.a)}.</li>`:''}
       ${big?`<li><b>"הוצאות גדולות":</b> החודש ${ils(big.a)}. אם חלק מזה לא מנוצל, הוא יכול לעבור להון העצמי.</li>`:''}
       <li><b>מגורים או השקעה:</b> מאפריל 2027 השכירות ${ils(G.y2027.rentFromApr)} בחודש (${ils(G.y2027.rentFromApr*12)} בשנה). בית למגורים מחליף את השכירות הזו. בית להשקעה מכניס שכירות, אבל אתם ממשיכים לשלם את שלכם. ההחלטה שלכם. כדאי לבדוק אותה מול יועץ משכנתאות עם המספרים האלה.</li>
-    </ul>
+    </ul></details>
     <div class="src">${gm?`קופת גמל רשומה החודש ${ils(gm.a)}${gm.star?'*':''}. `:''}יתרות הגמל, ההשתלמות וההלוואה לפי מה שסיפרתם. החישוב לא כולל תשואה.</div>
   </div></article>
   <article class="ins goalc goal"><div class="body">
     <div class="gh"><span class="tag">3 · לילדה</span><span class="tgt num">${ils(G.girl.tradeMonthly+G.girl.parent)} בחודש מכם</span></div>
     <h3>תיק מסחר וחיסכון לכל ילד</h3>
     <div class="now num">התוכנית שלכם: הפקדה ראשונה של <b>${ils(G.girl.tradeStart)}</b> לתיק מסחר, ואחר כך <b>${ils(G.girl.tradeMonthly)}</b> בחודש. בנוסף, בחיסכון לכל ילד המדינה מפקידה ${ils(G.girl.state)} בחודש, ואתם מוסיפים עוד ${ils(G.girl.parent)} שיורדים מקצבת הילדים: ${ils(G.girl.state+G.girl.parent)} בחודש למסלול בסיכון גבוה.</div>
-    <ul class="num">
+    <details class="more"><summary>עוד פרטים</summary><ul class="num">
       <li><b>ההפקדה הראשונה:</b> ${G.girl.grants.map(g=>`${g[0]} ${ils(g[1])}`).join(' ו')} מגיליון 2027 מכסים ${ils(grants)}. נשארים ${ils(G.girl.tradeStart-grants)}.</li>
       <li><b>ה־500 בחודש:</b> ${flow>0?(flow>=G.girl.tradeMonthly?`העודף של ${monthLabel(k)} מכסה אותם.`:`העודף של ${monthLabel(k)} (${ils(flow)}) מכסה רק חלק.`):'בחודש בלי עודף, אפשר לקחת אותם מהחיסכון בקיצוץ המנויים (155 ₪ בחודש) ומהמסגרת שנשארה בקניות.'}</li>
       <li><b>הפקדה אוטומטית:</b> הוראת קבע ביום שאחרי המשכורת, כדי שה־500 ייצאו לפני שהחודש מתחיל.</li>
-    </ul>
+    </ul></details>
     <div class="src">סכומי חיסכון לכל ילד נכונים ל־1.1.2026, לפי ביטוח לאומי ומקורות נוספים. כדאי לוודא באתר ביטוח לאומי.</div>
   </div></article>`;
 }
+/* ---------- insights: charts and cards computed from the data ---------- */
+function flowChart(){
+  const ks=Object.keys(S.months).sort().filter(k=>calc(k).income!==null);
+  const el=$('iChart');if(!ks.length){el.innerHTML='<div class="emptyline" style="border-top:0">אין חודשים עם הכנסה רשומה.</div>';return}
+  const vals=ks.map(k=>calc(k).flow),W=340,H=184,top=22,bot=46,mx=Math.max(1,...vals.map(Math.abs));
+  const hasNeg=vals.some(v=>v<0),hasPos=vals.some(v=>v>0);
+  const zero=hasNeg&&hasPos?top+(H-top-bot)*(Math.max(...vals)/(Math.max(...vals)-Math.min(...vals))):hasNeg?top:H-bot;
+  const scale=hasNeg&&hasPos?(H-top-bot)/(Math.max(...vals)-Math.min(...vals)):(H-top-bot)/mx;
+  const n=ks.length,slot=(W-8)/n,bw=Math.min(26,slot*.55);
+  const short=k=>new Date(Number(k.slice(0,4)),Number(k.slice(5))-1,1).toLocaleDateString('he-IL',{month:'short'});
+  const iMax=vals.indexOf(Math.max(...vals)),iMin=vals.indexOf(Math.min(...vals));
+  const bars=ks.map((k,i)=>{
+    // time runs right to left, like the rest of the app
+    const v=vals[i],cx=W-4-slot*(i+.5),h=Math.max(2,Math.abs(v)*scale),y=v>=0?zero-h:zero,cur=k===S.month;
+    const r=Math.min(4,h/2,bw/2),x=cx-bw/2;
+    // rounded only at the data end; flat on the zero line
+    const d=v>=0?`M${x} ${zero}V${y+r}Q${x} ${y} ${x+r} ${y}H${x+bw-r}Q${x+bw} ${y} ${x+bw} ${y+r}V${zero}Z`
+                :`M${x} ${zero}V${y+h-r}Q${x} ${y+h} ${x+r} ${y+h}H${x+bw-r}Q${x+bw} ${y+h} ${x+bw} ${y+h-r}V${zero}Z`;
+    const lbl=(cur||i===iMax||i===iMin)?`<text class="vl" x="${cx}" y="${v>=0?y-6:y+h+12}" text-anchor="middle">${v>0?'+':v<0?'−':''}${fmt(Math.abs(Math.round(v)))}</text>`:'';
+    return `<g class="bar${v<0?' neg':''}${cur?' cur':''}" data-tip="${esc(monthLabel(k))}: ⁦${v>0?'+':v<0?'−':''}${esc(ils(Math.abs(v)))}⁩" style="--i:${i}">
+      <rect class="hit" x="${cx-slot/2}" y="0" width="${slot}" height="${H}"/><path d="${d}"/>${lbl}
+      <text class="ml${cur?' on':''}" x="${cx}" y="${H-8}" text-anchor="middle">${esc(short(k))}</text></g>`}).join('');
+  el.setAttribute('aria-label','תזרים לפי חודש: '+ks.map((k,i)=>`${monthLabel(k)} ${vals[i]>=0?'פלוס':'מינוס'} ${fmt(Math.abs(vals[i]))}`).join(', '));
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><line class="zero" x1="2" x2="${W-2}" y1="${zero}" y2="${zero}"/>${bars}</svg>`;
+}
+function topChart(){
+  const c=calc(S.month);$('iTopTitle').textContent='לאן הלך הכסף · '+monthLabel(S.month);
+  if(!c){$('iTop').innerHTML='<div class="emptyline" style="border-top:0">אין נתונים לחודש הזה.</div>';return}
+  const rows=c.rows.filter(r=>!r.star&&has(r.amount)&&Number(r.amount)>0).sort((a,b)=>b.amount-a.amount).slice(0,6);
+  const mx=rows.length?Number(rows[0].amount):1;
+  $('iTop').innerHTML=rows.map((r,i)=>`<div class="tb" style="--i:${i}">${ric(r.name,GROUP_TINT[r.group])}<span class="col"><span class="tl"><b>${esc(r.name)}</b><span class="num">${ils(r.amount)}</span></span>
+    <span class="tbar" aria-hidden="true"><i style="width:${Number(r.amount)/mx*100}%"></i></span><small class="num">${Math.round(Number(r.amount)/c.total*100)}% מסה"כ ההוצאות</small></span></div>`).join('')||'<div class="emptyline" style="border-top:0">אין הוצאות רשומות.</div>';
+}
+// every card is built from the numbers in the app; a card with nothing to say is not shown
+function insightCards(){
+  const k=S.month,c=calc(k),out=[],L=monthLabel(k),prevK=shiftMonth(k,-1),pc=calc(prevK);
+  if(c){
+    const overs=LIST_ROWS.filter(r=>r!==CASH).map(r=>[r,listInfo(r,c)]).filter(([,x])=>x.over);
+    if(overs.length)out.push(['hi','▲ '+L,'רשימה עברה את המסגרת',overs.map(([r,x])=>`ב"${r}" נרשמו ${ils(x.sum)} מול ${ils(x.rv)} בשורה, ${ils(x.sum-x.rv)} מעל.`).join(' ')]);
+    const left=LIST_ROWS.filter(r=>r!==CASH).map(r=>[r,listInfo(r,c)]).filter(([,x])=>x.rv!==null&&x.vs.length&&!x.over&&x.rv-x.sum>0);
+    if(left.length)out.push(['ok','✓ '+L,'מה שנשאר במסגרות',left.map(([r,x])=>`${r}: נשארו ${ils(x.rv-x.sum)} מתוך ${ils(x.rv)}.`).join(' ')]);
+    if(pc){
+      const ch=c.rows.filter(r=>!r.star&&has(r.amount)).map(r=>{const p=pc.rows.find(x=>x.name===r.name&&!x.star&&has(x.amount));return p?[r.name,Number(p.amount),Number(r.amount)]:null}).filter(Boolean)
+        .filter(([,a,b])=>Math.abs(b-a)>=100&&a&&Math.abs(b-a)/a>=.25).sort((x,y)=>Math.abs(y[2]-y[1])-Math.abs(x[2]-x[1])).slice(0,3);
+      if(ch.length)out.push(['mid','● מול '+monthLabel(prevK),'השינויים הגדולים',ch.map(([n,a,b])=>`${n}: מ־${ils(a)} ל־${ils(b)} (${b>a?'+':'−'}${Math.round(Math.abs(b-a)/a*100)}%).`).join(' ')]);
+    }
+    if(c.starTotal)out.push(['ok','✓ '+L,'בחשבונות אחרים',`החודש ${ils(c.starTotal)} משולמים מחשבונות אחרים (שורות עם *). הם מוצגים למעקב ולא נספרים בסה"כ.`]);
+  }
+  const yr=k.slice(0,4),ks=Object.keys(S.months).filter(x=>x.startsWith(yr)&&calc(x).income!==null).sort();
+  if(ks.length>=2){const fl=ks.map(x=>calc(x).flow),neg=ks.filter((x,i)=>fl[i]<0),sum=fl.reduce((a,b)=>a+b,0);
+    out.push([neg.length?'mid':'ok',(neg.length?'● ':'✓ ')+yr,`${ks.length} חודשים עם הכנסה ב־${yr}`,`ביחד ${sum>=0?'עודף':'גירעון'} של ${ils(Math.abs(sum))}. ${neg.length?`במינוס: ${neg.map(monthLabel).join(', ')}.`:'כולם בפלוס.'}`])}
+  const buy=S.baby.filter(b=>b.status==='לקנות');
+  if(buy.length){const priced=buy.filter(b=>has(b.price));
+    out.push(['mid','● רשימת התינוק',`${buy.length} פריטים עוד לקנות`,`${priced.length?`${ils(priced.reduce((t,b)=>t+Number(b.price),0))} בפריטים עם מחיר`:''}${buy.length>priced.length?`${priced.length?', ו־':''}${buy.length-priced.length} בלי מחיר`:''}. נקנו ${S.baby.filter(b=>b.status==='נקנה').length} מתוך ${S.baby.length}.`])}
+  $('iCards').innerHTML=out.map(([cls,tag,h,p])=>`<article class="ins ${cls}"><div class="body"><span class="tag">${esc(tag)}</span><h3>${esc(h)}</h3><p class="num">${esc(p)}</p></div></article>`).join('')||'<div class="small muted">אין עדיין מספיק נתונים לתובנות.</div>';
+}
+document.addEventListener('click',e=>{const b=e.target.closest('#iChart .bar');const tip=$('iTip');if(!tip)return;
+  if(!b){tip.hidden=true;document.querySelectorAll('#iChart .bar.sel').forEach(x=>x.classList.remove('sel'));return}
+  document.querySelectorAll('#iChart .bar.sel').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+  const card=b.closest('.chartcard').getBoundingClientRect(),r=b.querySelector('path').getBoundingClientRect();
+  tip.textContent=b.dataset.tip;tip.hidden=false;tip.style.left=Math.max(8,Math.min(card.width-tip.offsetWidth-8,r.left-card.left+r.width/2-tip.offsetWidth/2))+'px';tip.style.top=Math.max(4,r.top-card.top-34)+'px'});
+document.addEventListener('pointerover',e=>{if(e.pointerType!=='mouse')return;const b=e.target.closest('#iChart .bar');if(b)b.dispatchEvent(new MouseEvent('click',{bubbles:true}))});
 function renderIns(){
-  renderGoals();
+  renderGoals();flowChart();topChart();insightCards();
   const ks=Object.keys(S.months).sort().filter(k=>calc(k).income!==null);
   $('iFlows').innerHTML=ks.length?ks.map(k=>{const c=calc(k),neg=c.flow<0,cur=k===S.month;
     return `<div class="ftile${neg?' neg':''}${cur&&!neg?' cur':''}"><span class="k">${esc(monthLabel(k))}${neg?' · במינוס':cur?' · החודש':''}</span><span class="v num">${signed(c.flow)}</span></div>`}).join(''):'<span class="muted small">אין חודשים עם הכנסה רשומה.</span>';
