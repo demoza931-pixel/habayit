@@ -438,7 +438,7 @@ body{margin:0}img{max-width:100%}
       <button class="btn block" id="gFinishBtn"></button>
       <button class="btn ghost block" id="gClear">ניקוי פריטים שסומנו</button>
     </div>
-    <div class="small muted">המחירים מהאתר של רמי לוי, סניף אונליין. פריט חדש מקבל הצעות מחיר בתוך שעה; בוחרים מוצר בלחיצה, ומאז המחיר מתעדכן לבד. גוררים פריט מהידית כדי לשנות את הסדר.</div>
+    <div class="small muted">המחירים מקובץ שקיפות המחירים של רמי לוי, סניף אונליין. פריט חדש מקבל הצעות מחיר בתוך כמה דקות; בוחרים מוצר בלחיצה, ומאז המחיר מתעדכן לבד. גוררים פריט מהידית כדי לשנות את הסדר.</div>
     <h2 class="sec" style="margin-top:8px">קניות קודמות</h2>
     <section class="card past" id="gPast" style="overflow:hidden"></section>
   </section>
@@ -503,7 +503,7 @@ body{margin:0}img{max-width:100%}
         <li>נכנסים ל־<a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
         <li>שם: "הבית שלנו". תוקף: עד שנה.</li>
         <li>Resource owner: demoza931-pixel. Repository access: Only select repositories, ובוחרים <b>habayit-data</b>.</li>
-        <li>Permissions, Repository permissions: <b>Contents: Read and write</b>.</li>
+        <li>Permissions, Repository permissions: <b>Contents: Read and write</b>, וגם <b>Actions: Read and write</b> (כדי שמחיר של מוצר חדש יגיע תוך דקות ולא תוך שעה).</li>
         <li>Generate token, מעתיקים ומדביקים כאן.</li>
       </ol>
     </details>
@@ -612,10 +612,13 @@ function mutate(col,fn,msg){
   };
   const p=chain.then(run,run);chain=p.catch(()=>{});return p;
 }
+// a new grocery item gets Rami Levy prices from the cloud job right away; without the Actions permission
+// the dispatch is refused and the hourly run picks the item up instead
+function pricesNow(){gh(`/repos/${REPO}/actions/workflows/grocery.yml/dispatches`,{method:'POST',body:JSON.stringify({ref:BRANCH})}).catch(()=>{})}
 const localId=()=>'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 async function write(fn,okMsg){const ok=await fn();if(ok&&okMsg)toast(okMsg);return ok}
 const store={
-  add(col,data){const id=localId();return mutate(col,d=>{d[id]=data},'add '+col)},
+  async add(col,data){const id=localId();const ok=await mutate(col,d=>{d[id]=data},'add '+col);if(ok&&col==='grocery')pricesNow();return ok},
   put(col,id,data){return mutate(col,d=>{d[id]=data},'save '+col)},
   update(col,id,data){return mutate(col,d=>{if(d[id])d[id]={...d[id],...data}},'update '+col)},
   del(col,id){return mutate(col,d=>{delete d[id]},'delete '+col)},
@@ -775,7 +778,7 @@ function gItemHtml(i){
   const c=i.candidates||[];
   if((i.priceStatus==='choose'||S.picking[i.id])&&c.length)return `<div class="gitem choose" data-gid="${esc(i.id)}">${ck}<span class="col"><span class="pickhd"><b>${esc(i.name)}</b><span class="pickpill">בחר מוצר</span></span>
     <span class="cands" role="radiogroup" aria-label="מוצר מרמי לוי">${c.map((p,k)=>`<button class="bare cand" role="radio" aria-checked="false" data-pick="${esc(i.id)}" data-k="${k}"><span>${esc(p.name)}</span><span class="num">${ils(p.price)}</span></button>`).join('')}</span></span>${who}${grip}</div>`;
-  const wait=i.priceStatus==='notfound'?'לא נמצא ברמי לוי. נסו שם אחר':'ממתין לחיפוש · מתעדכן פעם בשעה';
+  const wait=i.priceStatus==='notfound'?'לא נמצא ברמי לוי. נסו שם אחר':'מחפש מחיר ברמי לוי · עד כמה דקות';
   return `<div class="gitem" data-gid="${esc(i.id)}">${ck}<span class="col"><b>${esc(i.name)}</b><span class="wait">${I.clock}${wait}</span></span>${who}${grip}</div>`;
 }
 function renderShop(){
