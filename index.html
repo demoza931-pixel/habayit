@@ -398,6 +398,8 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .qitem .meta{font-weight:700;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .qitem .go{color:var(--ink-2);line-height:0}
 .wrap{padding-block:0 160px}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
+.confetti i{position:absolute;width:8px;height:12px;border-radius:2px;margin:-6px 0 0 -4px}
 .foldhead{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;text-align:right}
 .foldhead .col{flex:1;display:flex;flex-direction:column;gap:1px}.foldhead b{font-weight:700;font-size:16px}.foldhead small{font-size:12px;color:var(--ink-2)}
 .foldhead .chev{color:var(--ink-2);transition:transform .25s}
@@ -1001,7 +1003,11 @@ const amtTxt=(a,star)=>has(a)?ils(a)+(star?' (*)':''):(star?'*':'בלי סכום
 function noteFor(op,col,id,data){
   const prev=(G.files[col]&&G.files[col].docs[id])||null,d=data||prev||{};
   if(col==='variable'){
-    if(op==='add')return d.purchaseId?null:`נוספה הוצאה ב${rowLbl(d.row)}: ${d.name} · ${amtTxt(d.amount,d.star)}`;
+    if(op==='add'){if(d.purchaseId)return null;
+      const row=d.row||VAR_ROW,m=S.months[d.month],r=m&&(m.rows||[]).find(x=>x.name===row),rv=r&&has(r.amount)?Number(r.amount):null;
+      const sum=S.variable.filter(v=>v.month===d.month&&(v.row||VAR_ROW)===row&&!v.star).reduce((t,v)=>t+(Number(v.amount)||0),0);
+      const add=d.star?0:(Number(d.amount)||0),over=rv!==null&&sum+add>rv&&sum<=rv;
+      return `נוספה הוצאה ב${rowLbl(d.row)}: ${d.name} · ${amtTxt(d.amount,d.star)}${over?` · ⚠ הרשימה עברה את המסגרת ב־${ils(sum+add-rv)}`:''}`}
     if(op==='del')return prev?`נמחקה הוצאה ב${rowLbl(prev.row)}: ${prev.name}`:null;
     return prev?`עודכנה הוצאה: ${prev.name}`:null;
   }
@@ -1437,7 +1443,7 @@ function finishSheet(){
     if(!(await store.put('purchases',pid,purchase)))return;
     if(!(await store.add('variable',line)))return;
     for(const i of items)await store.del('grocery',i.id);
-    toast('הקנייה נשמרה');
+    cheer('הקנייה נשמרה');
   };
 }
 /* savings / investments: holdings are shared docs; prices are written daily by a scheduled task (invest_prices.py) */
@@ -1672,7 +1678,8 @@ function incomeSheet(){
    ${parts.length?`<div class="plist">${parts.map(p=>`<div class="lrow"><span class="nm">${esc(p.name)}</span><span class="leader" aria-hidden="true"></span><span class="amt num">${ils(p.amount)}</span></div>`).join('')}</div>`:''}
    <div class="actions"><button class="btn" id="isSave">שמירה</button><button class="btn ghost" id="isCancel">ביטול</button></div>`);
   $('isCancel').onclick=closeSheet;
-  $('isSave').onclick=()=>{closeSheet();store.setMonth(S.month,{...c.m,income:parseAmt($('isAmt').value)})};
+  $('isSave').onclick=async()=>{const inc=parseAmt($('isAmt').value),was=c.flow;closeSheet();await store.setMonth(S.month,{...c.m,income:inc});
+    const n=calc(S.month);if(n&&n.flow>0&&!(was>0))cheer(`החודש בפלוס: ${fmt(n.flow)} ₪`)};
 }
 function babySheet(b){
   const isNew=!b;b=b||{name:'',category:'',status:'לקנות',price:null,note:'',min:null,max:null};
@@ -1690,7 +1697,8 @@ function babySheet(b){
   $('sbCancel').onclick=closeSheet;
   $('sbSave').onclick=()=>{const name=$('sbName').value.trim();if(!name){$('sbName').focus();return}
     const data={name,status,price:parseAmt($('sbPrice').value),category:$('sbCat').value,note:$('sbNote').value.trim()};
-    closeSheet();isNew?store.add('baby',{...data,min:null,max:null,order:S.baby.length+1,createdAt:Date.now()}):store.update('baby',b.id,data)};
+    closeSheet();isNew?store.add('baby',{...data,min:null,max:null,order:S.baby.length+1,createdAt:Date.now()}):store.update('baby',b.id,data);
+    if(status==='נקנה'&&b.status!=='נקנה'){const left=S.baby.filter(x=>x.status!=='נקנה'&&x.id!==b.id).length;cheer(left?`נקנה! עוד ${left} פריטים ברשימה`:'כל הרשימה נקנתה!')}};
   if(!isNew){const d=$('sbDel');d.onclick=()=>{if(!d.classList.contains('arm')){d.classList.add('arm');d.textContent='ללחוץ שוב למחיקה';return}closeSheet();store.del('baby',b.id)}}
 }
 
@@ -1698,8 +1706,8 @@ function babySheet(b){
 document.querySelector('nav.tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;
   document.querySelectorAll('nav.tabs [data-tab]').forEach(x=>x===b?x.setAttribute('aria-current','page'):x.removeAttribute('aria-current'));
   ['home','exp','baby','shop','sav','ins'].forEach(t=>$('t-'+t).hidden=t!==S.tab);window.scrollTo(0,0);navInd();chrome();enterTab($('t-'+S.tab))};
-$('mPrev').onclick=()=>{S.month=shiftMonth(S.month,-1);renderAll();enterTab($('t-'+S.tab),28)};
-$('mNext').onclick=()=>{S.month=shiftMonth(S.month,1);renderAll();enterTab($('t-'+S.tab),-28)};
+$('mPrev').onclick=()=>{S.month=shiftMonth(S.month,-1);renderAll();enterTab($('t-'+S.tab),28);if(S.tab==='home')monthCheer()};
+$('mNext').onclick=()=>{S.month=shiftMonth(S.month,1);renderAll();enterTab($('t-'+S.tab),-28);if(S.tab==='home')monthCheer()};
 // typing in the list search re-renders the list but keeps the cursor
 document.addEventListener('input',e=>{if(e.target.id!=='vSearch')return;S.vq=e.target.value.trim();const pos=e.target.selectionStart;renderExp();fillAvatars();const n=$('vSearch');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}});
 function groupByDate(vs){
@@ -1718,7 +1726,9 @@ document.addEventListener('touchend',()=>{if(!VS.el||!VS.on){VS.el=null;return}c
   if(go){S.armVar=it.dataset.vid;renderExp();fillAvatars();if(navigator.vibrate)navigator.vibrate(10)}});
 $('expForm').onsubmit=e=>{e.preventDefault();const name=$('eName').value.trim();if(!name){$('eName').focus();toast('כתבו על מה ההוצאה');return}
   const data={month:S.month,row:S.expRow||VAR_ROW,name,amount:parseAmt($('eAmount').value),date:today(),createdAt:Date.now(),source:'app'};if(S.uid)data.by=S.uid;
-  store.add('variable',data).then(()=>toast('ההוצאה נוספה'));$('eAmount').value='';$('eName').value=''};
+  const before=listInfo(data.row,calc(S.month));buzz(10);
+  store.add('variable',data).then(()=>{const after=listInfo(data.row,calc(S.month));
+    toast(after.over&&!before.over?`שימו לב: "${data.row===VAR_ROW?'משתנות':data.row}" עברה את המסגרת ב־${fmt(after.sum-after.rv)} ₪`:'ההוצאה נוספה')});$('eAmount').value='';$('eName').value=''};
 document.addEventListener('click',e=>{
   const er=e.target.closest('[data-erow]');if(er){S.expRow=er.dataset.erow;renderExp();return}
   if(e.target.closest('#expFold')){const f=$('expForm'),open=f.classList.toggle('folded')===false;$('expFold').setAttribute('aria-expanded',open);if(open)setTimeout(()=>$('eAmount').focus(),50);return}
@@ -1736,7 +1746,7 @@ document.addEventListener('click',e=>{
   const ac=e.target.closest('[data-acc]');if(ac){const a=ac.dataset.acc;S.openAcc[a]=!S.openAcc[a];renderSav();runCounters();if(S.openAcc[a]){const h=document.querySelector(`[data-acc="${CSS.escape(a)}"]`);if(h)popIn(h.parentNode.querySelectorAll('.hrow'))}return}
   const ho=e.target.closest('[data-hold]');if(ho){holdingSheet(S.holdings.find(h=>h.id===ho.dataset.hold));return}
   const pu=e.target.closest('[data-purchase]');if(pu){const id=pu.dataset.purchase;S.openPurchase[id]=!S.openPurchase[id];renderPast();if(S.openPurchase[id]){const h=document.querySelector(`[data-purchase="${CSS.escape(id)}"]`);if(h&&h.nextElementSibling)popIn(h.nextElementSibling.children)}return}
-  const t=e.target.closest('[data-toggle]');if(t){const it=S.grocery.find(g=>g.id===t.dataset.toggle);if(it)store.update('grocery',it.id,{done:!it.done});return}
+  const t=e.target.closest('[data-toggle]');if(t){const it=S.grocery.find(g=>g.id===t.dataset.toggle);buzz(8);if(it)store.update('grocery',it.id,{done:!it.done});return}
 });
 $('addRow').onclick=()=>{if(!calc(S.month)){store.setMonth(S.month,{income:null,rows:[]}).then(()=>rowSheet(null));return}rowSheet(null)};
 $('bAdd').onclick=()=>babySheet(null);
@@ -1789,6 +1799,29 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'&&i>=0&&its[i].hasAttribute('aria-haspopup')){e.preventDefault();its[i].click()}
   if(e.key==='ArrowRight'&&Q.path.length){e.preventDefault();Q.path.pop();renderQuick('back')}
 });
+/* ---------- celebrations ---------- */
+const buzz=ms=>{try{if(navigator.vibrate)navigator.vibrate(ms)}catch(_){}};
+// a short burst of paper bits from a point (screen center when none), gone after a second and a half
+function confetti(x,y,n=36){
+  if(RM.matches)return;
+  x=x??innerWidth/2;y=y??innerHeight/3;
+  const cols=['#2C6B5E','#E8B84A','#D9774B','#7DB7A5','#F2A7A0','#4D6283'];
+  const box=document.createElement('div');box.className='confetti';box.setAttribute('aria-hidden','true');document.body.appendChild(box);
+  for(let i=0;i<n;i++){const b=document.createElement('i');b.style.background=cols[i%cols.length];b.style.left=x+'px';b.style.top=y+'px';
+    if(i%3===0)b.style.borderRadius='50%';box.appendChild(b);
+    const a=Math.random()*Math.PI*2,v=90+Math.random()*170,dx=Math.cos(a)*v,dy=Math.sin(a)*v-120;
+    b.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${dx}px,${dy+260}px) rotate(${Math.random()*720-360}deg)`,opacity:0}],
+      {duration:1100+Math.random()*500,easing:'cubic-bezier(.2,.7,.4,1)',fill:'forwards'})}
+  setTimeout(()=>box.remove(),1800);
+}
+function cheer(text,x,y){confetti(x,y);buzz([12,40,12]);if(text)toast(text)}
+// a month that ended in plus gets one celebration on each phone, the first time it is opened after it ended
+function monthCheer(){
+  const k=S.month,c=calc(k);if(!c||c.income===null||c.flow<=0||k>=monthKey(new Date()))return;
+  const key='hb_cheer_'+k;try{if(localStorage.getItem(key))return;localStorage.setItem(key,'1')}catch(_){return}
+  setTimeout(()=>cheer(`${monthLabel(k)} נסגר בפלוס: ${fmt(c.flow)} ₪`),450);
+}
+
 /* ---------- swipe sideways to change month ---------- */
 const SW={x:null,y:0,t:0};
 document.addEventListener('touchstart',e=>{SW.x=null;
