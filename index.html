@@ -398,6 +398,30 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .qitem .meta{font-weight:700;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .qitem .go{color:var(--ink-2);line-height:0}
 .wrap{padding-block:0 160px}
+.foldhead{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;text-align:right}
+.foldhead .col{flex:1;display:flex;flex-direction:column;gap:1px}.foldhead b{font-weight:700;font-size:16px}.foldhead small{font-size:12px;color:var(--ink-2)}
+.foldhead .chev{color:var(--ink-2);transition:transform .25s}
+.formcard:not(.folded) .foldhead .chev{transform:rotate(180deg)}
+.formcard.folded>:not(.foldhead){display:none}
+.formcard.folded{padding:8px 12px}
+.vsearch{padding:0 12px 10px}.vsearch .in{height:42px;font-size:15px;background:var(--bg)}
+.vgrp{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 6px;background:var(--surface-2);font-weight:700;font-size:12px;color:var(--ink-2);border-top:1px solid var(--line)}
+.vitem{position:relative;background:var(--surface)}
+.vitem.swiping{transition:none}
+.vitem{box-shadow:inset 0 0 0 0 var(--neg)}
+.vitem.swiping{background:color-mix(in srgb,var(--neg) calc(var(--sw,0) * 22%),var(--surface))}
+.again{display:flex;flex-direction:column;gap:6px}
+.again .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.again .chips::-webkit-scrollbar{display:none}
+.again .chip{flex:none;min-height:38px;font-size:14px}
+.bitem .ric{width:32px;height:32px;color:var(--clay)}
+.tile.bring{flex-direction:row;align-items:center;justify-content:space-between;gap:8px}
+.tile.bring .col{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tile.bring .ring{width:56px;height:56px;flex:none}
+.tile.bring .ring .bg{stroke:var(--surface)}.tile.bring .ring .fg{stroke:var(--clay)}
+@media (prefers-reduced-motion:no-preference){
+  .vitem{transition:transform .3s cubic-bezier(.34,1.3,.5,1),background-color .2s}
+  .formcard>:not(.foldhead){animation:popin .3s ease-out}
+}
 :root{--chart-pos:#1A7F5A;--chart-neg:#C0392B}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--chart-pos:#36A87A;--chart-neg:#E2674F}}
 :root[data-theme="dark"]{--chart-pos:#36A87A;--chart-neg:#E2674F}
@@ -647,7 +671,8 @@ body{margin:0}img{max-width:100%}
 
   <!-- VARIABLE EXPENSES -->
   <section class="tab" id="t-exp" hidden>
-    <form class="formcard" id="expForm">
+    <form class="formcard folded" id="expForm">
+      <button type="button" class="bare foldhead" id="expFold" aria-expanded="false" aria-controls="expForm"><span class="ric" aria-hidden="true" style="background:var(--accent-soft);color:var(--accent)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="col"><b>הוספת הוצאה</b><small id="expFoldSub"></small></span><span class="chev" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></button>
       <div class="amountbox lg"><input class="num" id="eAmount" inputmode="decimal" placeholder="0" aria-label="סכום" autocomplete="off"><span>₪</span></div>
       <input class="in" id="eName" placeholder="על מה?" aria-label="על מה" autocomplete="off">
       <div class="chips" id="eRow" role="radiogroup" aria-label="רשימה"></div>
@@ -674,6 +699,7 @@ body{margin:0}img{max-width:100%}
       <input class="in" id="gName" placeholder="מה צריך מהסופר?" autocomplete="off" aria-label="פריט חדש">
       <button class="sqbtn" type="submit" aria-label="הוספה לרשימה"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </form>
+    <div class="again" id="gAgain" hidden></div>
     <div class="glist" id="gOpen" aria-label="רשימת קניות, אפשר לגרור מהידית לשינוי סדר"></div>
     <div class="glist" id="gDone"></div>
     <div class="gtot" id="gTotal"></div>
@@ -829,10 +855,14 @@ const RI={
   parking:'<rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="M10 16.5V8h3a2.5 2.5 0 0 1 0 5h-3"/>',
   plane:'<path d="M2.5 13.5 21 4l-6 17-3.5-6.5z"/><path d="M11.5 14.5 21 4"/>',
   cash:'<rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/>',
+  bed:'<path d="M3 18v-8M3 14h18v4M21 18v-3a3 3 0 0 0-3-3h-7v2"/><circle cx="7" cy="11.5" r="1.8"/>',
+  shirt:'<path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3c-.5 1.5-2 2.5-4 2.5S8.5 4.5 8 3z"/>',
+  bottle:'<path d="M10 2h4M10.5 2v3l-2 3v12a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2V8l-2-3V2"/><path d="M8.5 12h7M8.5 16h7"/>',
   dot:'<circle cx="12" cy="12" r="3.2"/>'
 };
 const RI_WORDS=[['גוגל','cloud'],['טלפון','phone'],['נטפליקס','tv'],['צאט','sparkle'],['קלוד','sparkle'],['ביטוח','shield'],['רייזאפ','chart'],['ספוטיפיי','music'],['אינטרנט','wifi'],['שכירות','home'],['כללית','heart'],['ארנונה','building'],['ועד','building'],['חשמל','zap'],['מים','drop'],['גז','flame'],['ריכוז','layers'],['גמל','piggy'],['חירום','buoy'],['לידה','baby'],['מעון','baby'],['השקעות','trend'],['גדולות','box'],['קניות','cart'],['אוכל','food'],['משתנות','receipt'],['רכב','car'],['דלק','car'],['פנגו','parking'],['מוביט','parking'],['תאילנד','plane'],['מזומן','cash']];
-const riKey=n=>(RI_WORDS.find(([w])=>String(n||'').includes(w))||[0,'dot'])[1];
+const BABY_ICON={'שינה וריהוט':'bed','עגלה ורכב':'car','האכלה':'bottle','הנקה':'heart','טיפול והחתלה':'drop','בגדים וטקסטיל':'shirt','כביסה ומתכלים':'box','משחק והתפתחות':'sparkle'};
+const riKey=n=>RI[n]?n:(RI_WORDS.find(([w])=>String(n||'').includes(w))||[0,'dot'])[1];
 const riSvg=n=>`<svg viewBox="0 0 24 24" aria-hidden="true">${RI[riKey(n)]}</svg>`;
 const GROUP_TINT={'קבועות':'--t-house','חסכונות':'--t-piggy','משתנות':'--t-bag'};
 const ric=(n,tint)=>`<span class="ric" aria-hidden="true" style="background:var(${tint||'--surface-2'})">${riSvg(n)}</span>`;
@@ -1257,6 +1287,7 @@ function renderExp(){
   seed('variable');
   if(!S.expRow)S.expRow=VAR_ROW;
   if(!S.expView)S.expView=VAR_ROW;
+  $('expFoldSub').textContent='לרשימה: '+(S.expRow===VAR_ROW?'הוצאות משתנות':S.expRow);
   $('eRow').innerHTML=LIST_ROWS.map(r=>`<button type="button" class="chip" role="radio" data-erow="${esc(r)}" aria-checked="${r===S.expRow}">${esc(r)}</button>`).join('');
   const c=calc(S.month);
   $('eTabs').innerHTML=LIST_ROWS.map(rn=>{const L=listInfo(rn,c);
@@ -1269,11 +1300,12 @@ function renderExp(){
       ${rn===CASH?'<div class="small muted">הוצאות שיצאו במזומן. לא נספרות בסה"כ, כי הן כבר ירדו מהמשכורות.</div>':''}
       <span class="bar6${L.over?' over':''}" aria-hidden="true">${L.over?'':`<i style="width:${L.rv?Math.min(100,L.sum/L.rv*100):0}%"></i>`}</span></div>
       <span style="position:relative;flex:none">${last?`<span class="bubble" aria-label="נוסף לאחרונה: ${esc(ils(last.amount))}"><span class="plus" aria-hidden="true">+</span><span class="val num">${ils(last.amount)}</span></span>`:''}${arc(LIST_ART[rn],true,rn===CASH?moneyRain():'')}</span></div>
-    ${L.vs.length?L.vs.map(v=>{const armed=S.armVar===v.id;
-      return `<div class="vitem${newCls('variable',v.id)}">${v.by?`<img class="who" data-uid="${esc(v.by)}" alt="">`:ric(rn,(LIST_ART[rn]||[])[1])}
+    ${L.vs.length>8?`<div class="vsearch"><input class="in" id="vSearch" type="search" placeholder="חיפוש ברשימה" value="${esc(S.vq||'')}" aria-label="חיפוש ברשימה" autocomplete="off"></div>`:''}
+    ${L.vs.length?groupByDate(L.vs.filter(v=>!S.vq||String(v.name).includes(S.vq))).map(([g,vs])=>`<div class="vgrp">${esc(g)}<span class="num">${ils(varSum(vs))}</span></div>`+vs.map(v=>{const armed=S.armVar===v.id;
+      return `<div class="vitem${newCls('variable',v.id)}" data-vid="${esc(v.id)}">${v.by?`<img class="who" data-uid="${esc(v.by)}" alt="">`:ric(rn,(LIST_ART[rn]||[])[1])}
         <span class="col"><span class="nm">${esc(v.name)}${v.star?'<span class="tag-other">לא נספר</span>':''}</span>${v.date?`<span class="dt">${new Date(v.date+'T12:00').toLocaleDateString('he-IL',{day:'numeric',month:'numeric'})}</span>`:''}</span>
         <span class="amt num${v.star||!has(v.amount)?' mute':''}">${has(v.amount)?ils(v.amount):'בלי סכום'}</span>
-        <button class="bare del${armed?' arm':''}" data-del-var="${esc(v.id)}" aria-label="${armed?'אישור מחיקה':'מחיקה'}">${armed?'למחוק?':I.trash}</button></div>`}).join('')
+        <button class="bare del${armed?' arm':''}" data-del-var="${esc(v.id)}" aria-label="${armed?'אישור מחיקה':'מחיקה'}">${armed?'למחוק?':I.trash}</button></div>`}).join('')).join('')||'<div class="emptyline">לא נמצאו פריטים.</div>'
       :'<div class="emptyline">עוד אין פריטים ברשימה הזו החודש.</div>'}`;
 }
 function renderBaby(){
@@ -1282,7 +1314,8 @@ function renderBaby(){
   const bought=by('נקנה'),buy=by('לקנות');
   const fp=S.fp,fpSum=fp?(fp.items||[]).reduce((t,i)=>t+(Number(i.amount)||0),0):0;
   const total=S.baby.length;
-  $('bTiles').innerHTML=`<div class="tile clay"><span class="k">נקנו</span><span class="v">${bought.length}<small>/${total}</small></span><span class="bar5" aria-hidden="true"><i style="width:${total?bought.length/total*100:0}%"></i></span></div>`+
+  const bp=total?Math.round(bought.length/total*100):0;
+  $('bTiles').innerHTML=`<div class="tile clay bring"><span class="col"><span class="k">נקנו</span><span class="v">${bought.length}<small>/${total}</small></span><span class="s">${bp}% מהרשימה</span></span><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fg" cx="18" cy="18" r="15.9" style="--to:${100-bp}"/></svg></div>`+
     (fp?`<div class="tile"><span class="k">נשאר מקנייה ראשונה</span><span class="v">${ils(fp.budget-fpSum)}</span><span class="s">מתוך ${ils(fp.budget)}</span></div>`:'')+
     `<div class="tile"><span class="k">לקנות עם מחיר</span><span class="v">${ils(buy.reduce((t,b)=>t+(Number(b.price)||0),0))}</span><span class="s">${buy.filter(b=>!has(b.price)).length} בלי מחיר</span></div>`+
     `<div class="tile"><span class="k">מתנות (לקבל)</span><span class="v">${by('לקבל').length}</span></div>`;
@@ -1294,7 +1327,7 @@ function renderBaby(){
   const order=k=>({'לקנות':0,'לבדוק':1,'לקבל':2,'נקנה':3,'לא חובה':4}[k]??5);
   const items=S.baby.filter(b=>S.filter==='הכל'||b.status===S.filter).sort((a,b)=>order(a.status)-order(b.status)||(a.order||0)-(b.order||0));
   $('bList').innerHTML=items.length?items.map(b=>{const s=STATUSES.find(x=>x.k===b.status)||STATUSES[0];
-    return `<button class="bare bitem${newCls('baby',b.id)}" data-edit-baby="${esc(b.id)}"><span class="col"><b>${esc(b.name)}</b><small>${[b.category,b.note].filter(Boolean).map(esc).join(' · ')}</small></span><span class="side"><span class="num">${has(b.price)?ils(b.price):''}</span><span class="st ${s.c}">${s.m} ${esc(b.status)}</span></span></button>`}).join(''):`<div class="emptyline" style="border-top:0">${S.baby.length?'אין פריטים בסטטוס הזה.':'הרשימה ריקה. הוסיפו את הפריט הראשון.'}</div>`;
+    return `<button class="bare bitem${newCls('baby',b.id)}" data-edit-baby="${esc(b.id)}">${ric(BABY_ICON[b.category]||'baby','--clay-soft')}<span class="col"><b>${esc(b.name)}</b><small>${[b.category,b.note].filter(Boolean).map(esc).join(' · ')}</small></span><span class="side"><span class="num">${has(b.price)?ils(b.price):''}</span><span class="st ${s.c}">${s.m} ${esc(b.status)}</span></span></button>`}).join(''):`<div class="emptyline" style="border-top:0">${S.baby.length?'אין פריטים בסטטוס הזה.':'הרשימה ריקה. הוסיפו את הפריט הראשון.'}</div>`;
 }
 // Grocery order: a shared `order` number per item (falls back to createdAt), so both phones see the same order
 const gKey=i=>has(i.order)?Number(i.order):(i.createdAt||0);
@@ -1319,6 +1352,12 @@ function renderShop(){
   const open=openGrocery(),done=S.grocery.filter(i=>i.done).sort((a,b)=>gKey(a)-gKey(b));
   $('gOpen').innerHTML=open.map(gItemHtml).join('')||(done.length?'':`<div class="card"><div class="emptyline" style="border-top:0">הרשימה ריקה. כתבו למעלה מה צריך מהסופר.</div></div>`);
   $('gDone').innerHTML=done.map(gItemHtml).join('');
+  // items bought before and not on the list now, most frequent first
+  const onList=new Set(S.grocery.map(g=>String(g.name).trim())),freq={};
+  S.purchases.forEach(p=>(p.items||[]).forEach(it=>{const n=String(it.name||'').trim();if(n&&!onList.has(n))freq[n]=(freq[n]||0)+1}));
+  const again=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  $('gAgain').hidden=!again.length;
+  $('gAgain').innerHTML=again.length?`<span class="lbl">קנינו שוב?</span><div class="chips">${again.map(([n,c])=>`<button type="button" class="chip" data-again="${esc(n)}">+ ${esc(n)}${c>1?`<span class="cnt num">${c}</span>`:''}</button>`).join('')}</div>`:'';
   const priced=open.filter(i=>i.product),sum=priced.reduce((t,i)=>t+Number(i.product.price),0);
   $('gTotal').hidden=!open.length;
   $('gTotal').innerHTML=open.length?`<div class="t1"><span>סה"כ לפי רמי לוי</span><span class="num">${ils(sum)}</span></div>${priced.length<open.length?`<div class="warn num">${open.length-priced.length} פריטים עוד בלי מחיר</div>`:''}`:'';
@@ -1661,11 +1700,29 @@ document.querySelector('nav.tabs').onclick=e=>{const b=e.target.closest('[data-t
   ['home','exp','baby','shop','sav','ins'].forEach(t=>$('t-'+t).hidden=t!==S.tab);window.scrollTo(0,0);navInd();chrome();enterTab($('t-'+S.tab))};
 $('mPrev').onclick=()=>{S.month=shiftMonth(S.month,-1);renderAll();enterTab($('t-'+S.tab),28)};
 $('mNext').onclick=()=>{S.month=shiftMonth(S.month,1);renderAll();enterTab($('t-'+S.tab),-28)};
+// typing in the list search re-renders the list but keeps the cursor
+document.addEventListener('input',e=>{if(e.target.id!=='vSearch')return;S.vq=e.target.value.trim();const pos=e.target.selectionStart;renderExp();fillAvatars();const n=$('vSearch');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}});
+function groupByDate(vs){
+  const t=today(),wk=new Date(Date.now()-6*864e5).toISOString().slice(0,10),g={'היום':[],'השבוע':[],'מוקדם יותר':[],'מהגיליון':[]};
+  vs.forEach(v=>{const d=v.date;(d?d===t?g['היום']:d>=wk?g['השבוע']:g['מוקדם יותר']:g['מהגיליון']).push(v)});
+  return Object.entries(g).filter(([,x])=>x.length);
+}
+/* swipe an expense to the left to delete it (asks once more, like the trash button) */
+const VS={el:null,x:0,y:0,dx:0,on:false};
+document.addEventListener('touchstart',e=>{const it=e.target.closest('#ePanel .vitem');VS.el=null;if(!it||e.target.closest('.del'))return;VS.el=it;VS.x=e.touches[0].clientX;VS.y=e.touches[0].clientY;VS.dx=0;VS.on=false},{passive:true});
+document.addEventListener('touchmove',e=>{if(!VS.el)return;const dx=e.touches[0].clientX-VS.x,dy=e.touches[0].clientY-VS.y;
+  if(!VS.on){if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){VS.el=null;return}if(dx>-12)return;VS.on=true;VS.el.classList.add('swiping')}
+  VS.dx=Math.max(-140,Math.min(0,dx));VS.el.style.transform=`translateX(${VS.dx}px)`;VS.el.style.setProperty('--sw',Math.min(1,-VS.dx/90))},{passive:true});
+document.addEventListener('touchend',()=>{if(!VS.el||!VS.on){VS.el=null;return}const it=VS.el,go=VS.dx<-90;VS.el=null;
+  it.classList.remove('swiping');it.style.transform='';it.style.removeProperty('--sw');
+  if(go){S.armVar=it.dataset.vid;renderExp();fillAvatars();if(navigator.vibrate)navigator.vibrate(10)}});
 $('expForm').onsubmit=e=>{e.preventDefault();const name=$('eName').value.trim();if(!name){$('eName').focus();toast('כתבו על מה ההוצאה');return}
   const data={month:S.month,row:S.expRow||VAR_ROW,name,amount:parseAmt($('eAmount').value),date:today(),createdAt:Date.now(),source:'app'};if(S.uid)data.by=S.uid;
   store.add('variable',data).then(()=>toast('ההוצאה נוספה'));$('eAmount').value='';$('eName').value=''};
 document.addEventListener('click',e=>{
   const er=e.target.closest('[data-erow]');if(er){S.expRow=er.dataset.erow;renderExp();return}
+  if(e.target.closest('#expFold')){const f=$('expForm'),open=f.classList.toggle('folded')===false;$('expFold').setAttribute('aria-expanded',open);if(open)setTimeout(()=>$('eAmount').focus(),50);return}
+  const ag=e.target.closest('[data-again]');if(ag){const data={name:ag.dataset.again,done:false,priceStatus:'pending',createdAt:Date.now()};if(S.uid)data.by=S.uid;store.add('grocery',data);if(navigator.vibrate)navigator.vibrate(8);return}
   const ev=e.target.closest('[data-eview]');if(ev){S.expView=ev.dataset.eview;S.armVar=null;renderExp();fillAvatars();swapPanel($('ePanel'));return}
   const gh=e.target.closest('[data-group]');if(gh){const g=gh.dataset.group;S.openGroups[g]=!S.openGroups[g];renderHome();runCounters();if(S.openGroups[g]){const h=document.querySelector(`[data-group="${CSS.escape(g)}"]`);if(h)popIn(h.parentNode.querySelectorAll('.rowwrap,.otherstrip,.emptyline'))}return}
   const d=e.target.closest('[data-del-var]');
@@ -1700,7 +1757,7 @@ const Q={path:[],open:false};
 function goTab(t){const b=document.querySelector(`nav.tabs [data-tab="${t}"]`);if(b&&S.tab!==t)b.click()}
 function quickRun(id){
   closeQuick();
-  if(id.startsWith('exp:')){const r=id.slice(4);goTab('exp');S.expRow=r;S.expView=r;renderExp();fillAvatars();setTimeout(()=>$('eAmount').focus(),60);return}
+  if(id.startsWith('exp:')){const r=id.slice(4);goTab('exp');S.expRow=r;S.expView=r;renderExp();fillAvatars();$('expForm').classList.remove('folded');$('expFold').setAttribute('aria-expanded','true');setTimeout(()=>$('eAmount').focus(),60);return}
   if(id==='shop'){goTab('shop');setTimeout(()=>$('gName').focus(),60);return}
   if(id==='baby'){goTab('baby');babySheet(null);return}
   if(id==='row'){goTab('home');$('addRow').click();return}
@@ -1736,7 +1793,7 @@ document.addEventListener('keydown',e=>{
 const SW={x:null,y:0,t:0};
 document.addEventListener('touchstart',e=>{SW.x=null;
   if(e.touches.length!==1||!['home','exp','ins'].includes(S.tab)||!$('sheet').hidden||Q.open)return;
-  if(e.target.closest('.tablist,.chips,.cands,input,textarea,select,[data-grip],.login,.segbar'))return;
+  if(e.target.closest('.tablist,.chips,.cands,input,textarea,select,[data-grip],.login,.segbar,.vitem,.chart'))return;
   SW.x=e.touches[0].clientX;SW.y=e.touches[0].clientY;SW.t=Date.now()},{passive:true});
 document.addEventListener('touchend',e=>{
   if(SW.x===null||PTR.on)return;const t=e.changedTouches[0],dx=t.clientX-SW.x,dy=t.clientY-SW.y;SW.x=null;
