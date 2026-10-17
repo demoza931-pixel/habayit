@@ -1143,9 +1143,19 @@ async function pushOn(){
     let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC)});
     const ok=await mutate('pushsubs',d=>{d[deviceId()]={login:G.login,sub:sub.toJSON(),device:navigator.userAgent.slice(0,140),at:Date.now()}},'push subscribe');
-    if(ok){lsSet('hb_push','1');toast('התראות בטלפון הופעלו')}
+    if(ok){lsSet('hb_push','1');lsSet('hb_push_key',VAPID_PUBLIC);toast('התראות בטלפון הופעלו')}
     return ok;
   }catch(e){toast('הפעלת ההתראות נכשלה');return false}
+}
+// a phone that turned notifications on with an older key is registered again with the current one
+async function ensurePushKey(){
+  try{
+    if(lsGet('hb_push')!=='1'||lsGet('hb_push_key')===VAPID_PUBLIC||!pushOK()||Notification.permission!=='granted')return;
+    const reg=await swReady();if(!reg)return;
+    const old=await reg.pushManager.getSubscription();if(old)await old.unsubscribe().catch(()=>{});
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC)});
+    if(await mutate('pushsubs',d=>{d[deviceId()]={login:G.login,sub:sub.toJSON(),device:navigator.userAgent.slice(0,140),at:Date.now()}},'push subscribe'))lsSet('hb_push_key',VAPID_PUBLIC);
+  }catch(_){}
 }
 async function pushOff(){
   try{const reg=await swReady(),sub=reg?await reg.pushManager.getSubscription():null;if(sub)await sub.unsubscribe().catch(()=>{})}catch(_){}
@@ -1171,7 +1181,7 @@ async function signIn(token){
   if(!repo.ok){G.token=null;return `למשתמש ${me.login} אין גישה למאגר הנתונים. ודאו שהוזמנתם אליו ושהמפתח כולל את habayit-data.`}
   G.login=me.login;S.uid=me.login;lsSet('hb_token',token);lsSet('hb_login',me.login);
   $('login').hidden=true;$('whoami').textContent=me.login;
-  await loadAll();G.timer=setInterval(poll,15000);return null;
+  await loadAll();G.timer=setInterval(poll,15000);ensurePushKey();return null;
 }
 async function boot(){
   try{const c=JSON.parse(lsGet('hb_cache')||'null');if(c){Object.entries(c).forEach(([col,docs])=>{G.files[col]={sha:null,docs};applyCol(col,docs)});S.loaded=true}}catch(_){}
