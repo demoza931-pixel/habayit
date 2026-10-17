@@ -396,6 +396,29 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .qitem .go{color:var(--ink-2);line-height:0}
 .wrap{padding-block:0 160px}
 
+/* pull to refresh: a ball under the header follows the finger; past the line it turns and, on release, reloads */
+body{overscroll-behavior-y:contain}
+.ptr{position:fixed;top:calc(env(safe-area-inset-top,0px) + 60px);left:50%;z-index:6;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;opacity:0;transform:translate(-50%,-56px)}
+.ptr .ball{width:42px;height:42px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--lift);display:grid;place-items:center;color:var(--ink-2)}
+.ptr .ball svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transform:rotate(calc(var(--p,0) * 2.5deg))}
+.ptr .txt{font-weight:600;font-size:12px;color:var(--ink-2);background:var(--bg);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.ptr[data-state="ready"] .ball,.ptr[data-state="busy"] .ball,.ptr[data-state="done"] .ball{color:var(--accent);border-color:var(--accent)}
+.ptr[data-state="ready"] .ball svg{transform:rotate(180deg)}
+.ptr[data-state="fail"] .ball{color:var(--neg);border-color:var(--neg)}
+.ptr .spin,.ptr .ok{display:none}
+.ptr[data-state="busy"] .arrow,.ptr[data-state="done"] .arrow,.ptr[data-state="fail"] .arrow{display:none}
+.ptr[data-state="busy"] .spin{display:block}
+.ptr[data-state="done"] .ok,.ptr[data-state="fail"] .ok{display:block}
+.ptr.settle,section.tab.settle{transition:transform .5s cubic-bezier(.34,1.35,.5,1),opacity .3s ease}
+@media (prefers-reduced-motion:no-preference){
+  .ptr[data-state="busy"] .spin{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ptr[data-state="done"] .ball{animation:okpop .4s cubic-bezier(.34,1.8,.5,1)}
+  @keyframes okpop{50%{transform:scale(1.15)}}
+  .ptr .ball svg.arrow{transition:transform .2s ease}
+}
+@media (prefers-reduced-motion:reduce){.ptr.settle,section.tab.settle{transition:opacity .2s}}
+
 /* motion: entrances, expanding lists, new items, counting numbers, a sliding tab indicator, press feedback */
 nav.tabs .in-nav{position:relative}
 nav.tabs .nav-ind{position:absolute;top:0;left:0;width:52px;height:28px;border-radius:999px;background:var(--accent-soft);pointer-events:none}
@@ -505,6 +528,7 @@ body{margin:0}img{max-width:100%}
     </div></div>
   </header>
   <div id="banner" class="banner" hidden></div>
+  <div class="ptr" id="ptr" data-state="pull"><span class="ball" aria-hidden="true"><svg class="arrow" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg><svg class="spin" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg><svg class="ok" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="txt" id="ptrTxt" role="status" aria-live="polite"></span></div>
 
   <!-- MONTH -->
   <section class="tab" id="t-home">
@@ -985,6 +1009,12 @@ async function pushOff(){
   await mutate('pushsubs',d=>{delete d[deviceId()]},'push unsubscribe');lsSet('hb_push',null);toast('התראות בטלפון כובו');
 }
 
+// pull to refresh: read every file again now instead of waiting for the next poll
+async function refreshData(){
+  if(!G.token)return false;
+  try{await loadAll();const r=await gh(`/repos/${REPO}/commits/${BRANCH}`);if(r.ok){G.headEtag=r.headers.get('ETag');G.head=(await r.json()).sha}hideBanner();return true}
+  catch(e){return false}
+}
 function showBanner(t){const b=$('banner');b.textContent=t;b.hidden=false}
 function hideBanner(){$('banner').hidden=true}
 function logout(msg){lsSet('hb_token',null);G.token=null;clearInterval(G.timer);showLogin(msg||'')}
@@ -1502,6 +1532,48 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'&&i>=0&&its[i].hasAttribute('aria-haspopup')){e.preventDefault();its[i].click()}
   if(e.key==='ArrowRight'&&Q.path.length){e.preventDefault();Q.path.pop();renderQuick('back')}
 });
+/* ---------- pull to refresh, on every tab ---------- */
+const PTR={y0:null,x0:0,on:false,pull:0,busy:false,ready:false};
+const PTR_MAX=130,PTR_GO=72;
+const PTR_TXT={pull:'משכו למטה לרענון',ready:'שחררו לרענון',busy:'מרענן…',done:'עודכן עכשיו',fail:'אין חיבור, לא עודכן'};
+function ptrShow(p,state){
+  const el=$('ptr'),sec=$('t-'+S.tab);
+  el.dataset.state=state;el.style.setProperty('--p',p);
+  el.style.opacity=String(Math.min(1,p/36));el.style.transform=`translate(-50%,${p-56}px)`;
+  if(sec)sec.style.transform=p?`translateY(${Math.round(p*.85)}px)`:'';
+  const t=PTR_TXT[state]||'';if($('ptrTxt').textContent!==t)$('ptrTxt').textContent=t;
+}
+function ptrSettle(on){const el=$('ptr'),sec=$('t-'+S.tab);[el,sec].forEach(x=>x&&x.classList.toggle('settle',on))}
+function ptrRelease(){ptrSettle(true);ptrShow(0,'pull');$('ptrTxt').textContent='';setTimeout(()=>ptrSettle(false),520)}
+async function ptrRefresh(){
+  PTR.busy=true;ptrSettle(true);ptrShow(PTR_GO,'busy');
+  const [ok]=await Promise.all([refreshData().then(r=>r!==false,()=>false),new Promise(r=>setTimeout(r,700))]);
+  ptrShow(PTR_GO,ok?'done':'fail');
+  await new Promise(r=>setTimeout(r,ok?600:1400));
+  ptrRelease();PTR.busy=false;
+}
+document.addEventListener('touchstart',e=>{
+  PTR.y0=null;
+  if(PTR.busy||e.touches.length!==1||window.scrollY>0||!$('sheet').hidden||Q.open||S.dragging)return;
+  if(e.target.closest('[data-grip],.sheet,.qmenu,input,textarea,select,.login'))return;
+  PTR.y0=e.touches[0].clientY;PTR.x0=e.touches[0].clientX;PTR.on=false;PTR.pull=0;PTR.ready=false;
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(PTR.y0===null)return;
+  const dy=e.touches[0].clientY-PTR.y0,dx=e.touches[0].clientX-PTR.x0;
+  if(!PTR.on){
+    if(dy<8&&Math.abs(dx)<8)return;
+    if(dy<=0||Math.abs(dx)>dy||window.scrollY>0){PTR.y0=null;return}
+    PTR.on=true;ptrSettle(false);
+  }
+  e.preventDefault();
+  // rubber band: follows the finger at first, then resists
+  const p=PTR_MAX*(1-Math.exp(-dy/(PTR_MAX*1.6)));PTR.pull=p;
+  const ready=p>=PTR_GO;if(ready&&!PTR.ready&&navigator.vibrate)navigator.vibrate(8);PTR.ready=ready;
+  ptrShow(p,ready?'ready':'pull');
+},{passive:false});
+function ptrEnd(){if(PTR.y0===null&&!PTR.on)return;const was=PTR.on;PTR.y0=null;PTR.on=false;if(!was)return;PTR.pull>=PTR_GO?ptrRefresh():ptrRelease()}
+document.addEventListener('touchend',ptrEnd);document.addEventListener('touchcancel',ptrEnd);
 boot();
 
 // the sheet sync log (data/synclog.json, written by the Apps Script in the sheet), newest first
