@@ -896,6 +896,14 @@ function renderBell(){
   b.setAttribute('aria-label',n?`התראות, ${n} חדשות`:'התראות');
   if(n>F.count){b.classList.remove('ring');void b.offsetWidth;b.classList.add('ring');c.classList.remove('pop');void c.offsetWidth;c.classList.add('pop')}
   F.count=n;
+  appBadge(n);
+}
+// the number on the app's icon on the home screen; the service worker raises it when a push arrives
+// while the app is closed, and keeps it in a small cache entry so both sides count from the same number
+const BADGE_CACHE='habayit-badge';
+function appBadge(n){
+  try{if('setAppBadge' in navigator)(n?navigator.setAppBadge(n):navigator.clearAppBadge()).catch(()=>{})}catch(_){}
+  try{if(window.caches)caches.open(BADGE_CACHE).then(c=>c.put('./badge-count',new Response(String(n)))).catch(()=>{})}catch(_){}
 }
 // with the app open in the background and no push subscription, the phone still gets a notice
 async function localNotify(){

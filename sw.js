@@ -1,11 +1,14 @@
 // App shell cache. Data never goes through here: it comes from the GitHub API with the user's token.
-const CACHE='habayit-v4';
+const CACHE='habayit-v5';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)));self.skipWaiting()});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('habayit-v')&&k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
 self.addEventListener('push',e=>{
   let d={};try{d=e.data?e.data.json():{}}catch(_){d={body:e.data&&e.data.text()}}
-  e.waitUntil(self.registration.showNotification(d.title||'הבית שלנו',{body:d.body||'',tag:d.tag||undefined,icon:'icons/icon-192.png',badge:'icons/icon-192.png',lang:'he',dir:'rtl',data:{url:d.url||'./'}}));
+  // one more unread update: raise the number on the app icon (the app sets the exact number when it opens)
+  const bump=caches.open('habayit-badge').then(c=>c.match('./badge-count').then(r=>r?r.text():'0').then(t=>{const n=(parseInt(t,10)||0)+1;
+    return c.put('./badge-count',new Response(String(n))).then(()=>self.navigator.setAppBadge?self.navigator.setAppBadge(n):null)})).catch(()=>{});
+  e.waitUntil(Promise.all([bump,self.registration.showNotification(d.title||'הבית שלנו',{body:d.body||'',tag:d.tag||undefined,icon:'icons/icon-192.png',badge:'icons/icon-192.png',lang:'he',dir:'rtl',data:{url:d.url||'./'}})]));
 });
 self.addEventListener('notificationclick',e=>{
   e.notification.close();
