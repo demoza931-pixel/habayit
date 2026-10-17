@@ -1387,7 +1387,7 @@ function renderBaby(){
     `<div class="tile"><span class="k">לקנות עם מחיר</span><span class="v">${ils(buy.reduce((t,b)=>t+(Number(b.price)||0),0))}</span><span class="s">${buy.filter(b=>!has(b.price)).length} בלי מחיר</span></div>`+
     `<div class="tile"><span class="k">מתנות (לקבל)</span><span class="v">${by('לקבל').length}</span></div>`;
   $('fpCard').innerHTML=`<button class="bare collapse-head" id="fpToggle" aria-expanded="${S.fpOpen}"><span class="ring" aria-hidden="true">${S.fpOpen?I.chevD:I.chevL}</span><span class="col"><b>כסף שנלקח לקנייה ראשונה</b><small class="num">${fp?(fp.items||[]).length+' שורות':'אין נתונים'}</small></span><span class="sum num">${fp?ils(fpSum):''}</span></button>
-    ${S.fpOpen&&fp?(fp.items||[]).map(i=>`<div class="rowwrap"><div class="lrow"><span class="nm">${esc(i.name)}</span><span class="leader" aria-hidden="true"></span><span class="amt num">${ils(i.amount)}</span></div></div>`).join(''):''}`;
+    ${S.fpOpen&&fp?(fp.items||[]).map(i=>`<div class="rowwrap"><div class="lrow"><span class="nm">${esc(i.name)}</span><span class="leader" aria-hidden="true"></span><span class="amt num${has(i.amount)?'':' mute'}">${has(i.amount)?ils(i.amount):'בלי סכום'}</span></div></div>`).join(''):''}`;
   $('fpToggle').onclick=()=>{S.fpOpen=!S.fpOpen;renderBaby();if(S.fpOpen)popIn($('fpCard').querySelectorAll('.rowwrap'))};
   const counts={הכל:total};STATUSES.forEach(s=>counts[s.k]=by(s.k).length);
   $('bFilters').innerHTML=['הכל',...STATUSES.map(s=>s.k)].map(k=>`<button class="chip cnt-chip" data-filter="${esc(k)}" aria-pressed="${k===S.filter}">${esc(k)}<span class="cnt num">${counts[k]}</span></button>`).join('');
