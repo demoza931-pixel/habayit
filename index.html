@@ -374,6 +374,12 @@ body{margin:0}img{max-width:100%}
 .lg-help summary{cursor:pointer;font-weight:600;color:var(--accent);min-height:44px;display:flex;align-items:center}
 .lg-help ol{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;line-height:1.5}
 .lg-help a{color:var(--accent);word-break:break-all}
+.synclog{overflow:hidden}
+.synclog .sl{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-top:1px solid var(--line);font-size:14px;line-height:1.45}
+.synclog .sl:first-child{border-top:0}
+.synclog .sk{font-size:12px;color:var(--ink-2)}
+.synclog .sl.alert{background:var(--warn-soft)}
+.synclog .sl.alert .sk{color:var(--warn);font-weight:600}
 </style>
 </head>
 <body>
@@ -471,6 +477,8 @@ body{margin:0}img{max-width:100%}
     <article class="ins ok"><div class="body"><span class="tag">✓ מנויים</span><h3>155 ₪ בחודש פחות מנובמבר 2025</h3><p class="num">טלפון ירד מ־140 ל־80 ₪ וספוטיפיי מ־56 ל־24 (מיולי), רייזאפ (55) הופסק אחרי מרץ, וצאט/קלוד ירד מ־70 ל־62 (ממרץ, בכל חודש). בגיליון 2027 השורה עדיין נקראת "צאט" ורשום בה 70, והטלפון רשום 140 עד מאי.</p></div></article>
     <article class="ins ok"><div class="body"><span class="tag">✓ הגיליון</span><h3>הסה"כ בטבלה ובאפליקציה זהה עכשיו</h3><p class="num">תא הסה"כ בגיליון 2026 סופר עכשיו את כל השורות, כולל גוגל, טלפון, נטפליקס וצאט/קלוד. הסכומים בטבלה ובאפליקציה זהים: אוקטובר 19,544.4 ₪, ספטמבר 22,127 ₪. גם תא ה־#REF! נעלם.</p></div></article>
     <article class="ins mid"><div class="body"><span class="tag">● לבדוק בטבלה</span><h3>דברים שאני לא בטוח לגביהם</h3><p class="num">"מסרק" ברשימת התינוק רשום ב־1,948 ₪, אותו סכום כמו שילב. "תאילנד" מופיע ב־2027 גם כ־1,666 ₪ בחודש וגם כ־20,000 ₪ ברשימת החיסכונות. בגיליון 2027 השורות חיתולים, מגבונים וביגוד והנעלה בלי סכום.</p></div></article>
+    <h2 class="sec" style="margin-top:8px">סנכרון עם הגיליון</h2>
+    <section class="card synclog" id="syncLog"></section>
     <div class="small muted" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px">מחובר כ־<b id="whoami"></b> · <button class="bare link" id="logoutBtn" type="button">התנתקות</button></div>
   </section>
 </div>
@@ -559,7 +567,7 @@ const arc=(art,lg)=>art?`<span class="arc${lg?' lg':''}" aria-hidden="true" styl
    Reads poll the branch head (cheap, conditional) and reload files only when it changed.
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
-const COLS=['months','variable','baby','grocery','purchases','holdings','info'];
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -618,11 +626,12 @@ function pricesNow(){gh(`/repos/${REPO}/actions/workflows/grocery.yml/dispatches
 const localId=()=>'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 async function write(fn,okMsg){const ok=await fn();if(ok&&okMsg)toast(okMsg);return ok}
 const store={
-  async add(col,data){const id=localId();const ok=await mutate(col,d=>{d[id]=data},'add '+col);if(ok&&col==='grocery')pricesNow();return ok},
-  put(col,id,data){return mutate(col,d=>{d[id]=data},'save '+col)},
-  update(col,id,data){return mutate(col,d=>{if(d[id])d[id]={...d[id],...data}},'update '+col)},
+  // updatedAt: when the sheet sync finds the same value changed in the app and in the sheet, the later edit wins
+  async add(col,data){const id=localId();const ok=await mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'add '+col);if(ok&&col==='grocery')pricesNow();return ok},
+  put(col,id,data){return mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'save '+col)},
+  update(col,id,data){return mutate(col,d=>{if(d[id])d[id]={...d[id],...data,updatedAt:Date.now()}},'update '+col)},
   del(col,id){return mutate(col,d=>{delete d[id]},'delete '+col)},
-  setMonth(k,data){return write(()=>mutate('months',d=>{d[k]=data},'month '+k),'נשמר')}
+  setMonth(k,data){return write(()=>mutate('months',d=>{d[k]={...data,updatedAt:Date.now()}},'month '+k),'נשמר')}
 };
 function showBanner(t){const b=$('banner');b.textContent=t;b.hidden=false}
 function hideBanner(){$('banner').hidden=true}
@@ -1094,6 +1103,14 @@ $('gFinishBtn').onclick=finishSheet;
 $('gClear').onclick=()=>{const b=$('gClear');if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='ללחוץ שוב לאישור';return}b.classList.remove('arm');S.grocery.filter(g=>g.done).forEach(g=>store.del('grocery',g.id))};
 boot();
 
+// the sheet sync log (data/synclog.json, written by the Apps Script in the sheet), newest first
+const SYNC_KIND={toApp:'מהגיליון',toSheet:'לגיליון',conflict:'התנגשות',skip:'לא נכתב',note:'הערה',error:'שגיאה'};
+function renderSync(){
+  const el=$('syncLog');if(!el)return;
+  const items=(S.synclog||[]).slice().sort((a,b)=>b.t-a.t).slice(0,15);
+  el.innerHTML=items.length?items.map(e=>`<div class="sl ${e.kind==='conflict'||e.kind==='error'||e.kind==='skip'?'alert':''}"><span class="sk">${esc(SYNC_KIND[e.kind]||e.kind)} · ${esc(new Date(e.t).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}))}</span><span>${esc(e.text)}</span></div>`).join(''):'<div class="sl"><span class="muted">עוד אין רישומים. שינויים בין האפליקציה לגיליון יופיעו כאן.</span></div>';
+}
+const _renderIns=renderIns;renderIns=function(){_renderIns();renderSync()};
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
