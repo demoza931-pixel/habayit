@@ -12,7 +12,9 @@ self.addEventListener('push',e=>{
 });
 self.addEventListener('notificationclick',e=>{
   e.notification.close();
-  e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{for(const c of cs){if('focus' in c)return c.focus()}return clients.openWindow(e.notification.data&&e.notification.data.url||'./')}));
+  // the app already open: bring it forward and tell it where to go; otherwise open it at that place
+  const url=e.notification.data&&e.notification.data.url||'./',m=url.match(/#go=(.+)$/),ref=m?decodeURIComponent(m[1]):null;
+  e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{for(const c of cs){if('focus' in c){if(ref)c.postMessage({type:'go',ref});return c.focus()}}return clients.openWindow(url)}));
 });
 self.addEventListener('fetch',e=>{
   const u=new URL(e.request.url);

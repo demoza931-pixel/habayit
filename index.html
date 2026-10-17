@@ -398,6 +398,9 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .qitem .meta{font-weight:700;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .qitem .go{color:var(--ink-2);line-height:0}
 .wrap{padding-block:0 160px}
+.flash{position:relative;z-index:2;box-shadow:0 0 0 3px var(--accent);background:var(--accent-soft)!important;transition:box-shadow .3s,background-color .3s}
+@media (prefers-reduced-motion:no-preference){.flash{animation:flash 2.4s ease-in-out both}
+  @keyframes flash{0%{box-shadow:0 0 0 0 transparent;transform:scale(1)}12%{box-shadow:0 0 0 4px var(--accent);transform:scale(1.02)}30%{transform:none}70%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}}
 .qty{direction:ltr;unicode-bidi:isolate;display:inline-block;margin-inline-start:6px;padding:0 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:12px;line-height:20px;vertical-align:middle;text-decoration:none}
 .gitem .price .unit{font-size:11px;color:var(--ink-2);font-weight:500}
 .stepper{display:flex;align-items:center;gap:0;align-self:flex-start;border:1.5px solid var(--accent);border-radius:var(--r-btn);overflow:hidden}
@@ -647,7 +650,9 @@ body{margin:0}img{max-width:100%}
 .ntabs .ind{position:absolute;top:4px;bottom:4px;right:4px;width:calc(50% - 4px);border-radius:999px;background:var(--surface);box-shadow:0 1px 4px rgba(30,41,37,.14)}
 .ntabs.second .ind{transform:translateX(-100%)}
 .ntlist{overflow:hidden}
-.nt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+.nt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-top:1px solid var(--line);width:100%;text-align:right;cursor:pointer}
+.nt .go{flex:none;align-self:center;color:var(--ink-2);line-height:0}.nt .go svg{width:16px;height:16px}
+.nt:active{background:var(--surface-2)}
 .nt:first-child{border-top:0}
 .nt.unread{background:var(--accent-soft)}
 .nt .who{flex:none;width:34px;height:34px;border-radius:999px;background:var(--surface-2);object-fit:cover;display:grid;place-items:center}
@@ -992,12 +997,12 @@ async function poll(){
 }
 // one write at a time, so a burst of edits (e.g. finishing a purchase) never races itself
 let chain=Promise.resolve();
-function mutate(col,fn,msg,note){
+function mutate(col,fn,msg,note,ref){
   const run=async()=>{
     for(let attempt=0;attempt<4;attempt++){
       const f=G.files[col]||{sha:null,docs:{}},docs=JSON.parse(JSON.stringify(f.docs));
       fn(docs);
-      const body={message:`${msg} (${G.login||'app'})`+(note?`\n\nnotify: ${note}`:''),branch:BRANCH,content:b64enc(JSON.stringify({docs},null,1))};
+      const body={message:`${msg} (${G.login||'app'})`+(note?`\n\nnotify: ${note}${ref?`\nref: ${ref}`:''}`:''),branch:BRANCH,content:b64enc(JSON.stringify({docs},null,1))};
       if(f.sha)body.sha=f.sha;
       let r;try{r=await gh(`/repos/${REPO}/contents/data/${col}.json`,{method:'PUT',body:JSON.stringify(body)})}catch(e){if(e&&e.code==='auth')return false;toast('אין חיבור לאינטרנט. השינוי לא נשמר');return false}
       if(r.ok){const j=await r.json();G.files[col]={sha:j.content.sha,docs};G.head=j.commit.sha;G.headEtag=null;applyCol(col,docs);cacheSave();renderAll();return true}
@@ -1016,11 +1021,11 @@ const localId=()=>'l'+Date.now().toString(36)+Math.random().toString(36).slice(2
 async function write(fn,okMsg){const ok=await fn();if(ok&&okMsg)toast(okMsg);return ok}
 const store={
   // updatedAt: when the sheet sync finds the same value changed in the app and in the sheet, the later edit wins
-  async add(col,data){const id=localId();const ok=await mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'add '+col,noteFor('add',col,id,data));if(ok&&col==='grocery')pricesNow();return ok},
-  put(col,id,data){return mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'save '+col,noteFor('put',col,id,data))},
-  update(col,id,data){return mutate(col,d=>{if(d[id])d[id]={...d[id],...data,updatedAt:Date.now()}},'update '+col,noteFor('update',col,id,data))},
-  del(col,id){return mutate(col,d=>{delete d[id]},'delete '+col,noteFor('del',col,id,null))},
-  setMonth(k,data){return write(()=>mutate('months',d=>{d[k]={...data,updatedAt:Date.now()}},'month '+k,monthNote(k,data)),'נשמר')}
+  async add(col,data){const id=localId();const ok=await mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'add '+col,noteFor('add',col,id,data),col+'/'+id);if(ok&&col==='grocery')pricesNow();return ok},
+  put(col,id,data){return mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'save '+col,noteFor('put',col,id,data),col+'/'+id)},
+  update(col,id,data){return mutate(col,d=>{if(d[id])d[id]={...d[id],...data,updatedAt:Date.now()}},'update '+col,noteFor('update',col,id,data),col+'/'+id)},
+  del(col,id){return mutate(col,d=>{delete d[id]},'delete '+col,noteFor('del',col,id,null),col+'/'+id)},
+  setMonth(k,data){return write(()=>mutate('months',d=>{d[k]={...data,updatedAt:Date.now()}},'month '+k,monthNote(k,data),'months/'+k),'נשמר')}
 };
 
 /* ---------- notifications ----------
@@ -1076,7 +1081,9 @@ async function loadFeed(){
     const cs=await r.json();
     F.items=cs.map(c=>{const msg=c.commit.message||'',lines=msg.split('\n'),line=lines.find(l=>l.startsWith('notify: '));if(!line)return null;
       const who=(c.author&&c.author.login)||((lines[0].match(/\(([^()]+)\)\s*$/)||[])[1])||'';
-      return {id:c.sha,t:Date.parse(c.commit.committer.date),who,text:line.slice(8)}}).filter(Boolean);
+      const rl=lines.find(l=>l.startsWith('ref: ')),m1=lines[0].match(/^(?:add|save|update|delete) (\w+)/),m2=lines[0].match(/^month (\d{4}-\d{2})/);
+      const ref=rl?rl.slice(5).trim():m2?'months/'+m2[1]:m1?m1[1]:'';
+      return {id:c.sha,t:Date.parse(c.commit.committer.date),who,text:line.slice(8),ref}}).filter(Boolean);
     const missing=[...new Set(F.items.map(x=>x.who))].filter(l=>l&&!F.names[l]);
     await Promise.all(missing.map(async l=>{try{const u=await gh('/users/'+encodeURIComponent(l));if(u.ok){const j=await u.json();F.names[l]=(j.name||l).trim()}}catch(_){}}));
     if(missing.length)lsSet('hb_names',JSON.stringify(F.names));
@@ -1109,7 +1116,7 @@ async function localNotify(){
   if(!fresh.length)return;
   F.shown=top;lsSet('hb_shown',String(top));
   if(!document.hidden||lsGet('hb_push')==='1'||!('Notification' in window)||Notification.permission!=='granted')return;
-  try{const reg=await swReady();if(!reg)return;fresh.slice(0,3).forEach(x=>reg.showNotification('הבית שלנו',{body:`${whoName(x.who)}: ${x.text}`,tag:x.id,icon:'icons/icon-192.png',badge:'icons/icon-192.png',data:{url:'./'}}))}catch(_){}
+  try{const reg=await swReady();if(!reg)return;fresh.slice(0,3).forEach(x=>reg.showNotification('הבית שלנו',{body:`${whoName(x.who)}: ${x.text}`,tag:x.id,icon:'icons/icon-192.png',badge:'icons/icon-192.png',data:{url:x.ref?'./#go='+encodeURIComponent(x.ref):'./'}}))}catch(_){}
 }
 function relTime(t){const d=(Date.now()-t)/1000;if(d<60)return 'עכשיו';if(d<3600)return `לפני ${Math.floor(d/60)} דק׳`;if(d<86400)return `לפני ${Math.floor(d/3600)} שע׳`;
   return new Date(t).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}
@@ -1118,7 +1125,7 @@ function renderNotes(){
   if(F.tab==='people'){
     const items=F.items.slice(0,30);
     list.innerHTML=items.length?items.map(x=>{const me=x.who===G.login,isNew=!me&&x.t>F.seenBefore;
-      return `<div class="nt${isNew?' unread':''}"><img class="who" src="https://avatars.githubusercontent.com/${encodeURIComponent(x.who)}?s=64" alt=""><span class="col"><b>${esc(me?'את/ה':whoName(x.who))}</b><span>${esc(x.text)}</span><small>${esc(relTime(x.t))}</small></span>${isNew?'<span class="dot" aria-label="חדש"></span>':''}</div>`}).join('')
+      return `<button class="bare nt${isNew?' unread':''}" data-go="${esc(x.ref||'')}" aria-label="${esc((me?'את/ה':whoName(x.who))+': '+x.text)}. מעבר לשינוי"><img class="who" src="https://avatars.githubusercontent.com/${encodeURIComponent(x.who)}?s=64" alt=""><span class="col"><b>${esc(me?'את/ה':whoName(x.who))}</b><span>${esc(x.text)}</span><small>${esc(relTime(x.t))}</small></span>${isNew?'<span class="dot" aria-label="חדש"></span>':''}<span class="go" aria-hidden="true">${I.chevL}</span></button>`}).join('')
       :'<div class="emptyline" style="border-top:0">עוד אין עדכונים. כשאחד מכם מוסיף או משנה משהו, זה יופיע כאן.</div>';
   }else{
     const items=(S.synclog||[]).slice().sort((a,b)=>b.t-a.t).slice(0,30);
@@ -1137,6 +1144,7 @@ function notesSheet(){
   const tabs=$('sheetBody').querySelector('.ntabs');tabs.classList.toggle('second',F.tab==='sheet');
   tabs.onclick=e=>{const t=e.target.closest('[data-nt]');if(!t)return;F.tab=t.dataset.nt;
     tabs.querySelectorAll('[data-nt]').forEach(x=>x.setAttribute('aria-selected',x===t));tabs.classList.toggle('second',F.tab==='sheet');renderNotes()};
+  $('ntList').onclick=e=>{const b=e.target.closest('[data-go]');if(b&&b.dataset.go)goTo(b.dataset.go)};
   renderNotes();renderPushBox();
   F.seen=Math.max(F.seen,0,...F.items.map(x=>x.t));lsSet('hb_seen',String(F.seen));renderBell();
 }
@@ -1186,6 +1194,12 @@ async function ensurePushKey(){
     if(await mutate('pushsubs',d=>{d[deviceId()]={login:G.login,sub:sub.toJSON(),device:navigator.userAgent.slice(0,140),at:Date.now()}},'push subscribe'))lsSet('hb_push_key',VAPID_PUBLIC);
   }catch(_){}
 }
+function goFromHash(){
+  const m=location.hash.match(/^#go=(.+)$/);if(!m)return;
+  try{history.replaceState(null,'',location.pathname+location.search)}catch(_){}
+  setTimeout(()=>goTo(decodeURIComponent(m[1])),200);
+}
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.type==='go'&&e.data.ref)goTo(e.data.ref)});
 async function pushOff(){
   try{const reg=await swReady(),sub=reg?await reg.pushManager.getSubscription():null;if(sub)await sub.unsubscribe().catch(()=>{})}catch(_){}
   await mutate('pushsubs',d=>{delete d[deviceId()]},'push unsubscribe');lsSet('hb_push',null);toast('התראות בטלפון כובו');
@@ -1210,7 +1224,7 @@ async function signIn(token){
   if(!repo.ok){G.token=null;return `למשתמש ${me.login} אין גישה למאגר הנתונים. ודאו שהוזמנתם אליו ושהמפתח כולל את habayit-data.`}
   G.login=me.login;S.uid=me.login;lsSet('hb_token',token);lsSet('hb_login',me.login);
   $('login').hidden=true;$('whoami').textContent=me.login;
-  await loadAll();G.timer=setInterval(poll,15000);ensurePushKey();return null;
+  await loadAll();G.timer=setInterval(poll,15000);ensurePushKey();goFromHash();return null;
 }
 async function boot(){
   try{const c=JSON.parse(lsGet('hb_cache')||'null');if(c){Object.entries(c).forEach(([col,docs])=>{G.files[col]={sha:null,docs};applyCol(col,docs)});S.loaded=true}}catch(_){}
@@ -1396,7 +1410,7 @@ function gItemHtml(i){
   const nw=newCls('grocery',i.id),pr=gPrice(i),manual=has(i.price);
   const edit=`<button class="bare gedit" data-gedit="${esc(i.id)}" aria-label="עריכה או מחיקה: ${esc(i.name)}">${I.pencil}</button>`;
   const q=gQty(i),priceEl=pr!==null?`<span class="num">${ils(gLine(i))}</span>${q>1?`<small class="unit num">${ils(pr)} ליח׳</small>`:''}${manual?'<span class="manual">ידני</span>':''}`:'';
-  if(i.done)return `<div class="gitem done${nw}">${ck}<span class="col"><b>${esc(i.name)}${qtyTag(i)}</b></span>${pr!==null?`<span class="price">${priceEl}</span>`:''}${edit}</div>`;
+  if(i.done)return `<div class="gitem done${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><b>${esc(i.name)}${qtyTag(i)}</b></span>${pr!==null?`<span class="price">${priceEl}</span>`:''}${edit}</div>`;
   const grip=`<button class="bare grip" data-grip="${esc(i.id)}" aria-label="גרירה לשינוי סדר: ${esc(i.name)}. אפשר גם חצים למעלה ולמטה">${GRIP}</button>`;
   if(i.product)return `<div class="gitem${nw}" data-gid="${esc(i.id)}">${ck}<span class="col"><b>${esc(i.name)}${qtyTag(i)}</b><span class="meta">${esc(i.product.name)}</span></span><span class="price">${priceEl}<button class="bare link" data-repick="${esc(i.id)}">החלפה</button></span>${who}${edit}${grip}</div>`;
   const c=i.candidates||[];
@@ -1932,6 +1946,27 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'&&i>=0&&its[i].hasAttribute('aria-haspopup')){e.preventDefault();its[i].click()}
   if(e.key==='ArrowRight'&&Q.path.length){e.preventDefault();Q.path.pop();renderQuick('back')}
 });
+/* ---------- jump to the item a change touched: "col/id" ("months/yyyy-mm" for a month) ---------- */
+function flash(el){
+  if(!el)return;el.scrollIntoView({behavior:RM.matches?'auto':'smooth',block:'center'});
+  el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),2600);
+}
+function goTo(ref){
+  const [col,id]=String(ref||'').split('/');
+  const tab={grocery:'shop',purchases:'shop',variable:'exp',baby:'baby',months:'home',holdings:'sav'}[col];if(!tab)return;
+  if(!$('sheet').hidden)closeSheet();
+  goTab(tab);
+  const later=fn=>setTimeout(fn,160),sel=(a,v)=>document.querySelector(`[${a}="${CSS.escape(v)}"]`);
+  if(col==='months'){if(/^\d{4}-\d{2}$/.test(id||'')&&id!==S.month){S.month=id;renderAll()}later(()=>flash($('hero').firstElementChild));return}
+  const item=id&&(S[col]||[]).find(x=>x.id===id);
+  if(!item){if(id)toast('הפריט כבר לא ברשימה');return}
+  if(col==='variable'){if(item.month)S.month=item.month;S.expView=item.row||VAR_ROW;S.vq='';S.vOpen[groupByDate([item])[0][0]]=true;renderAll();later(()=>flash(sel('data-vid',id)));return}
+  if(col==='baby'){S.filter='הכל';renderBaby();later(()=>flash(sel('data-edit-baby',id)));return}
+  if(col==='grocery'){later(()=>flash(sel('data-gid',id)));return}
+  if(col==='purchases'){S.openPurchase[id]=true;renderPast();later(()=>flash(sel('data-purchase',id)));return}
+  if(col==='holdings'){S.openAcc[item.account||'ללא חשבון']=true;renderSav();later(()=>flash(sel('data-hold',id)))}
+}
+
 /* ---------- celebrations ---------- */
 const buzz=ms=>{try{if(navigator.vibrate)navigator.vibrate(ms)}catch(_){}};
 // a short burst of paper bits from a point (screen center when none), gone after a second and a half
