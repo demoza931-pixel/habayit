@@ -398,6 +398,45 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .qitem .meta{font-weight:700;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .qitem .go{color:var(--ink-2);line-height:0}
 .wrap{padding-block:0 160px}
+.hright{display:flex;align-items:center;gap:6px}
+.hbtn{position:relative;width:42px;height:42px;border-radius:999px;display:grid;place-items:center;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);flex:none}
+.hbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hbtn[aria-pressed="true"]{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.month button{width:38px}.month span{min-width:80px;font-size:14px}
+.brand{font-size:20px;white-space:nowrap}
+.weekbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.weekbar b{font:700 17px var(--font-display)}
+.wkbtn{width:40px;height:40px;border-radius:999px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);color:var(--ink-2)}
+.daystrip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dchip{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 6px;border-radius:14px;background:var(--surface);border:1px solid var(--line);min-height:64px}
+.dchip small{font-size:11px;color:var(--ink-2);font-weight:600}.dchip b{font-size:17px}
+.dchip .dots{display:flex;gap:3px;min-height:6px}.dchip .dots i{width:6px;height:6px;border-radius:999px}
+.dchip[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.dchip[aria-selected="true"] small{color:var(--accent-ink)}
+.dchip.today b{text-decoration:underline;text-underline-offset:3px}
+.who-y{background:#2C6B5E}.who-t{background:#9B5BA5}.who-s{background:#D9774B}
+:root{--who-y:#2C6B5E;--who-t:#9B5BA5;--who-s:#D9774B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--who-y:#72C2AC;--who-t:#C997D1;--who-s:#E39A64}}
+.qadd{display:flex;gap:8px}.qadd .in{height:50px;border-radius:var(--r-btn);background:var(--surface);font-size:15px}
+.qprev{min-height:1.2em;color:var(--ink-2);padding:0 4px}.qprev b{color:var(--accent)}
+.dayview{padding:12px}
+.dv-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}.dv-hd b{font:700 17px var(--font-display)}
+.lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.lane{display:flex;flex-direction:column;gap:6px;min-width:0}
+.lane>small{font-weight:700;font-size:12px;text-align:center;padding:3px 0;border-radius:8px}
+.lane.y>small{background:color-mix(in srgb,var(--who-y) 16%,transparent);color:var(--who-y)}
+.lane.t>small{background:color-mix(in srgb,var(--who-t) 16%,transparent);color:var(--who-t)}
+.lane.s>small{background:color-mix(in srgb,var(--who-s) 16%,transparent);color:var(--who-s)}
+.ev{padding:7px 8px;border-radius:10px;border-inline-start:3px solid var(--c);background:color-mix(in srgb,var(--c) 10%,var(--surface));font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.ev b{display:block;font-weight:700}.ev small{display:block;color:var(--ink-2);font-size:11px}
+.ev.pending{border-style:dashed;opacity:.75}
+.lane .none{font-size:12px;color:var(--ink-2);text-align:center;padding:10px 0}
+.acard{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--r-card);background:var(--surface);border:1px solid var(--line)}
+.acard .ai{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;background:var(--surface-2)}
+.acard.warn .ai{background:var(--warn-soft)}.acard.bad .ai{background:var(--neg-soft)}.acard.good .ai{background:var(--accent-soft)}
+.acard .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;font-size:14px;line-height:1.45}.acard .col b{font-size:15px}
+.acard .link{align-self:flex-start}
+#calFree .chip{min-height:40px;font-size:14px}
+@media (prefers-reduced-motion:no-preference){.ev{animation:popin .3s ease-out backwards}.dchip{transition:background-color .2s,transform .15s}.dchip:active{transform:scale(.95)}}
 .salhd{display:flex;justify-content:space-between;align-items:center;padding:0 4px 6px}.salhd b{font-size:18px}
 .salhd .link{display:inline-flex;align-items:center;gap:4px}.salhd svg{width:13px;height:13px}
 .salbars{display:flex;align-items:flex-end;gap:2px;height:110px;padding:0 2px 18px;position:relative}
@@ -706,7 +745,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 <div class="wrap">
   <header class="top">
     <div class="brand">הבית שלנו</div>
-    <div class="hright"><button class="bare bell" id="bellBtn" type="button" aria-label="התראות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg><span class="badge num" id="bellCount" hidden></span></button>
+    <div class="hright"><button class="bare bell" id="bellBtn" type="button" aria-label="התראות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg><span class="badge num" id="bellCount" hidden></span></button><button class="bare hbtn" id="insBtn" type="button" aria-label="תובנות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
     <div class="month" aria-label="בחירת חודש">
       <button class="bare" id="mPrev" aria-label="חודש קודם"><svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
       <span id="mLabel" class="num"></span>
@@ -751,6 +790,21 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
     <div class="chips" id="bFilters" role="group" aria-label="סינון לפי סטטוס"></div>
     <section class="card" style="overflow:hidden"><div id="bList"></div></section>
     <button class="btn ghost block" id="bAdd">הוספת פריט</button>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section class="tab" id="t-cal" hidden>
+    <div class="weekbar"><button class="bare wkbtn" id="wkPrev" aria-label="שבוע קודם"><svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button><b id="wkLabel" class="num"></b><button class="bare wkbtn" id="wkNext" aria-label="שבוע הבא"><svg class="i" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button></div>
+    <div class="daystrip" id="dayStrip" role="tablist" aria-label="ימי השבוע"></div>
+    <form class="qadd" id="calForm"><input class="in" id="calText" placeholder='למשל: ארוחה אצל ההורים שישי 19:00' autocomplete="off" aria-label="אירוע משותף חדש"><button class="sqbtn" type="submit" aria-label="הוספה ליומן המשותף"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></form>
+    <div class="qprev small" id="calPrev" aria-live="polite"></div>
+    <section class="card dayview" id="dayView"></section>
+    <h2 class="sec">שימו לב השבוע</h2>
+    <div id="calCards" style="display:flex;flex-direction:column;gap:10px"></div>
+    <h2 class="sec">חלונות ביחד</h2>
+    <div class="small muted">ערבים שבהם שניכם פנויים לפחות שעה וחצי.</div>
+    <div class="chips" id="calFree"></div>
+    <div class="small muted" id="calFoot"></div>
   </section>
 
   <!-- GROCERY -->
@@ -807,11 +861,12 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 <nav class="tabs" aria-label="לשוניות">
   <div class="in-nav">
     <button data-tab="home" aria-current="page"><span class="pillwrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>חודש</button>
+    <button data-tab="cal"><span class="pillwrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2.2"/></svg></span>לו"ז</button>
     <button data-tab="exp"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span>משתנות</button>
     <button data-tab="baby"><span class="pillwrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M9.5 15.5c1.4 1.1 3.6 1.1 5 0M12 5.5c0-1.5 1-2.5 2.5-2.5"/></svg></span>תינוק</button>
     <button data-tab="shop"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg></span>סופר</button>
     <button data-tab="sav"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-8"/><path d="M15 8h5v5"/></svg></span>חיסכון</button>
-    <button data-tab="ins"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></span>תובנות</button>
+
   </div>
 </nav>
 
@@ -849,7 +904,7 @@ const label=n=>DISPLAY_NAMES[n]||n;
 const STATUSES=[{k:'לקנות',c:'st-buy',m:'●'},{k:'נקנה',c:'st-done',m:'✓'},{k:'לקבל',c:'st-gift',m:'◆'},{k:'לבדוק',c:'st-check',m:'?'},{k:'לא חובה',c:'st-opt',m:'○'}];
 const BABY_CATS=['','שינה וריהוט','עגלה ורכב','האכלה','הנקה','טיפול והחתלה','בגדים וטקסטיל','כביסה ומתכלים','משחק והתפתחות'];
 
-const S={vOpen:{},months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={vOpen:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -967,14 +1022,14 @@ function swapPanel(panel){if(RM.matches||!panel)return;[...panel.children].forEa
 function navInd(){
   const nav=document.querySelector('nav.tabs .in-nav');if(!nav)return;
   let ind=nav.querySelector('.nav-ind');if(!ind){ind=document.createElement('span');ind.className='nav-ind';ind.setAttribute('aria-hidden','true');nav.prepend(ind);nav.classList.add('ind')}
-  const p=nav.querySelector('[aria-current="page"] .pillwrap');if(!p)return;
+  const p=nav.querySelector('[aria-current="page"] .pillwrap');ind.style.opacity=p?'1':'0';if(!p)return;
   const r=p.getBoundingClientRect(),n=nav.getBoundingClientRect();
   const first=!ind.dataset.placed;if(first)ind.style.transition='none';
   ind.style.transform=`translate(${r.left-n.left}px,${r.top-n.top}px)`;ind.classList.toggle('clay',S.tab==='baby');
   if(first){void ind.offsetWidth;ind.style.transition='';ind.dataset.placed='1'}
 }
 addEventListener('resize',navInd);
-const NO_MONTH=['baby','shop','sav'];
+const NO_MONTH=['baby','shop','sav','cal'];
 function chrome(){
   const f=$('fab');if(f)f.classList.toggle('away',S.tab==='shop')
   const h=document.querySelector('header.top');if(h)h.classList.toggle('nomonth',NO_MONTH.includes(S.tab));
@@ -988,7 +1043,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(navInd);
    Reads poll the branch head (cheap, conditional) and reload files only when it changed.
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
-const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog'];
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -1001,6 +1056,7 @@ async function gh(path,opt={}){
 }
 function applyCol(col,docs){
   if(col==='months')S.months=docs;
+  else if(col==='calendar')S.calendar=docs.week||null;
   else if(col==='info'){S.fp=docs.firstPurchase||null;S.people=docs.people||{};S.plan=docs.plan2027||null;S.salaries=docs.salaries||null}
   else S[col]=Object.entries(docs).map(([id,d])=>({id,...d}));
 }
@@ -1082,6 +1138,9 @@ function noteFor(op,col,id,data){
     if('price' in data&&has(data.price)&&Number(data.price)!==Number(prev.price))ch.push('מחיר '+ils(data.price));
     return `רשימת התינוק · ${prev.name}: ${ch.length?ch.join(', '):'עודכן'}`;
   }
+  if(col==='calreq'){if(op!=='add')return null;
+    if(d.op==='delete')return `נמחק מהיומן המשותף: ${d.title||'אירוע'}`;
+    const s=new Date(d.start);return `נוסף ליומן המשותף: ${d.title} · ${['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'][s.getDay()]} ${s.getDate()}/${s.getMonth()+1}${d.allDay?'':' '+s.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}`}
   if(col==='holdings')return `עודכן בחיסכון: ${d.name||(prev&&prev.name)||''}`;
   return null;
 }
@@ -1384,7 +1443,7 @@ const varSum=vs=>vs.filter(x=>!x.star).reduce((t,x)=>t+(Number(x.amount)||0),0);
 const monthVar=(k,row)=>S.variable.filter(v=>v.month===k&&(v.row||VAR_ROW)===row).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
 
 /* ---------- render ---------- */
-function renderAll(){$('mLabel').textContent=monthLabel(S.month);renderHome();renderExp();renderBaby();renderShop();renderSav();renderIns();fillAvatars();runCounters();navInd();chrome()}
+function renderAll(){$('mLabel').textContent=monthLabel(S.month);renderHome();renderExp();renderBaby();renderShop();renderSav();renderIns();renderCal();fillAvatars();runCounters();navInd();chrome()}
 function rowHtml(r,i){
   const amt=has(r.amount)?`<span class="amt num${r.star?' mute':''}">${ils(r.amount)}</span>`:`<span class="amt mute">${r.star?'*':'—'}</span>`;
   let det='';
@@ -1994,9 +2053,16 @@ function babySheet(b){
 }
 
 /* ---------- events ---------- */
-document.querySelector('nav.tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;
-  document.querySelectorAll('nav.tabs [data-tab]').forEach(x=>x===b?x.setAttribute('aria-current','page'):x.removeAttribute('aria-current'));
-  ['home','exp','baby','shop','sav','ins'].forEach(t=>$('t-'+t).hidden=t!==S.tab);window.scrollTo(0,0);navInd();chrome();enterTab($('t-'+S.tab))};
+const TABS=['home','cal','exp','baby','shop','sav','ins'];
+function showTab(t,dx){
+  S.tab=t;
+  document.querySelectorAll('nav.tabs [data-tab]').forEach(x=>x.dataset.tab===t?x.setAttribute('aria-current','page'):x.removeAttribute('aria-current'));
+  TABS.forEach(x=>{const sec=$('t-'+x);if(sec)sec.hidden=x!==t});
+  const ib=$('insBtn');if(ib)ib.setAttribute('aria-pressed',t==='ins');
+  window.scrollTo(0,0);navInd();chrome();enterTab($('t-'+t),dx);if(t==='cal')renderCal();
+}
+document.querySelector('nav.tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab)};
+$('insBtn').onclick=()=>showTab(S.tab==='ins'?'home':'ins');
 $('mPrev').onclick=()=>{S.month=shiftMonth(S.month,-1);renderAll();enterTab($('t-'+S.tab),28);if(S.tab==='home')monthCheer()};
 $('mNext').onclick=()=>{S.month=shiftMonth(S.month,1);renderAll();enterTab($('t-'+S.tab),-28);if(S.tab==='home')monthCheer()};
 // typing in the list search re-renders the list but keeps the cursor
@@ -2061,7 +2127,7 @@ const QUICK=[
   {id:'hold',name:'החזקה בחיסכון',detail:'נייר ערך, קרן או יתרה ידנית',group:'עוד',icon:'השקעות'}
 ];
 const Q={path:[],open:false};
-function goTab(t){const b=document.querySelector(`nav.tabs [data-tab="${t}"]`);if(b&&S.tab!==t)b.click()}
+function goTab(t){if(S.tab!==t)showTab(t)}
 function quickRun(id){
   closeQuick();
   if(id.startsWith('exp:')){const r=id.slice(4);goTab('exp');S.expRow=r;S.expView=r;renderExp();fillAvatars();$('expForm').classList.remove('folded');$('expFold').setAttribute('aria-expanded','true');setTimeout(()=>$('eAmount').focus(),60);return}
@@ -2103,7 +2169,8 @@ function flash(el){
 }
 function goTo(ref){
   const [col,id]=String(ref||'').split('/');
-  const tab={grocery:'shop',purchases:'shop',variable:'exp',baby:'baby',months:'home',holdings:'sav'}[col];if(!tab)return;
+  const tab={grocery:'shop',purchases:'shop',variable:'exp',baby:'baby',months:'home',holdings:'sav',calreq:'cal',calendar:'cal'}[col];if(!tab)return;
+  if(tab==='cal'){if(!$('sheet').hidden)closeSheet();goTab('cal');return}
   if(!$('sheet').hidden)closeSheet();
   goTab(tab);
   const later=fn=>setTimeout(fn,160),sel=(a,v)=>document.querySelector(`[${a}="${CSS.escape(v)}"]`);
@@ -2116,6 +2183,123 @@ function goTo(ref){
   if(col==='purchases'){S.openPurchase[id]=true;renderPast();later(()=>flash(sel('data-purchase',id)));return}
   if(col==='holdings'){S.openAcc[item.account||'ללא חשבון']=true;renderSav();later(()=>flash(sel('data-hold',id)))}
 }
+
+/* ---------- schedule ("לו"ז"): both Google calendars and the shared one, plus an assistant ----------
+   data/calendar.json (written by the sheet's script every 10 minutes) holds the events from yesterday to 5 weeks ahead.
+   A shared event typed here goes to data/calreq.json; the script creates it in the shared calendar "הבית שלנו",
+   which shows in both phones' Google Calendar. */
+const WHO={yosef:{n:'יוסף',c:'--who-y',k:'y'},tchiya:{n:'תחיה',c:'--who-t',k:'t'},shared:{n:'משותף',c:'--who-s',k:'s'}};
+const HDAYS=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const dkey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const hm=d=>d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+const rng=(a,b)=>`⁦${hm(a)}–${hm(b)}⁩`;
+const dm=d=>`⁦${d.getDate()}/${d.getMonth()+1}⁩`;
+const startOfWeek=d=>{const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-x.getDay());return x};
+function calEvents(){
+  const ev=((S.calendar&&S.calendar.events)||[]).map(e=>({...e,s:new Date(e.start),e:new Date(e.end)}));
+  // shared events typed in the app that the script has not created yet
+  (S.calreq||[]).filter(r=>r.status!=='done'&&r.status!=='failed'&&r.op!=='delete').forEach(r=>ev.push({id:'req-'+r.id,who:'shared',title:r.title,start:r.start,end:r.end,allDay:!!r.allDay,s:new Date(r.start),e:new Date(r.end||r.start),pending:true}));
+  const gone=new Set((S.calreq||[]).filter(r=>r.op==='delete').map(r=>r.eventId));
+  return ev.filter(e=>!gone.has(e.id)).sort((a,b)=>a.s-b.s);
+}
+function onDay(evs,day){const a=new Date(day);a.setHours(0,0,0,0);const b=new Date(a);b.setDate(b.getDate()+1);return evs.filter(e=>e.s<b&&e.e>a)}
+// busy minutes of one person that day between 07:00 and 23:00 (all-day events such as birthdays do not count)
+function busy(evs,who,day){
+  const a=new Date(day);a.setHours(7,0,0,0);const b=new Date(day);b.setHours(23,0,0,0);
+  return onDay(evs,day).filter(e=>!e.allDay&&(e.who===who||e.who==='shared')).map(e=>[Math.max(e.s,a),Math.min(e.e,b)]).filter(x=>x[1]>x[0]).sort((x,y)=>x[0]-y[0]);
+}
+function freeTogether(evs,day,from=18,to=23,min=90){
+  const a=new Date(day);a.setHours(from,0,0,0);const b=new Date(day);b.setHours(to,0,0,0);
+  const bs=[...busy(evs,'yosef',day),...busy(evs,'tchiya',day)].sort((x,y)=>x[0]-y[0]);let t=+a;const out=[];
+  bs.forEach(([s,e])=>{if(e<=t)return;if(s>t&&s-t>=min*6e4)out.push([t,Math.min(s,+b)]);t=Math.max(t,e)});
+  if(+b-t>=min*6e4)out.push([t,+b]);
+  return out.filter(([s,e])=>e-s>=min*6e4&&s>=+a);
+}
+// the assistant: plain rules over the week, each card says what it found and what to do
+function assistant(evs,w0){
+  const cards=[],days=[...Array(7)].map((_,i)=>{const d=new Date(w0);d.setDate(d.getDate()+i);return d});
+  const now=new Date();
+  days.forEach(d=>{
+    const de=onDay(evs,d),dn=`${HDAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+    if(d<new Date(now.getFullYear(),now.getMonth(),now.getDate()))return;
+    // a shared event on top of someone's own
+    de.filter(e=>e.who==='shared'&&!e.allDay).forEach(se=>de.filter(o=>o.who!=='shared'&&!o.allDay&&o.s<se.e&&o.e>se.s).forEach(o=>
+      cards.push(['bad','⚠️',`${dn}: התנגשות`,`"${se.title}" (${hm(se.s)}) חופף ל"${o.title}" של ${WHO[o.who].n} (${rng(o.s,o.e)}). כדאי להזיז אחד מהם, או להחליט ש${WHO[o.who].n} לא מגיע/ה.`])));
+    ['yosef','tchiya'].forEach(w=>{
+      const mine=de.filter(e=>!e.allDay&&(e.who===w||e.who==='shared'));
+      for(let i=1;i<mine.length;i++){const p=mine[i-1],c=mine[i],gap=(c.s-p.e)/6e4;
+        if(gap>=0&&gap<30&&p.place&&c.place&&p.place!==c.place)cards.push(['warn','🚗',`${dn}: אין זמן לנסוע`,`ל${WHO[w].n} יש רק ${Math.round(gap)} דק׳ בין "${p.title}" (${p.place}) ל"${c.title}" (${c.place}).`])}
+      const mins=busy(evs,w,d).reduce((t,[s,e])=>t+(e-s)/6e4,0);
+      if(mins>9*60)cards.push(['warn','🔋',`${dn}: יום עמוס ל${WHO[w].n}`,`${Math.round(mins/60)} שעות תפוסות. אולי להזיז משהו ליום פנוי יותר השבוע.`]);
+    });
+    const gift=de.filter(e=>/חתונה|יום הולדת|יומולדת|בר מצווה|בת מצווה|ברית|אירוסין|חינה/.test(e.title));
+    gift.forEach(e=>cards.push(['good','🎁',`${dn}: ${e.title}`,'אם צריך מתנה, אפשר לרשום אותה מראש ב"משתנות" (אוכל/בילויים או הוצאות משתנות).']));
+  });
+  const tom=new Date(now);tom.setDate(tom.getDate()+1);
+  const early=onDay(evs,tom).filter(e=>!e.allDay&&e.s.getHours()<8);
+  if(early.length)cards.push(['warn','⏰','מחר מוקדם',early.map(e=>`${WHO[e.who].n}: "${e.title}" ב־${hm(e.s)}`).join(' · ')]);
+  const evenings=days.filter(d=>d>=new Date(now.getFullYear(),now.getMonth(),now.getDate())).map(d=>[d,freeTogether(evs,d)]).filter(x=>x[1].length);
+  if(!evenings.length&&days.some(d=>d>=now))cards.push(['warn','💛','אין השבוע ערב פנוי לשניכם','בכל הערבים שנשארו השבוע לפחות אחד מכם תפוס. אפשר לבדוק את השבוע הבא, או לפנות ערב אחד.']);
+  return cards;
+}
+// "ארוחה אצל ההורים שישי 19:00" -> {title, start, end, allDay}
+function parseEvent(text){
+  let t=' '+String(text||'').replace(/\s+/g,' ').trim()+' ',day=null,time=null,end=null,allDay=false;
+  const now=new Date(),base=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const cut=re=>{const m=t.match(re);if(m)t=t.replace(m[0],' ');return m};
+  let m;
+  if((m=cut(/\s(?:ב-?)?(\d{1,2})[\/.](\d{1,2})(?:[\/.](\d{2,4}))?\s/))){let y=m[3]?Number(m[3]):now.getFullYear();if(y<100)y+=2000;day=new Date(y,Number(m[2])-1,Number(m[1]));if(!m[3]&&day<base)day.setFullYear(y+1)}
+  if(!day&&(m=cut(/\s(היום|מחרתיים|מחר)\s/)))day=new Date(base.getTime()+({'היום':0,'מחר':1,'מחרתיים':2}[m[1]])*864e5);
+  if(!day&&(m=cut(/\s(?:ב?יום\s)?(?:ב?)(ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)(?:\sהבא)?\s/))){const w=HDAYS.indexOf(m[1]);day=new Date(base);day.setDate(base.getDate()+((w-base.getDay()+7)%7||7))}
+  if(!day&&(m=cut(/\sיום\s([אבגדהו])['׳]?\s/))){const w='אבגדהו'.indexOf(m[1]);day=new Date(base);day.setDate(base.getDate()+((w-base.getDay()+7)%7||7))}
+  if(cut(/\sכל היום\s/))allDay=true;
+  if((m=cut(/\s(?:ב-?|בשעה\s)?(\d{1,2}):(\d{2})(?:\s?[-–]\s?(\d{1,2}):(\d{2}))?\s/))){time=[Number(m[1]),Number(m[2])];if(m[3])end=[Number(m[3]),Number(m[4])]}
+  else if((m=cut(/\s(?:ב-?|בשעה\s)(\d{1,2})(?:\s(בערב|בלילה|בבוקר|בצהריים|אחה"צ))?\s/))){let h=Number(m[1]);if(/ערב|לילה|אחה/.test(m[2]||'')&&h<12)h+=12;if(!m[2]&&h<8)h+=12;time=[h,0]}
+  const title=t.replace(/\s+/g,' ').replace(/^\s*(ב|ל)\s/,' ').trim();
+  if(!day)day=time&&(time[0]>now.getHours()||(time[0]===now.getHours()&&time[1]>now.getMinutes()))?new Date(base):new Date(base.getTime()+(time?864e5:0));
+  if(!time)allDay=true;
+  const s=new Date(day);if(time)s.setHours(time[0],time[1],0,0);
+  const e=new Date(s);if(end)e.setHours(end[0],end[1],0,0);else if(allDay)e.setDate(e.getDate()+1);else e.setHours(e.getHours()+1);
+  return {title,start:s.toISOString(),end:e.toISOString(),allDay,s,e};
+}
+function whenText(p){const d=p.s;return `${HDAYS[d.getDay()]} ${dm(d)}${p.allDay?' · כל היום':` · ${rng(p.s,p.e)}`}`}
+function renderCal(){
+  const sec=$('t-cal');if(!sec)return;
+  if(!S.calendar){
+    $('dayStrip').innerHTML='';$('calCards').innerHTML='';$('calFree').innerHTML='';
+    $('dayView').innerHTML='<div class="emptyline" style="border-top:0">היומנים עוד לא מחוברים. אחרי ההגדרה בגיליון (פעם אחת), הלו"ז של שניכם יופיע כאן.</div>';
+    $('wkLabel').textContent='השבוע';$('calFoot').textContent='';return;
+  }
+  const evs=calEvents(),today=new Date();today.setHours(0,0,0,0);
+  if(!S.calDay)S.calDay=dkey(today);
+  const sel=new Date(S.calDay+'T00:00'),w0=startOfWeek(sel);
+  const days=[...Array(7)].map((_,i)=>{const d=new Date(w0);d.setDate(d.getDate()+i);return d});
+  $('wkLabel').textContent=`⁦${days[0].getDate()}/${days[0].getMonth()+1} – ${days[6].getDate()}/${days[6].getMonth()+1}⁩`;
+  $('dayStrip').innerHTML=days.map(d=>{const de=onDay(evs,d),ws=['yosef','tchiya','shared'].filter(w=>de.some(e=>e.who===w));
+    return `<button class="bare dchip${dkey(d)===dkey(today)?' today':''}" role="tab" aria-selected="${dkey(d)===S.calDay}" data-cday="${dkey(d)}" aria-label="${HDAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}, ${de.length} אירועים"><small>${'אבגדהוש'[d.getDay()]}׳</small><b class="num">${d.getDate()}</b><span class="dots">${ws.map(w=>`<i style="background:var(${WHO[w].c})"></i>`).join('')}</span></button>`}).join('');
+  const de=onDay(evs,sel);
+  $('dayView').innerHTML=`<div class="dv-hd"><b>${HDAYS[sel.getDay()]} ${sel.getDate()}/${sel.getMonth()+1}</b><small class="muted">${de.length?de.length+' אירועים':'יום פנוי'}</small></div>
+    <div class="lanes">${['yosef','shared','tchiya'].map(w=>{const list=de.filter(e=>e.who===w);
+      return `<div class="lane ${WHO[w].k}"><small>${WHO[w].n}</small>${list.length?list.map((e,i)=>`<div class="ev${e.pending?' pending':''}" style="--c:var(${WHO[w].c});--i:${i}"><b>${esc(e.title)}</b><small class="num">${e.allDay?'כל היום':rng(e.s,e.e)}${e.pending?' · נשלח ליומן':''}</small>${e.place?`<small>${esc(e.place)}</small>`:''}${w==='shared'&&!e.pending?`<button class="bare link" data-caldel="${esc(e.id)}">מחיקה</button>`:''}</div>`).join(''):'<div class="none">—</div>'}</div>`}).join('')}</div>`;
+  const cards=assistant(evs,w0);
+  $('calCards').innerHTML=cards.length?cards.map(([k,ic,h,p])=>`<div class="acard ${k}"><span class="ai" aria-hidden="true">${ic}</span><span class="col"><b>${esc(h)}</b><span>${esc(p)}</span></span></div>`).join(''):'<div class="acard good"><span class="ai" aria-hidden="true">✓</span><span class="col"><b>השבוע נראה מסודר</b><span>אין התנגשויות, אין ימים עמוסים מדי.</span></span></div>';
+  const free=days.filter(d=>d>=today).flatMap(d=>freeTogether(evs,d).map(([s,e])=>[d,new Date(s),new Date(e)])).slice(0,6);
+  $('calFree').innerHTML=free.length?free.map(([d,s,e])=>`<button type="button" class="chip" data-calfree="${HDAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} ${hm(s)}">${HDAYS[d.getDay()]} ${rng(s,e)}</button>`).join(''):'<span class="small muted">אין השבוע ערב פנוי לשניכם.</span>';
+  $('calFoot').textContent=S.calendar.at?`עודכן מהיומנים ${new Date(S.calendar.at).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}`:'';
+}
+$('calText').addEventListener('input',()=>{const v=$('calText').value.trim();if(!v){$('calPrev').textContent='';return}const p=parseEvent(v);
+  $('calPrev').innerHTML=p.title?`ייכנס ליומן המשותף: <b>${esc(p.title)}</b> · ${esc(whenText(p))}`:'כתבו מה ומתי'});
+$('calForm').onsubmit=e=>{e.preventDefault();const v=$('calText').value.trim();if(!v)return;const p=parseEvent(v);if(!p.title){toast('כתבו מה האירוע');return}
+  const data={op:'add',title:p.title,start:p.start,end:p.end,allDay:p.allDay,status:'pending',createdAt:Date.now()};if(S.uid)data.by=S.uid;
+  store.add('calreq',data);$('calText').value='';$('calPrev').textContent='';S.calDay=dkey(p.s);renderCal();buzz(10);toast('נשלח ליומן המשותף')};
+$('wkPrev').onclick=()=>{const d=new Date(S.calDay+'T00:00');d.setDate(d.getDate()-7);S.calDay=dkey(d);renderCal();swapPanel($('dayView'))};
+$('wkNext').onclick=()=>{const d=new Date(S.calDay+'T00:00');d.setDate(d.getDate()+7);S.calDay=dkey(d);renderCal();swapPanel($('dayView'))};
+document.addEventListener('click',e=>{
+  const dc=e.target.closest('[data-cday]');if(dc){S.calDay=dc.dataset.cday;renderCal();swapPanel($('dayView'));return}
+  const fr=e.target.closest('[data-calfree]');if(fr){$('calText').value='ערב ביחד '+fr.dataset.calfree;$('calText').dispatchEvent(new Event('input'));$('calText').focus();return}
+  const cd=e.target.closest('[data-caldel]');if(cd){if(!cd.classList.contains('arm')){cd.classList.add('arm');cd.textContent='ללחוץ שוב למחיקה';return}
+    const ev=calEvents().find(x=>x.id===cd.dataset.caldel);store.add('calreq',{op:'delete',eventId:cd.dataset.caldel,title:ev?ev.title:'',status:'pending',createdAt:Date.now()});toast('יימחק מהיומן המשותף')}
+});
 
 /* ---------- celebrations ---------- */
 const buzz=ms=>{try{if(navigator.vibrate)navigator.vibrate(ms)}catch(_){}};
@@ -2150,9 +2334,9 @@ document.addEventListener('touchend',e=>{
   if(SW.x===null||PTR.on)return;const t=e.changedTouches[0],dx=t.clientX-SW.x,dy=t.clientY-SW.y;SW.x=null;
   if(Math.abs(dx)<70||Math.abs(dy)>45||Date.now()-SW.t>700)return;
   // the tab bar runs right to left: a finger moving left brings in the tab on the right (the previous one)
-  const order=['home','exp','baby','shop','sav','ins'],i=order.indexOf(S.tab),j=i+(dx<0?-1:1);
-  if(j<0||j>=order.length)return;
-  document.querySelector(`nav.tabs [data-tab="${order[j]}"]`).click();enterTab($('t-'+order[j]),dx<0?-28:28);
+  const order=['home','cal','exp','baby','shop','sav'],i=order.indexOf(S.tab),j=i+(dx<0?-1:1);
+  if(i<0||j<0||j>=order.length)return;
+  showTab(order[j],dx<0?-28:28);
   if(navigator.vibrate)navigator.vibrate(6);
 },{passive:true});
 
