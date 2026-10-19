@@ -957,7 +957,7 @@ const ILL={
 ILL.cash='<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="7" y="22" width="44" height="24" rx="3" fill="#6FA85C" transform="rotate(-10 29 34)"/><rect x="12" y="20" width="44" height="24" rx="3" fill="#9BCB84"/><rect x="15.5" y="23.5" width="37" height="17" rx="2" fill="none" stroke="#5E9A4A" stroke-width="1.6"/><circle cx="34" cy="32" r="6.2" fill="#5E9A4A"/><path d="M36.2 28.8c-.6-.8-1.4-1.1-2.3-1.1-1.3 0-2.2.7-2.2 1.7 0 2.3 4.7 1.3 4.7 3.6 0 1.1-1 1.8-2.4 1.8-1 0-1.9-.4-2.5-1.2M34 26.5v1.2M34 35.8v1.4" fill="none" stroke="#E9F5E0" stroke-width="1.5" stroke-linecap="round"/><g class="a-stack"><ellipse cx="18" cy="52" rx="9" ry="3.2" fill="#C99A2E"/><ellipse cx="18" cy="49" rx="9" ry="3.2" fill="#E8B84A"/><ellipse cx="18" cy="46" rx="9" ry="3.2" fill="#F2CD6A"/><ellipse cx="18" cy="46" rx="5" ry="1.6" fill="none" stroke="#C99A2E" stroke-width="1.1"/></g></svg>';
 const BILL='<svg viewBox="0 0 22 13" aria-hidden="true"><rect x=".5" y=".5" width="21" height="12" rx="2" fill="#9BCB84" stroke="#5E9A4A"/><circle cx="11" cy="6.5" r="3" fill="#5E9A4A"/><path d="M12.1 5c-.3-.4-.7-.5-1.1-.5-.6 0-1 .3-1 .8 0 1.1 2.2.6 2.2 1.7 0 .5-.5.9-1.1.9-.5 0-.9-.2-1.2-.6" fill="none" stroke="#E9F5E0" stroke-width=".8" stroke-linecap="round"/></svg>';
 const GROUP_ART={'קבועות':['house','--t-house'],'חסכונות':['piggy','--t-piggy'],'משתנות':['bag','--t-bag']};
-const LIST_ART={'הוצאות משתנות':['gift','--t-gift'],'קניות/פארם':['avo','--t-avo'],'אוכל/בילואים':['pizza','--t-pizza'],'מזומן':['cash','--t-cash']};
+const LIST_ART={'הוצאות משתנות':['gift','--t-gift'],'קניות/פארם':['avo','--t-avo'],'אוכל/בילויים':['pizza','--t-pizza'],'אוכל/בילואים':['pizza','--t-pizza'],'מזומן':['cash','--t-cash']};
 const arc=(art,lg,extra='')=>art?`<span class="arc${lg?' lg':''}" aria-hidden="true" style="background:var(${art[1]})">${ILL[art[0]]}${extra}</span>`:'';
 const moneyRain=()=>`<span class="rain">${`<i>${BILL}</i>`.repeat(4)}</span>`;
 
@@ -1457,7 +1457,10 @@ function calc(k){
 }
 // 'מזומן' is not a grid row: cash spending the sheet takes off the salary, shown for tracking only
 const CASH='מזומן';
-const LIST_ROWS=[VAR_ROW,'קניות/פארם','אוכל/בילואים',CASH];
+// the food row was renamed in tab 2026 ("אוכל/בילויים"); tab 2027 still has the old spelling, so each month uses the one it has
+const FOOD_NEW='אוכל/בילויים',FOOD_OLD='אוכל/בילואים';
+const foodRow=k=>{const rs=((S.months||{})[k||S.month]||{}).rows||[];return rs.some(r=>r.name===FOOD_OLD)&&!rs.some(r=>r.name===FOOD_NEW)?FOOD_OLD:FOOD_NEW};
+const listRows=()=>[VAR_ROW,'קניות/פארם',foodRow(),CASH];
 const varSum=vs=>vs.filter(x=>!x.star).reduce((t,x)=>t+(Number(x.amount)||0),0);
 const monthVar=(k,row)=>S.variable.filter(v=>v.month===k&&(v.row||VAR_ROW)===row).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
 
@@ -1557,9 +1560,9 @@ function renderExp(){
   if(!S.expRow)S.expRow=VAR_ROW;
   if(!S.expView)S.expView=VAR_ROW;
   $('expFoldSub').textContent='לרשימה: '+(S.expRow===VAR_ROW?'הוצאות משתנות':S.expRow);
-  $('eRow').innerHTML=LIST_ROWS.map(r=>`<button type="button" class="chip" role="radio" data-erow="${esc(r)}" aria-checked="${r===S.expRow}">${esc(r)}</button>`).join('');
+  $('eRow').innerHTML=listRows().map(r=>`<button type="button" class="chip" role="radio" data-erow="${esc(r)}" aria-checked="${r===S.expRow}">${esc(r)}</button>`).join('');
   const c=calc(S.month);
-  $('eTabs').innerHTML=LIST_ROWS.map(rn=>{const L=listInfo(rn,c);
+  $('eTabs').innerHTML=listRows().map(rn=>{const L=listInfo(rn,c);
     const sub=L.rv!==null?(L.over?`${fmt(L.sum-L.rv)} מעל`:`נשארו ${fmt(L.rv-L.sum)}`):(L.vs.length?`נרשמו ${fmt(L.sum)}`:'ריק');
     return `<button type="button" class="bare ctab" role="tab" data-eview="${esc(rn)}" aria-selected="${rn===S.expView}"><span class="tic">${riSvg(rn)}</span><b>${rn===VAR_ROW?'משתנות':esc(rn)}</b><small class="num${L.over?' neg':''}">${sub}</small></button>`}).join('');
   const rn=S.expView,L=listInfo(rn,c);
@@ -1882,7 +1885,7 @@ function renderGoals(){
   const flow=c&&c.flow!==null?c.flow:null;
   const rowAmt=n=>{const r=c&&c.rows.find(x=>x.name===n);return r&&has(r.amount)?{a:Number(r.amount),star:!!r.star}:null};
   // money left inside the month's frames (row amount minus what was recorded in its breakdown)
-  const left=['קניות/פארם','אוכל/בילואים',VAR_ROW].map(n=>{const r=rowAmt(n);const L=listInfo(n,c);return r&&L.vs.length&&!r.star&&r.a>L.sum?[n,r.a-L.sum]:null}).filter(Boolean);
+  const left=['קניות/פארם',foodRow(k),VAR_ROW].map(n=>{const r=rowAmt(n);const L=listInfo(n,c);return r&&L.vs.length&&!r.star&&r.a>L.sum?[n,r.a-L.sum]:null}).filter(Boolean);
   const leftSum=left.reduce((t,x)=>t+x[1],0);
   // suggested split of this month's surplus: the girl's fixed 500 first, the rest to the cushion
   const toGirl=flow>0?Math.min(flow,G.girl.tradeMonthly):0,toCushion=flow>0?flow-toGirl:0;
@@ -1956,9 +1959,9 @@ function topChart(){
 function insightCards(){
   const k=S.month,c=calc(k),out=[],L=monthLabel(k),prevK=shiftMonth(k,-1),pc=calc(prevK);
   if(c){
-    const overs=LIST_ROWS.filter(r=>r!==CASH).map(r=>[r,listInfo(r,c)]).filter(([,x])=>x.over);
+    const overs=listRows().filter(r=>r!==CASH).map(r=>[r,listInfo(r,c)]).filter(([,x])=>x.over);
     if(overs.length)out.push(['hi','▲ '+L,'רשימה עברה את המסגרת',overs.map(([r,x])=>`ב"${r}" נרשמו ${ils(x.sum)} מול ${ils(x.rv)} בשורה, ${ils(x.sum-x.rv)} מעל.`).join(' ')]);
-    const left=LIST_ROWS.filter(r=>r!==CASH).map(r=>[r,listInfo(r,c)]).filter(([,x])=>x.rv!==null&&x.vs.length&&!x.over&&x.rv-x.sum>0);
+    const left=listRows().filter(r=>r!==CASH).map(r=>[r,listInfo(r,c)]).filter(([,x])=>x.rv!==null&&x.vs.length&&!x.over&&x.rv-x.sum>0);
     if(left.length)out.push(['ok','✓ '+L,'מה שנשאר במסגרות',left.map(([r,x])=>`${r}: נשארו ${ils(x.rv-x.sum)} מתוך ${ils(x.rv)}.`).join(' ')]);
     if(pc){
       const ch=c.rows.filter(r=>!r.star&&has(r.amount)).map(r=>{const p=pc.rows.find(x=>x.name===r.name&&!x.star&&has(x.amount));return p?[r.name,Number(p.amount),Number(r.amount)]:null}).filter(Boolean)
@@ -2139,7 +2142,7 @@ $('gClear').onclick=()=>{const b=$('gClear');if(!b.classList.contains('arm')){b.
 /* ---------- quick add: a menu with submenus (opened beside, slides in) ---------- */
 const QUICK=[
   {id:'exp',name:'הוצאה',detail:'לאחת מרשימות הפירוט של החודש',meta:'4 רשימות',group:'מהיר',icon:'receipt',
-   children:LIST_ROWS.map(r=>({id:'exp:'+r,name:r===VAR_ROW?'הוצאות משתנות':r,detail:r===CASH?'לא נספר בסה"כ, כבר ירד מהמשכורות':`פירוט לשורה "${r}"`,icon:r}))},
+   children:listRows().map(r=>({id:'exp:'+r,name:r===VAR_ROW?'הוצאות משתנות':r,detail:r===CASH?'לא נספר בסה"כ, כבר ירד מהמשכורות':`פירוט לשורה "${r}"`,icon:r}))},
   {id:'shop',name:'פריט לסופר',detail:'מקבל מחיר מרמי לוי תוך דקות',group:'מהיר',icon:'קניות'},
   {id:'baby',name:'פריט לרשימת התינוק',detail:'עם סטטוס, מחיר והערה',group:'עוד',icon:'לידה'},
   {id:'row',name:'שורה בטבלת החודש',detail:'הוצאה קבועה, חיסכון או הוצאה חודשית',group:'עוד',icon:'ריכוז'},
