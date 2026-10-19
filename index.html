@@ -234,7 +234,28 @@ select.in{padding:0 10px}
 .collapse-head .col b{font-weight:700;font-size:16px}
 .collapse-head .col small{font-weight:500;font-size:13px;color:var(--ink-2)}
 .collapse-head .sum{font-weight:700;font-size:16px;white-space:nowrap}
-.bitem{width:100%;min-height:64px;display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--line)}
+.bitem{width:100%;min-height:56px;display:flex;align-items:center;gap:12px;padding:6px 12px 6px 16px;border-top:1px solid var(--line)}
+.bsecs{display:flex;flex-direction:column;gap:12px}
+.bhero{display:flex;align-items:center;gap:14px;width:100%;text-align:start;padding:16px;background:var(--clay-soft);border-color:transparent}
+.bhero .ringwrap{position:relative;width:62px;height:62px;flex:none;display:grid;place-items:center}
+.bhero .ring{position:absolute;inset:0;width:62px;height:62px}.bhero .ring .bg{stroke:var(--surface)}.bhero .ring .fg{stroke:var(--clay)}
+.bhero .rv b{font-size:14px;color:var(--clay)}
+.bhero .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.bhero .col b{font:800 19px var(--font-display)}.bhero .col small{font-size:13px;color:var(--ink-2)}
+.bhero .chev{color:var(--clay)}.bhero .chev svg{width:18px;height:18px}
+.bsec{padding:0;overflow:hidden}
+.bsh{width:100%;display:flex;align-items:center;gap:10px;padding:14px 16px;min-height:52px;text-align:start}
+.bsh .t{flex:none;font-weight:700;font-size:15px}.bsh .t small{color:var(--ink-2);font-weight:600}
+.bsh .peek{flex:1;min-width:0;color:var(--ink-2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bsh .chev{margin-inline-start:auto;display:inline-grid;color:var(--ink-2)}.bsh .chev svg{width:16px;height:16px}
+.bsec.quiet{background:transparent}
+.bck{flex:none;width:30px;height:30px;border-radius:999px;border:2px solid var(--clay);display:grid;place-items:center;color:transparent;transition:background-color .2s,transform .15s}
+.bck svg{width:16px;height:16px}.bck[aria-pressed="true"]{background:var(--clay);color:#fff}.bck:active{transform:scale(.88)}
+.bmain{flex:1;min-width:0;display:flex;align-items:center;gap:10px;min-height:44px;text-align:start}
+.bmain b{flex:1;min-width:0;font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.bpr{flex:none;font-weight:700;font-size:15px}.bpr.mute{font-weight:500;font-size:12.5px;color:var(--ink-2)}
+.bitem.done b{color:var(--ink-2);font-weight:500}
+.ball{display:flex;flex-direction:column;gap:4px;padding:14px 16px;background:var(--accent-soft);border-color:transparent}.ball small{color:var(--ink-2)}
+.binfo{display:flex;flex-direction:column;gap:2px}.binfo .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:15px}.binfo .row:first-child{border-top:0}
 .bitem:first-child{border-top:0}
 .bitem .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .bitem .col b{font-weight:600;font-size:16px;overflow-wrap:anywhere}
@@ -825,11 +846,8 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 
   <!-- BABY -->
   <section class="tab" id="t-baby" hidden>
-    <div class="tiles num" id="bTiles"></div>
-    <section class="card" id="fpCard"></section>
-    <div class="chips" id="bFilters" role="group" aria-label="סינון לפי סטטוס"></div>
-    <section class="card" style="overflow:hidden"><div id="bList"></div></section>
-    <button class="btn ghost block" id="bAdd">הוספת פריט</button>
+    <div id="bHero"></div>
+    <div id="bSections" class="bsecs"></div>
   </section>
 
   <!-- SCHEDULE -->
@@ -954,7 +972,7 @@ const label=n=>DISPLAY_NAMES[n]||n;
 const STATUSES=[{k:'לקנות',c:'st-buy',m:'●'},{k:'נקנה',c:'st-done',m:'✓'},{k:'לקבל',c:'st-gift',m:'◆'},{k:'לבדוק',c:'st-check',m:'?'},{k:'לא חובה',c:'st-opt',m:'○'}];
 const BABY_CATS=['','שינה וריהוט','עגלה ורכב','האכלה','הנקה','טיפול והחתלה','בגדים וטקסטיל','כביסה ומתכלים','משחק והתפתחות'];
 
-const S={vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -1618,26 +1636,41 @@ function listBody(rn,i){
   const edit=i!==undefined?`<button class="bare link vedit" data-row="${i}">${I.pencil}עריכת הסכום בשורה</button>`:'';
   return `<div class="vlist" data-vlist="${esc(rn)}">${note}${edit}${add}${search}${body}</div>`;
 }
+// what is left comes first; the rest folds into one line each
+const B_SEC=[{k:'לקנות',key:'buy',t:'לקנות',open:true},{k:'לקבל',key:'gift',t:'מחכים למתנה'},{k:'לבדוק',key:'check',t:'לבדוק'},{k:'נקנה',key:'done',t:'נקנו'},{k:'לא חובה',key:'opt',t:'לא חובה'}];
+function babyStats(){
+  const by=k=>S.baby.filter(b=>b.status===k),bought=by('נקנה'),buy=by('לקנות'),total=S.baby.length;
+  const fp=S.fp,fpSum=fp?(fp.items||[]).reduce((t,i)=>t+(Number(i.amount)||0),0):0;
+  return {by,bought,buy,total,bp:total?Math.round(bought.length/total*100):0,fp,fpSum,buySum:buy.reduce((t,b)=>t+(Number(b.price)||0),0),noPrice:buy.filter(b=>!has(b.price)).length};
+}
 function renderBaby(){
   seed('baby');
-  const by=k=>S.baby.filter(b=>b.status===k);
-  const bought=by('נקנה'),buy=by('לקנות');
-  const fp=S.fp,fpSum=fp?(fp.items||[]).reduce((t,i)=>t+(Number(i.amount)||0),0):0;
-  const total=S.baby.length;
-  const bp=total?Math.round(bought.length/total*100):0;
-  $('bTiles').innerHTML=`<div class="tile clay bring"><span class="col"><span class="k">נקנו</span><span class="v">${bought.length}<small>/${total}</small></span><span class="s">${bp}% מהרשימה</span></span><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fg" cx="18" cy="18" r="15.9" style="--to:${100-bp}"/></svg></div>`+
-    (fp?`<div class="tile"><span class="k">נשאר מקנייה ראשונה</span><span class="v">${ils(fp.budget-fpSum)}</span><span class="s">מתוך ${ils(fp.budget)} · מה שלא ינוצל יחזור לטבלת החסכונות של 2027</span></div>`:'')+
-    `<div class="tile"><span class="k">לקנות עם מחיר</span><span class="v">${ils(buy.reduce((t,b)=>t+(Number(b.price)||0),0))}</span><span class="s">${buy.filter(b=>!has(b.price)).length} בלי מחיר</span></div>`+
-    `<div class="tile"><span class="k">מתנות (לקבל)</span><span class="v">${by('לקבל').length}</span></div>`;
-  $('fpCard').innerHTML=`<button class="bare collapse-head" id="fpToggle" aria-expanded="${S.fpOpen}"><span class="ring" aria-hidden="true">${S.fpOpen?I.chevD:I.chevL}</span><span class="col"><b>כסף שנלקח לקנייה ראשונה</b><small class="num">${fp?(fp.items||[]).length+' שורות':'אין נתונים'}</small></span><span class="sum num">${fp?ils(fpSum):''}</span></button>
-    ${S.fpOpen&&fp?(fp.items||[]).map(i=>`<div class="rowwrap"><div class="lrow"><span class="nm">${esc(i.name)}</span><span class="leader" aria-hidden="true"></span><span class="amt num${has(i.amount)?'':' mute'}">${has(i.amount)?ils(i.amount):'בלי סכום'}</span></div></div>`).join(''):''}`;
-  $('fpToggle').onclick=()=>{S.fpOpen=!S.fpOpen;renderBaby();if(S.fpOpen)popIn($('fpCard').querySelectorAll('.rowwrap'))};
-  const counts={הכל:total};STATUSES.forEach(s=>counts[s.k]=by(s.k).length);
-  $('bFilters').innerHTML=['הכל',...STATUSES.map(s=>s.k)].map(k=>`<button class="chip cnt-chip" data-filter="${esc(k)}" aria-pressed="${k===S.filter}">${esc(k)}<span class="cnt num">${counts[k]}</span></button>`).join('');
-  const order=k=>({'לקנות':0,'לבדוק':1,'לקבל':2,'נקנה':3,'לא חובה':4}[k]??5);
-  const items=S.baby.filter(b=>S.filter==='הכל'||b.status===S.filter).sort((a,b)=>order(a.status)-order(b.status)||(a.order||0)-(b.order||0));
-  $('bList').innerHTML=items.length?items.map(b=>{const s=STATUSES.find(x=>x.k===b.status)||STATUSES[0];
-    return `<button class="bare bitem${newCls('baby',b.id)}" data-edit-baby="${esc(b.id)}">${ric(BABY_ICON[b.category]||'baby','--clay-soft')}<span class="col"><b>${esc(b.name)}</b><small>${[b.category,b.note].filter(Boolean).map(esc).join(' · ')}</small></span><span class="side"><span class="num">${has(b.price)?ils(b.price):''}</span><span class="st ${s.c}">${s.m} ${esc(b.status)}</span></span></button>`}).join(''):`<div class="emptyline" style="border-top:0">${S.baby.length?'אין פריטים בסטטוס הזה.':'הרשימה ריקה. הוסיפו את הפריט הראשון.'}</div>`;
+  const st=babyStats(),{by,bought,buy,total,bp,fp,fpSum}=st;
+  $('bHero').innerHTML=total?`<button class="bare card bhero" id="bHeroBtn" aria-label="נקנו ${bought.length} מתוך ${total}. פרטים על הקופה והמתנות">
+    <span class="ringwrap"><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fg" cx="18" cy="18" r="15.9" style="--to:${100-bp}"/></svg><span class="rv num"><b>${bp}%</b></span></span>
+    <span class="col"><b class="num">נקנו ${bought.length} מתוך ${total}</b><small class="num">${buy.length?`נשארו ${buy.length} לקנות${st.buySum?` · כ־${ils(st.buySum)}`:''}`:'אין כרגע מה לקנות'}</small>${fp?`<small class="num">בקופת הקנייה הראשונה: ${ils(fp.budget-fpSum)}</small>`:''}</span>
+    <span class="chev" aria-hidden="true">${I.chevL}</span></button>`:'';
+  if(!total){$('bSections').innerHTML='<div class="emptyline" style="border-top:0">הרשימה ריקה. הוסיפו את הפריט הראשון עם כפתור הפלוס.</div>';return}
+  const ord=(a,b)=>(a.order||0)-(b.order||0);
+  const row=b=>{const done=b.status==='נקנה';
+    return `<div class="bitem${done?' done':''}${newCls('baby',b.id)}"><button class="bare bck" data-bbuy="${esc(b.id)}" aria-pressed="${done}" aria-label="${done?'ביטול סימון נקנה':'סימון נקנה'}: ${esc(b.name)}">${I.check}</button>
+      <button class="bare bmain" data-edit-baby="${esc(b.id)}"><b>${esc(b.name)}</b><span class="bpr num${has(b.price)?'':' mute'}">${has(b.price)?ils(b.price):done?'':'בלי מחיר'}</span></button></div>`};
+  $('bSections').innerHTML=(buy.length?'':`<div class="card ball"><b>כל מה שצריך לקנות נקנה</b><small>נשאר רק לחכות למתנות ולבדוק כמה דברים.</small></div>`)+
+    B_SEC.map(sc=>{const list=by(sc.k).sort(ord);if(!list.length)return '';const open=S.bOpen[sc.key]??!!sc.open;
+      const peek=list.slice(0,2).map(b=>b.name).join(', ')+(list.length>2?` ועוד ${list.length-2}`:'');
+      return `<section class="card bsec${sc.key==='done'||sc.key==='opt'?' quiet':''}"><button class="bare bsh" data-bsec="${sc.key}" aria-expanded="${open}"><span class="t">${sc.t} <small class="num">· ${list.length}</small></span>${open?'':`<small class="peek">${esc(peek)}</small>`}<span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></button>${open?list.map(row).join(''):''}</section>`}).join('');
+}
+// the details that used to sit on top: the first-purchase money and the counts
+function babyInfoSheet(){
+  const st=babyStats(),{fp,fpSum}=st;
+  openSheet('הקנייה הראשונה והמתנות',`<div class="binfo num">
+    <div class="row"><span class="muted">נקנו</span><b>${st.bought.length} מתוך ${st.total} (${st.bp}%)</b></div>
+    <div class="row"><span class="muted">לקנות, עם מחיר</span><b>${ils(st.buySum)}</b></div>
+    ${st.noPrice?`<div class="row"><span class="muted">לקנות, בלי מחיר</span><b>${st.noPrice} פריטים</b></div>`:''}
+    <div class="row"><span class="muted">מחכים למתנה</span><b>${st.by('לקבל').length}</b></div></div>
+    ${fp?`<h3 class="sec" style="margin:0">כסף שנלקח לקנייה ראשונה</h3><div class="binfo num"><div class="row"><span class="muted">נשאר</span><b>${ils(fp.budget-fpSum)} מתוך ${ils(fp.budget)}</b></div>
+      ${(fp.items||[]).map(i=>`<div class="row"><span>${esc(i.name)}</span><span class="${has(i.amount)?'':'muted'}">${has(i.amount)?ils(i.amount):'בלי סכום'}</span></div>`).join('')}</div>
+      <p class="small muted">מה שלא ינוצל יחזור לטבלת החסכונות של 2027.</p>`:''}`);
 }
 // Grocery order: a shared `order` number per item (falls back to createdAt), so both phones see the same order
 const gKey=i=>has(i.order)?Number(i.order):(i.createdAt||0);
@@ -2157,7 +2190,6 @@ document.addEventListener('click',e=>{
   const d=e.target.closest('[data-del-var]');
   if(d){const id=d.dataset.delVar;if(S.armVar!==id){S.armVar=id;renderExp();fillAvatars();return}S.armVar=null;store.del('variable',id);return}
   if(S.armVar&&!e.target.closest('.vlist')){S.armVar=null;renderExp();fillAvatars()}
-  const f=e.target.closest('[data-filter]');if(f){S.filter=f.dataset.filter;renderBaby();popIn($('bList').children);return}
   const eb=e.target.closest('[data-edit-baby]');if(eb){babySheet(S.baby.find(b=>b.id===eb.dataset.editBaby));return}
   const se=e.target.closest('[data-saledit]');if(se){salarySheet(se.dataset.saledit);return}
   const ge=e.target.closest('[data-gedit]');if(ge){gItemSheet(S.grocery.find(g=>g.id===ge.dataset.gedit));return}
@@ -2171,7 +2203,15 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-toggle]');if(t){const it=S.grocery.find(g=>g.id===t.dataset.toggle);buzz(8);if(it)store.update('grocery',it.id,{done:!it.done});return}
 });
 $('addRow').onclick=()=>{if(!calc(S.month)){store.setMonth(S.month,{income:null,rows:[]}).then(()=>rowSheet(null));return}rowSheet(null)};
-$('bAdd').onclick=()=>babySheet(null);
+document.addEventListener('click',e=>{
+  if(e.target.closest('#bHeroBtn')){babyInfoSheet();return}
+  const bs=e.target.closest('[data-bsec]');if(bs){const k=bs.dataset.bsec,sc=B_SEC.find(x=>x.key===k);S.bOpen[k]=!(S.bOpen[k]??!!sc.open);renderBaby();
+    if(S.bOpen[k])popIn(bs.parentNode.querySelectorAll('.bitem'));return}
+  const bb=e.target.closest('[data-bbuy]');if(bb){const b=S.baby.find(x=>x.id===bb.dataset.bbuy);if(!b)return;
+    if(b.status==='נקנה'){store.update('baby',b.id,{status:'לקנות'});toast(`"${b.name}" חזר לרשימת הקניות`);return}
+    store.update('baby',b.id,{status:'נקנה'});const r=bb.getBoundingClientRect(),left=S.baby.filter(x=>x.status==='לקנות'&&x.id!==b.id).length;
+    cheer(left?`נקנה! עוד ${left} לקנות`:'כל מה שצריך לקנות נקנה!',r.left+r.width/2,r.top+r.height/2)}
+});
 $('svAdd').onclick=()=>holdingSheet(null);
 function parseQty(t){let m=t.match(/^(\d{1,3})\s+(.+)$/);if(m)return [m[2].trim(),Number(m[1])];m=t.match(/^(.+?)\s*[x×*]\s*(\d{1,3})$/i);if(m)return [m[1].trim(),Number(m[2])];return [t,1]}
 $('gForm').onsubmit=e=>{e.preventDefault();const raw=$('gName').value.trim();if(!raw)return;const [name,qty]=parseQty(raw);const data={name,done:false,priceStatus:'pending',createdAt:Date.now()};if(qty>1)data.qty=qty;if(S.uid)data.by=S.uid;store.add('grocery',data);$('gName').value='';$('gName').focus()};
@@ -2207,7 +2247,7 @@ function renderQuick(dir){
 }
 function openQuick(){Q.open=true;Q.path=[];$('qmenu').hidden=false;$('fab').setAttribute('aria-expanded','true');renderQuick()}
 function closeQuick(){if(!Q.open)return;Q.open=false;$('qmenu').hidden=true;$('fab').setAttribute('aria-expanded','false')}
-$('fab').onclick=e=>{e.stopPropagation();if(S.tab==='cal'&&!Q.open){openCalAdd();return}Q.open?closeQuick():openQuick()};
+$('fab').onclick=e=>{e.stopPropagation();if(S.tab==='cal'&&!Q.open){openCalAdd();return}if(S.tab==='baby'&&!Q.open){babySheet(null);return}Q.open?closeQuick():openQuick()};
 $('qmenu').onclick=e=>{e.stopPropagation();
   if(e.target.closest('#qBack')){Q.path.pop();renderQuick('back');return}
   const b=e.target.closest('[data-q]');if(!b)return;
@@ -2241,7 +2281,7 @@ function goTo(ref){
   if(!item){if(id)toast('הפריט כבר לא ברשימה');return}
   if(col==='variable'){if(item.month)S.month=item.month;const rn=item.row||VAR_ROW;S.openGroups['משתנות']=true;S.rowOpen[rn]=true;(S.vqs||(S.vqs={}))[rn]='';S.vOpen[rn+'|'+groupByDate([item])[0][0]]=true;renderAll();
     later(()=>{const el=sel('data-vid',id);if(el){el.scrollIntoView({block:'center',behavior:RM.matches?'auto':'smooth'});flash(el)}});return}
-  if(col==='baby'){S.filter='הכל';renderBaby();later(()=>flash(sel('data-edit-baby',id)));return}
+  if(col==='baby'){const sc=B_SEC.find(x=>x.k===item.status);if(sc)S.bOpen[sc.key]=true;renderBaby();later(()=>{const el=sel('data-edit-baby',id);if(el){el.scrollIntoView({block:'center',behavior:RM.matches?'auto':'smooth'});flash(el.parentNode)}});return}
   if(col==='grocery'){later(()=>flash(sel('data-gid',id)));return}
   if(col==='purchases'){S.openPurchase[id]=true;renderPast();later(()=>flash(sel('data-purchase',id)));return}
   if(col==='holdings'){S.openAcc[item.account||'ללא חשבון']=true;renderSav();later(()=>flash(sel('data-hold',id)))}
