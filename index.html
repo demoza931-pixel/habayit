@@ -1383,7 +1383,7 @@ function renderBaby(){
   const total=S.baby.length;
   const bp=total?Math.round(bought.length/total*100):0;
   $('bTiles').innerHTML=`<div class="tile clay bring"><span class="col"><span class="k">נקנו</span><span class="v">${bought.length}<small>/${total}</small></span><span class="s">${bp}% מהרשימה</span></span><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fg" cx="18" cy="18" r="15.9" style="--to:${100-bp}"/></svg></div>`+
-    (fp?`<div class="tile"><span class="k">נשאר מקנייה ראשונה</span><span class="v">${ils(fp.budget-fpSum)}</span><span class="s">מתוך ${ils(fp.budget)}</span></div>`:'')+
+    (fp?`<div class="tile"><span class="k">נשאר מקנייה ראשונה</span><span class="v">${ils(fp.budget-fpSum)}</span><span class="s">מתוך ${ils(fp.budget)} · מה שלא ינוצל יחזור לטבלת החסכונות של 2027</span></div>`:'')+
     `<div class="tile"><span class="k">לקנות עם מחיר</span><span class="v">${ils(buy.reduce((t,b)=>t+(Number(b.price)||0),0))}</span><span class="s">${buy.filter(b=>!has(b.price)).length} בלי מחיר</span></div>`+
     `<div class="tile"><span class="k">מתנות (לקבל)</span><span class="v">${by('לקבל').length}</span></div>`;
   $('fpCard').innerHTML=`<button class="bare collapse-head" id="fpToggle" aria-expanded="${S.fpOpen}"><span class="ring" aria-hidden="true">${S.fpOpen?I.chevD:I.chevL}</span><span class="col"><b>כסף שנלקח לקנייה ראשונה</b><small class="num">${fp?(fp.items||[]).length+' שורות':'אין נתונים'}</small></span><span class="sum num">${fp?ils(fpSum):''}</span></button>
@@ -1627,7 +1627,7 @@ function holdingSheet(h){
 const GOALS={
   cushion:{target:56400,basis:'3 חודשי הוצאות לפי תוכנית 2027 (244,398 ₪ ב־13 חודשים, כ־18,800 בחודש)'},
   equity:{gemel:70000,gemelMonthly:1000,hishtalmut:58000,hishtalmutMonthly:1800,hishtalmutYear:2030,loan:100000,loanRepay:1000},
-  girl:{tradeStart:7000,tradeMonthly:500,state:58,parent:58,grants:[['מענק לידה',2103],['מענק הורים',2000]]},
+  girl:{tradeStart:5000,firstFrom:['2026-08','2026-12'],tradeMonthly:500,state:58,parent:58,grants:[['מענק לידה',2103],['מענק הורים',2000]]},
   y2027:{flowTotal:57055,leftAfterUses:38703,taxRefund:14000,refunds:3100,rentFromApr:6000}
 };
 /* the cushion, from the 2027 tab: target = 3 months of the plan's expenses (all rows, Google to Chat included);
@@ -1664,6 +1664,7 @@ function cushionCard(nowLine,em,left,leftSum){
         <span class="alloc" aria-hidden="true">${uses.map((u,i)=>`<i style="width:${u[1]/sv.total*100}%;background:var(${cols[i]})"></i>`).join('')}</span></li>
       <li><b>דצמבר עד מרץ:</b> עודף של ${ils(R.earlySur)}. מתוכו ${ils(P.apartment.total)} להוצאות הדירה (${P.apartment.items.filter(x=>x[1]&&x[1]!=='None').map(x=>`${esc(x[0])} ${esc(String(x[1]).replace('.0',''))}`).join(', ')}), ונשארים ${ils(R.earlyLeft)} לכרית.</li>
       <li><b>אפריל עד דצמבר 2027:</b> עוד ${ils(R.lateSur)} מהעודף החודשי.${R.tight.length?` החודשים הצפופים: ${R.tight.map(m=>`${esc(mlab(m.k))} ${ils(m.surplus)}`).join(', ')}.`:''}</li>
+      <li><b>הכנסה תחיה בתוכנית:</b> ביולי עד ספטמבר 2027 ("אבטלה") היא משוערת: 75% מהמשכורות נטו של 2026, לפי חוק הביטוח הלאומי (לשונית "משכורות תחיה"). מאוקטובר 2027 זה סכום משוער, אם תחיה תחזור לעבוד, לפי כמה שהיא רוצה להרוויח.</li>
       ${R.emerg?`<li><b>שורת "קופת חירום":</b> ${Object.entries(P.emergency).map(([k,v])=>`${esc(mlab(k))} ${ils(v)}`).join(', ')}.</li>`:''}
       ${leftSum?`<li><b>מה שנשאר במסגרות החודש:</b> ${left.map(x=>`${esc(x[0])} ${ils(x[1])}`).join(', ')}. אם זה יישאר עד סוף החודש, עוד <b>${ils(leftSum)}</b> לכרית.</li>`:''}
     </ul></details>
@@ -1707,7 +1708,7 @@ function renderGoals(){
     <h3>תיק מסחר וחיסכון לכל ילד</h3>
     <div class="now num">התוכנית שלכם: הפקדה ראשונה של <b>${ils(G.girl.tradeStart)}</b> לתיק מסחר, ואחר כך <b>${ils(G.girl.tradeMonthly)}</b> בחודש. בנוסף, בחיסכון לכל ילד המדינה מפקידה ${ils(G.girl.state)} בחודש, ואתם מוסיפים עוד ${ils(G.girl.parent)} שיורדים מקצבת הילדים: ${ils(G.girl.state+G.girl.parent)} בחודש למסלול בסיכון גבוה.</div>
     <details class="more"><summary>עוד פרטים</summary><ul class="num">
-      <li><b>ההפקדה הראשונה:</b> ${G.girl.grants.map(g=>`${g[0]} ${ils(g[1])}`).join(' ו')} רשומים בטבלת החסכונות של 2027, אבל הטבלה כולה כבר מיועדת: לרכב, לגשר, לקנייה הראשונה ולהכנסה של תחיה בחופשת הלידה. כלומר ל־${ils(G.girl.tradeStart)} של ההפקדה הראשונה עוד אין מקור מסומן בגיליון.</li>
+      <li><b>ההפקדה הראשונה (${ils(G.girl.tradeStart)}):</b> מאוגוסט עד דצמבר 2026 שורת "השקעות" (1,000 ₪ בחודש) נחסכת להפקדה הזו, כרגע בתיק המסחר שלכם.${(()=>{const ks=Object.keys(S.months).filter(x=>x>=G.girl.firstFrom[0]&&x<=G.girl.firstFrom[1]).sort();const got=ks.map(x=>{const r=(S.months[x].rows||[]).find(y=>y.name==='השקעות');return r&&has(r.amount)&&!r.star?Number(r.amount):0});const sum=got.reduce((a,b)=>a+b,0);return ks.length?` לפי טבלת החודש: ${ks.map((x,n)=>`${esc(monthLabel(x))} ${ils(got[n])}`).join(', ')}, ביחד ${ils(sum)}${sum>=G.girl.tradeStart?', כלומר ההפקדה מכוסה':`, חסרים ${ils(G.girl.tradeStart-sum)}`}.`:''})()}</li>
       <li><b>ה־500 בחודש:</b> ${flow>0?(flow>=G.girl.tradeMonthly?`העודף של ${monthLabel(k)} מכסה אותם.`:`העודף של ${monthLabel(k)} (${ils(flow)}) מכסה רק חלק.`):'בחודש בלי עודף, אפשר לקחת אותם מהחיסכון בקיצוץ המנויים (155 ₪ בחודש) ומהמסגרת שנשארה בקניות.'}</li>
       <li><b>הפקדה אוטומטית:</b> הוראת קבע ביום שאחרי המשכורת, כדי שה־500 ייצאו לפני שהחודש מתחיל.</li>
     </ul></details>
