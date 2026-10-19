@@ -675,7 +675,8 @@ body{margin:0}img{max-width:100%}
 .pushcard.on{background:var(--accent-soft)}
 .pushcard .link{align-self:flex-start}
 .pinrow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 10px;margin-top:8px;padding:12px 14px;border-radius:var(--r-card);background:var(--surface);border:1px solid var(--line)}
-.pinrow .small{grid-column:1}.pinrow .pinbtns{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.pinrow .small{grid-column:1}.pinrow .biorow{grid-column:1/3;display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:8px;margin-top:6px}
+.pin-card .bio-btn{margin-top:4px;min-height:48px;font-size:15px}.pinrow .pinbtns{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 .pinlock{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;place-items:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px))}
 .pin-card{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
@@ -1266,10 +1267,12 @@ function pinEl(){
   el.innerHTML=`<div class="pin-card"><div class="brand">הבית שלנו</div><b id="pinTitle">הקוד האישי</b><small id="pinSub"></small>
     <div class="pin-dots" id="pinDots" aria-hidden="true">${'<i></i>'.repeat(PIN.len)}</div><div class="pin-err" id="pinErr" role="status" aria-live="polite"></div>
     <div class="pin-pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="bare" data-pin="${n}">${n}</button>`).join('')}<button class="bare pin-x" id="pinCancel"></button><button class="bare" data-pin="0">0</button><button class="bare pin-back" data-pin="back" aria-label="מחיקה">⌫</button></div>
+    <button class="btn ghost bio-btn" id="pinBio" hidden>זיהוי פנים / טביעת אצבע</button>
     <button class="bare link" id="pinForgot">שכחתי את הקוד</button></div>`;
   document.body.appendChild(el);
   el.addEventListener('click',e=>{const b=e.target.closest('[data-pin]');if(b)pinKey(b.dataset.pin)});
-  $('pinForgot').onclick=()=>{lsSet('hb_pin',null);PIN.locked=false;el.hidden=true;document.body.classList.remove('locked');logout('כדי לאפס את הקוד, הדביקו שוב את המפתח.')};
+  $('pinBio').onclick=()=>bioUnlock();
+  $('pinForgot').onclick=()=>{lsSet('hb_pin',null);lsSet('hb_bio',null);PIN.locked=false;el.hidden=true;document.body.classList.remove('locked');logout('כדי לאפס את הקוד, הדביקו שוב את המפתח.')};
   $('pinCancel').onclick=()=>{if(PIN.mode!=='unlock'){PIN.mode=null;el.hidden=true;document.body.classList.remove('locked')}};
   document.addEventListener('keydown',e=>{if(el.hidden)return;if(/^\d$/.test(e.key))pinKey(e.key);else if(e.key==='Backspace')pinKey('back')});
   return el;
@@ -1280,7 +1283,8 @@ function pinShow(mode){
   $('pinTitle').textContent=mode==='unlock'?'הקוד האישי':'קוד אישי חדש';
   $('pinCancel').textContent=mode==='unlock'?'':'ביטול';$('pinForgot').hidden=mode!=='unlock';
   $('pinErr').textContent='';pinDots();el.hidden=false;
-  if(mode==='unlock'){PIN.locked=true;document.body.classList.add('locked')}
+  $('pinBio').hidden=!(mode==='unlock'&&bioId());
+  if(mode==='unlock'){PIN.locked=true;document.body.classList.add('locked');if(bioId())setTimeout(()=>bioUnlock(),250)}
 }
 function pinDots(){[...$('pinDots').children].forEach((d,i)=>d.classList.toggle('on',i<PIN.entry.length))}
 async function pinKey(k){
@@ -1299,7 +1303,7 @@ async function pinKey(k){
   const saved=pinSaved();
   if(saved&&await pinHash(code,saved.salt)===saved.hash){PIN.fails=0;PIN.locked=false;PIN.mode=null;$('pinLock').hidden=true;document.body.classList.remove('locked');return}
   PIN.fails++;
-  if(PIN.fails>=5){lsSet('hb_pin',null);PIN.fails=0;PIN.locked=false;$('pinLock').hidden=true;document.body.classList.remove('locked');logout('5 ניסיונות שגויים. כדי להיכנס שוב, הדביקו את המפתח.');return}
+  if(PIN.fails>=5){lsSet('hb_pin',null);lsSet('hb_bio',null);PIN.fails=0;PIN.locked=false;$('pinLock').hidden=true;document.body.classList.remove('locked');logout('5 ניסיונות שגויים. כדי להיכנס שוב, הדביקו את המפתח.');return}
   pinWrong(`קוד שגוי. נשארו ${5-PIN.fails} ניסיונות`);
 }
 function pinWrong(msg){PIN.entry='';$('pinErr').textContent=msg;const d=$('pinDots');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake');setTimeout(pinDots,250);if(navigator.vibrate)navigator.vibrate([30,40,30])}
@@ -1308,12 +1312,43 @@ document.addEventListener('visibilitychange',()=>{
   if(document.hidden){PIN.hiddenAt=Date.now();return}
   if(PIN.hiddenAt&&Date.now()-PIN.hiddenAt>60000&&!PIN.locked)pinLockNow();
 });
+/* Face ID / fingerprint: a platform passkey on this phone (WebAuthn). Only its id is kept here; the face or finger
+   never leaves the phone's own secure hardware. It opens the same lock as the code, and the code stays as the fallback. */
+const bioOK=()=>!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext);
+const bioId=()=>lsGet('hb_bio');
+const b64e=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+async function bioAvailable(){try{return bioOK()&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()}catch(_){return false}}
+async function bioRegister(){
+  try{
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:'הבית שלנו',id:location.hostname},
+      user:{id:new TextEncoder().encode(G.login||'me'),name:G.login||'me',displayName:whoName(G.login)||'הבית שלנו'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000,attestation:'none'}});
+    if(!cred)return false;lsSet('hb_bio',b64e(cred.rawId));toast('זיהוי פנים / טביעת אצבע הופעל');return true;
+  }catch(e){toast('לא הצלחנו להפעיל זיהוי. אפשר להמשיך עם הקוד');return false}
+}
+async function bioUnlock(){
+  const id=bioId();if(!id)return false;
+  try{
+    const raw=Uint8Array.from(atob(id.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-id.length%4)%4)),c=>c.charCodeAt(0));
+    const a=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rpId:location.hostname,
+      allowCredentials:[{type:'public-key',id:raw}],userVerification:'required',timeout:60000}});
+    if(a&&a.response&&new Uint8Array(a.response.authenticatorData)[32]&0x04){PIN.fails=0;PIN.locked=false;PIN.mode=null;$('pinLock').hidden=true;document.body.classList.remove('locked');return true}
+  }catch(_){}
+  return false;
+}
 function renderPinRow(){
   const el=$('pinRow');if(!el)return;const on=!!pinSaved();
   el.innerHTML=`<span class="lbl">קוד אישי לכניסה</span><span class="small muted">${on?'פעיל בטלפון הזה':'לא מוגדר'}</span>
-    <span class="pinbtns"><button class="bare link" id="pinSet">${on?'שינוי קוד':'הגדרת קוד'}</button>${on?'<button class="bare link" id="pinOff">ביטול הקוד</button>':''}</span>`;
+    <span class="pinbtns"><button class="bare link" id="pinSet">${on?'שינוי קוד':'הגדרת קוד'}</button>${on?'<button class="bare link" id="pinOff">ביטול הקוד</button>':''}</span>
+    ${on?`<span class="biorow" id="bioRow"></span>`:''}`;
+  if(on)bioAvailable().then(ok=>{const b=$('bioRow');if(!b)return;
+    if(!ok){b.innerHTML='<span class="small muted">הטלפון הזה לא תומך בזיהוי פנים או טביעת אצבע באפליקציה</span>';return}
+    b.innerHTML=bioId()?'<span class="small muted">✓ זיהוי פנים / טביעת אצבע פעיל</span><button class="bare link" id="bioOff">כיבוי</button>':'<button class="bare link" id="bioOn">הפעלת זיהוי פנים / טביעת אצבע</button>';
+    const on2=$('bioOn'),off2=$('bioOff');if(on2)on2.onclick=async()=>{await bioRegister();renderPinRow()};if(off2)off2.onclick=()=>{lsSet('hb_bio',null);renderPinRow()}});
   $('pinSet').onclick=()=>pinShow('set');
-  const off=$('pinOff');if(off)off.onclick=()=>{lsSet('hb_pin',null);renderPinRow();toast('הקוד בוטל')};
+  const off=$('pinOff');if(off)off.onclick=()=>{lsSet('hb_pin',null);lsSet('hb_bio',null);renderPinRow();toast('הקוד בוטל')};
 }
 
 async function boot(){
