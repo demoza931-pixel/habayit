@@ -481,6 +481,10 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .evacts .btn2{min-height:46px;border-radius:14px;border:1px solid var(--line);font-weight:700;background:var(--surface-2)}
 .evacts .btn2.danger{color:var(--neg)}.evacts .btn2.arm{background:var(--neg);color:#fff;border-color:var(--neg)}
 #calQuick .chip{min-height:38px;font-size:13px}
+#calForm .cam{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);cursor:pointer}
+.ocrbox{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);font-size:13px}
+.ocrbox.warn{background:var(--warn-soft)}.ocrbox pre{white-space:pre-wrap;font:inherit;font-size:12px;max-height:160px;overflow:auto;margin:6px 0 0;color:var(--ink-2)}
+.ocrbox summary{cursor:pointer;color:var(--ink-2)}
 @media (prefers-reduced-motion:no-preference){.aitem{animation:popin .3s ease-out backwards;animation-delay:calc(var(--i,0)*35ms);transition:transform .12s}}
 @media (prefers-reduced-motion:no-preference){.ev{animation:popin .3s ease-out backwards}.dchip{transition:background-color .2s,transform .15s}.dchip:active{transform:scale(.95)}}
 .salhd{display:flex;justify-content:space-between;align-items:center;padding:0 4px 6px}.salhd b{font-size:18px}
@@ -922,8 +926,9 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 <div id="calSheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="calShT"><div class="in-sheet">
   <span class="handle" aria-hidden="true"></span>
   <div class="sh"><h2 id="calShT">אירוע חדש</h2><button class="bare close" id="calShClose" aria-label="סגירה"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-  <form class="qadd" id="calForm"><input class="in" id="calText" placeholder="למשל: תספורת 18:00" autocomplete="off" aria-label="מה ומתי"><button class="sqbtn" type="submit" aria-label="הוספה"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></form>
+  <form class="qadd" id="calForm"><input class="in" id="calText" placeholder="למשל: תספורת 18:00" autocomplete="off" aria-label="מה ומתי"><label class="sqbtn cam" aria-label="אירוע מתמונה של הזמנה או זימון"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><input type="file" id="calImg" accept="image/*" hidden></label><button class="sqbtn" type="submit" aria-label="הוספה"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></form>
   <div class="qprev small" id="calPrev" aria-live="polite"></div>
+  <div id="calOcr"></div>
   <div class="chips calwho" id="calWho" role="radiogroup" aria-label="לאיזה יומן"></div>
   <div id="calQuick"></div>
 </div></div>
@@ -2390,13 +2395,13 @@ function renderCal(){
   $('calText').placeholder=S.calMove?'יום ושעה חדשים, למשל: חמישי 19:00':`ב${HDAYS[sel.getDay()]} ${dm(sel)}? למשל: תספורת 18:00`;
 }
 function openCalAdd(text,o={}){
-  S.calMove=o.move||null;$('calShT').textContent=S.calMove?'העברת אירוע':'אירוע חדש';
+  S.calPlace='';$('calOcr').innerHTML='';S.calMove=o.move||null;$('calShT').textContent=S.calMove?'העברת אירוע':'אירוע חדש';
   S.calTarget=o.target||'shared';
   renderCal();$('calBg').hidden=false;$('calSheet').hidden=false;
   $('calText').value=text||'';$('calText').dispatchEvent(new Event('input'));
   setTimeout(()=>{$('calText').focus();const v=$('calText').value;$('calText').setSelectionRange(v.length,v.length)},60);
 }
-function closeCalAdd(){$('calSheet').hidden=true;$('calBg').hidden=true;S.calMove=null}
+function closeCalAdd(){$('calSheet').hidden=true;$('calBg').hidden=true;S.calMove=null;S.calPlace='';$('calOcr').innerHTML=''}
 $('calBg').onclick=closeCalAdd;$('calShClose').onclick=closeCalAdd;
 function openCalEvent(e){
   const when=e.allDay?`${HDAYS[e.s.getDay()]} ${dm(e.s)} · כל היום`:`${HDAYS[e.s.getDay()]} ${dm(e.s)} · ${rng(e.s,e.e)}`;
@@ -2406,11 +2411,62 @@ function openCalEvent(e){
     ${e.place?`<div class="row"><span class="muted">איפה</span><b>${esc(e.place)}</b></div>`:''}
     ${e.pending?'<p class="small muted">נשלח ליומן. יופיע שם אחרי הסנכרון הבא (עד 10 דקות).</p>':`<div class="evacts"><button class="bare btn2" data-calmove="${esc(e.id)}">העברה ליום אחר</button><button class="bare btn2 danger" data-caldel="${esc(e.id)}" data-calw="${e.who}">מחיקה</button></div>`}</div>`);
 }
+/* ---------- an event from a photo of an invitation: the text is read on the phone (Tesseract, Hebrew and English) ---------- */
+const HMONTHS={'ינואר':1,'פברואר':2,'מרץ':3,'מרס':3,'אפריל':4,'מאי':5,'יוני':6,'יולי':7,'אוגוסט':8,'ספטמבר':9,'אוקטובר':10,'נובמבר':11,'דצמבר':12};
+const EV_WORDS=/(party|birthday|meeting|wedding|appointment|concert|חתונ|בר[ -]?מצו|בת[ -]?מצו|ברית|יום הולדת|יומולדת|אירוסין|חינה|שבע ברכות|אסיפ|ישיב|פגיש|תור |בדיק|זימון|הופע|הצג|כנס|מסיב|טקס|השק|סדנ|הרצא|ערב |חגיג|מפגש|ראיון|בייבי|שמחת)/;
+const PLACE_WORDS=/(מקום|כתובת|אולם|גן אירועים|גני |בית כנסת|רח['׳]|רחוב|מרכז|קומה|מתחם|לופט|וילה|מסעדת|ב?קניון)/;
+function eventFromText(raw){
+  const txt=String(raw||'').replace(/[|_~=*•●]+/g,' ').replace(/[ \t]+/g,' ');
+  const lines=txt.split(/\n+/).map(l=>l.trim()).filter(l=>l.length>1);
+  const all=lines.join(' \n ');
+  let d=null,mo=null,y=null,m;
+  if((m=all.match(/(?:^|[^\d:])(\d{1,2})\s?[\/.\-]\s?(\d{1,2})(?:\s?[\/.\-]\s?(\d{2,4}))?(?![\d:])/))&&Number(m[2])>=1&&Number(m[2])<=12&&Number(m[1])<=31){d=Number(m[1]);mo=Number(m[2]);y=m[3]?Number(m[3]):null}
+  else if((m=all.match(new RegExp('(\\d{1,2})\\s*(?:ב|ל|-)?\\s*('+Object.keys(HMONTHS).join('|')+')(?:\\s*,?\\s*(\\d{4}))?')))){d=Number(m[1]);mo=HMONTHS[m[2]];y=m[3]?Number(m[3]):null}
+  if(y&&y<100)y+=2000;
+  // the time: one after "בשעה"/"קבלת פנים" first, else the first hh:mm in the text
+  let tm=all.match(/(?:בשעה|שעה|קבלת פנים|התכנסות|החל מ-?|מ-)\s*:?\s*(\d{1,2})[:.](\d{2})/)||all.match(/(?:^|[^\d\/.])(\d{1,2}):(\d{2})(?!\d)/);
+  const time=tm&&Number(tm[1])<24&&Number(tm[2])<60?`${String(tm[1]).padStart(2,'0')}:${tm[2]}`:'';
+  const clean=l=>l.replace(/\d{1,2}\s?[\/.\-]\s?\d{1,2}(?:\s?[\/.\-]\s?\d{2,4})?/g,' ').replace(/\d{1,2}:\d{2}/g,' ').replace(/(בשעה|ביום|יום|שעה)\s*$/,'').replace(/[:,\-–]+\s*$/,'').replace(/\s+/g,' ').trim();
+  const heb=l=>(l.match(/[א-תa-zA-Z]/g)||[]).length,generic=/^(זימון|הזמנה|מוזמנים|הנכם מוזמנים|אנו מתכבדים)/;
+  const placeLine=lines.find(l=>PLACE_WORDS.test(l)&&heb(l)>=3);
+  const place=placeLine?clean(placeLine).replace(/^(מקום|כתובת)\s*:?\s*/,'').slice(0,70):'';
+  // the most specific line: an event word that is not just "you're invited" / "an appointment"
+  const evl=lines.filter(l=>EV_WORDS.test(l)&&heb(clean(l))>=3&&l!==placeLine);
+  const tl=evl.find(l=>!generic.test(l))||evl[0]||lines.find(l=>heb(clean(l))>=4&&l!==placeLine&&!generic.test(l));
+  let title=tl?clean(tl).replace(/^(הנכם\s)?מוזמנים\s*ל-?/,'').replace(/^ל(?=(חתונ|בר |בת |ברית|אסיפ|מסיב|יום הולדת|ערב|טקס|חגיג))/,'').replace(/^(שתתקיים|שייערך|אשר)\s/,'').trim():'';
+  // "חתונת ילדינו" + the names on the next line
+  const ti=lines.indexOf(tl);
+  if(/(ילדינו|בננו|בתנו|נכדנו|נכדתנו)$/.test(title)&&lines[ti+1]&&heb(lines[ti+1])>=3&&lines[ti+1].length<=30&&!/\d/.test(lines[ti+1]))title=title.replace(/\s(ילדינו|בננו|בתנו|נכדנו|נכדתנו)$/,'')+' '+lines[ti+1];
+  if(title.length>45)title=title.slice(0,45).replace(/\s\S*$/,'');
+  const when=d&&mo?`${d}/${mo}${y?'/'+y:''}`:'';
+  return {title,when,time,place,line:[title||'אירוע',when,time].filter(Boolean).join(' '),found:!!(d||time)};
+}
+let tessP=null;
+const loadTess=()=>tessP||(tessP=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';sc.onload=()=>ok(window.Tesseract);sc.onerror=()=>{tessP=null;no(new Error('load'))};document.head.appendChild(sc)}));
+// big phone photos are scaled down first: faster, and the text reads just as well
+function shrinkImage(file,max=1800){return new Promise(ok=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+  const g=c.getContext('2d');g.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>ok(b||file),'image/jpeg',.9)};im.onerror=()=>{URL.revokeObjectURL(u);ok(file)};im.src=u})}
+$('calImg').addEventListener('change',async()=>{
+  const f=$('calImg').files&&$('calImg').files[0];$('calImg').value='';if(!f)return;
+  const say=t=>{$('calPrev').textContent=t};
+  say('טוען את קורא הטקסט (בפעם הראשונה זה לוקח קצת זמן)…');$('calOcr').innerHTML='';
+  try{
+    const T=await loadTess(),img=await shrinkImage(f);
+    const r=await T.recognize(img,'heb+eng',{logger:x=>{if(x.status==='recognizing text')say(`קורא את התמונה… ${Math.round((x.progress||0)*100)}%`);else if(/load|init/.test(x.status||''))say('מכין את קורא הטקסט…')}});
+    const raw=(r&&r.data&&r.data.text||'').trim();
+    if(!raw){say('לא נמצא טקסט בתמונה. אפשר לנסות תמונה חדה יותר, או לכתוב את האירוע.');return}
+    const ev=eventFromText(raw);S.calPlace=ev.place||'';
+    $('calText').value=ev.line;$('calText').dispatchEvent(new Event('input'));
+    $('calOcr').innerHTML=`<div class="ocrbox${ev.found?'':' warn'}"><b>${ev.found?'מהתמונה, כדאי לבדוק לפני השליחה':'לא מצאתי תאריך או שעה בתמונה. אפשר להשלים בשורה למעלה'}</b>${ev.place?`<span>מקום: ${esc(ev.place)} <button type="button" class="bare link" data-ocrplace>הסרה</button></span>`:''}<details><summary>כל הטקסט שזוהה</summary><pre dir="auto">${esc(raw.slice(0,1500))}</pre></details></div>`;
+    $('calText').focus();buzz(10);
+  }catch(e){say(String(e&&e.message)==='load'?'אין חיבור לטעינת קורא הטקסט. נסו שוב כשיש אינטרנט.':'לא הצלחתי לקרוא את התמונה. אפשר לנסות שוב או לכתוב את האירוע.')}
+});
+document.addEventListener('click',e=>{if(e.target.closest('[data-ocrplace]')){S.calPlace='';const b=e.target.closest('.ocrbox span');if(b)b.remove();$('calText').dispatchEvent(new Event('input'))}});
 const calTargetName=()=>(S.calTarget||'shared')==='shared'?'ליומן המשותף':'ליומן של '+WHO[S.calTarget].n;
 $('calText').addEventListener('input',()=>{const v=$('calText').value.trim();if(!v){$('calPrev').textContent='';return}const p=parseEvent(v,S.calDay&&new Date(S.calDay+'T00:00'));
-  $('calPrev').innerHTML=p.title?`ייכנס ${calTargetName()}: <b>${esc(p.title)}</b> · ${esc(whenText(p))}`:'כתבו מה ומתי'});
+  $('calPrev').innerHTML=p.title?`ייכנס ${calTargetName()}: <b>${esc(p.title)}</b> · ${esc(whenText(p))}${S.calPlace?' · '+esc(S.calPlace):''}`:'כתבו מה ומתי'});
 $('calForm').onsubmit=e=>{e.preventDefault();const v=$('calText').value.trim();if(!v)return;const p=parseEvent(v,S.calDay&&new Date(S.calDay+'T00:00'));if(!p.title){toast('כתבו מה האירוע');return}
-  const data={op:'add',target:S.calTarget||'shared',title:p.title,start:p.start,end:p.end,allDay:p.allDay,status:'pending',createdAt:Date.now()};if(S.uid)data.by=S.uid;
+  const data={op:'add',target:S.calTarget||'shared',title:p.title,start:p.start,end:p.end,allDay:p.allDay,status:'pending',createdAt:Date.now()};if(S.uid)data.by=S.uid;if(S.calPlace)data.place=S.calPlace;
   const where=calTargetName(),mv=S.calMove;store.add('calreq',data);
   if(mv)store.add('calreq',{op:'delete',target:mv.w,eventId:mv.id,title:mv.title,status:'pending',createdAt:Date.now()});
   $('calText').value='';$('calPrev').textContent='';S.calDay=dkey(p.s);closeCalAdd();renderCal();buzz(10);toast(mv?'האירוע יועבר '+where.replace('ל','ב',1):'נשלח '+where)};
