@@ -94,7 +94,7 @@ h2.sec{margin:4px 0 0;font:700 18px var(--font-display)}
 .vlist{border-top:1px dashed var(--line);background:var(--surface)}
 .vadd{display:flex;gap:8px;padding:10px 12px}.vadd .amountbox{flex:none;width:110px;height:46px;padding:0 10px}.vadd .amountbox input{font-size:17px}
 .vadd .in{flex:1;min-width:0;height:46px;font-size:15px}.vadd .sqbtn{width:46px;height:46px}
-.vnote{padding:8px 16px 0}.rowwrap.cash .nm{flex:none}
+.vnote{padding:8px 16px 0}.vedit{display:flex;align-items:center;gap:6px;margin:10px 16px 0;font-size:13px}.vedit svg{width:15px;height:15px}.rowwrap.cash .nm{flex:none}
 .tag-other{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:999px;background:var(--other-soft);color:var(--other);font:600 11px var(--font-body);align-self:center;white-space:nowrap}
 .tag-other svg{width:11px;height:11px;stroke-width:2.6}
 .detail{display:flex;flex-direction:column;gap:6px;padding:0 16px 12px;margin-top:-4px}
@@ -818,7 +818,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
     <div id="hSummary" class="totals">
       <div class="t1"><span>סה"כ הוצאות</span><span class="num" id="hTotal"></span></div>
       <div class="t2" id="hStarTotal"></div>
-      <div class="note">לחיצה על שורה פותחת עריכה. ב"הוצאות החודש", לחיצה על "פירוט" פותחת את הקניות של השורה.</div>
+      <div class="note">לחיצה על שורה פותחת עריכה. ב"הוצאות החודש", לחיצה על השורה פותחת את הקניות שלה, ומשם אפשר גם לערוך את הסכום.</div>
     </div>
     <button class="btn ghost block" id="addRow">הוספת שורה</button>
   </section>
@@ -1503,16 +1503,17 @@ function rowHtml(r,i){
   const amt=has(r.amount)?`<span class="amt num${r.star?' mute':''}">${ils(r.amount)}</span>`:`<span class="amt mute">${r.star?'*':'—'}</span>`;
   let det='';
   const vs=monthVar(S.month,r.name);
-  if(listNames().includes(r.name)){
+  const isList=listNames().includes(r.name);
+  if(isList){
     const sum=varSum(vs),rv=has(r.amount)?Number(r.amount):null,over=rv!==null&&sum>rv,open=!!S.rowOpen[r.name];
     det=`<button class="bare detail vtog" data-vopen="${esc(r.name)}" aria-expanded="${open}"><div class="dl num"><span class="muted">${vs.length?`פירוט: ${ils(sum)} ב־${vs.length} פריטים`:'פירוט · עוד אין פריטים, אפשר להוסיף'}</span><span class="vtr">${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל</span>`:rv&&vs.length?`<span class="muted">נשארו ${fmt(rv-sum)}</span>`:''}<span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></span></div>
-      ${rv&&vs.length?`<span class="minibar${over?' over':''}" aria-hidden="true">${over?'':`<i style="width:${Math.min(100,sum/rv*100)}%"></i>`}</span>`:''}</button>${open?listBody(r.name):''}`;
+      ${rv&&vs.length?`<span class="minibar${over?' over':''}" aria-hidden="true">${over?'':`<i style="width:${Math.min(100,sum/rv*100)}%"></i>`}</span>`:''}</button>${open?listBody(r.name,i):''}`;
   }else if(vs.length){
     const sum=varSum(vs),rv=has(r.amount)?Number(r.amount):null,over=rv!==null&&sum>rv;
     det=`<div class="detail"><div class="dl num"><span class="muted">פירוט: ${ils(sum)} ב־${vs.length} פריטים</span>${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל</span>`:''}</div>
       ${rv?`<span class="minibar${over?' over':''}" aria-hidden="true">${over?'':`<i style="width:${Math.min(100,sum/rv*100)}%"></i>`}</span>`:''}</div>`;
   }
-  return `<div class="rowwrap"><button class="bare lrow" data-row="${i}">${ric(r.name,GROUP_TINT[r.group])}<span class="nm">${esc(label(r.name))}</span>${r.star?`<span class="tag-other">${I.out}חשבון אחר</span>`:''}${rowTrend(r)}<span class="leader" aria-hidden="true"></span>${amt}</button>${det}</div>`;
+  return `<div class="rowwrap${isList?' haslist':''}"><button class="bare lrow" ${isList?`data-vopen="${esc(r.name)}" aria-expanded="${!!S.rowOpen[r.name]}" aria-label="${esc(label(r.name))}: פתיחת הפירוט"`:`data-row="${i}"`}>${ric(r.name,GROUP_TINT[r.group])}<span class="nm">${esc(label(r.name))}</span>${r.star?`<span class="tag-other">${I.out}חשבון אחר</span>`:''}${rowTrend(r)}<span class="leader" aria-hidden="true"></span>${amt}</button>${det}</div>`;
 }
 const GROUPS=['קבועות','חסכונות','משתנות'];
 const GROUP_TITLE={'קבועות':'הוצאות קבועות','חסכונות':'חסכונות','משתנות':'הוצאות החודש'};
@@ -1600,7 +1601,7 @@ function cashHtml(){
     <button class="bare detail vtog" data-vopen="${CASH}" aria-expanded="${open}"><div class="dl num"><span class="muted">${vs.length?`פירוט: ${vs.length} פריטים`:'פירוט · עוד אין פריטים, אפשר להוסיף'}</span><span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></div></button>${open?listBody(CASH):''}</div>`;
 }
 // one list: a quick add on top, then the items by date (the same breakdown the משתנות tab had)
-function listBody(rn){
+function listBody(rn,i){
   seed('variable');
   const L=listInfo(rn,calc(S.month)),q=(S.vqs||{})[rn]||'';
   const add=`<form class="vadd" data-vadd="${esc(rn)}"><div class="amountbox"><input class="num" name="a" inputmode="decimal" placeholder="0" aria-label="סכום" autocomplete="off"><span>₪</span></div><input class="in" name="n" placeholder="על מה?" aria-label="על מה" autocomplete="off"><button class="sqbtn" type="submit" aria-label="הוספה ל${esc(label(rn))}"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></form>`;
@@ -1614,7 +1615,8 @@ function listBody(rn){
         <span class="amt num${v.star||!has(v.amount)?' mute':''}">${has(v.amount)?ils(v.amount):'בלי סכום'}</span>
         <button class="bare del${armed?' arm':''}" data-del-var="${esc(v.id)}" aria-label="${armed?'אישור מחיקה':'מחיקה'}">${armed?'למחוק?':I.trash}</button></div>`}).join(''):'')}).join('')||'<div class="emptyline">לא נמצאו פריטים.</div>'
     :'<div class="emptyline">עוד אין פריטים ברשימה הזו החודש.</div>';
-  return `<div class="vlist" data-vlist="${esc(rn)}">${note}${add}${search}${body}</div>`;
+  const edit=i!==undefined?`<button class="bare link vedit" data-row="${i}">${I.pencil}עריכת הסכום בשורה</button>`:'';
+  return `<div class="vlist" data-vlist="${esc(rn)}">${note}${edit}${add}${search}${body}</div>`;
 }
 function renderBaby(){
   seed('baby');
