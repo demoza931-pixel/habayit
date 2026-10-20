@@ -686,6 +686,24 @@ body.noscroll{overflow:hidden}
 .sgwhy{align-self:flex-start;font-size:13px;min-height:32px}
 .sgwhybox{display:flex;flex-direction:column;gap:6px;font-size:13px;padding:10px 12px;border-radius:12px;background:var(--surface)}
 .sgparts{display:flex;flex-wrap:wrap;gap:6px}.sgparts i{font-style:normal;padding:2px 8px;border-radius:999px;background:var(--surface-2);font-size:12px}
+.cmdbar{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 6px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.cmdbar>svg{width:20px;height:20px;flex:none;fill:var(--accent);margin-inline-start:6px}
+.cmdbar input{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:15px;color:var(--ink);padding:8px 0;outline:none}
+.cmdbar button{width:36px;height:36px;border-radius:50%;background:var(--accent);display:grid;place-items:center;flex:none}
+.cmdbar button svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.cmdbar:focus-within{border-color:var(--accent)}
+.cmdask{font-size:14px;color:var(--ink-2);margin:-4px 0 4px}.cmdask q{color:var(--ink)}
+.cmdsteps{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.cmdsteps li{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:var(--r-card);background:var(--surface);border:1px solid var(--line)}
+.cmdsteps li>b{font-size:15px}.cmdsteps .tsrow{gap:8px}
+.cmdsteps label.ck{display:flex;align-items:center;gap:8px;font-size:14px}
+.cmdnote{font-size:13px;color:var(--ink-2)}
+.tdlearn{align-self:center;margin-top:4px;font-size:14px}
+.lrncard{display:flex;flex-direction:column;gap:4px;text-align:start;padding:16px;width:100%}
+.lrnsec{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}.lrnsec>h3{margin:0;font-size:15px}
+.lrnrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:14px}
+.lrnrow .col{min-width:0}.lrnrow small{display:block;color:var(--ink-2);font-size:12px}
+.lrnrow .chips{flex:none}.lrnrow .chip{font-size:12px;padding:0 10px;min-height:34px}
 .sgundo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-radius:var(--r-card);background:var(--surface);border:1px dashed var(--line);font-size:14px}
 .tdsec{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .tdrange{display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--surface-2)}
@@ -1034,12 +1052,16 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   <!-- TODAY: "היום שלנו" -->
   <section class="tab" id="t-today" hidden>
     <div class="tdhead"><div class="col"><b id="tdGreet" class="ptitle"></b><small id="tdDate" class="muted"></small></div></div>
+    <form class="cmdbar" id="cmdForm" autocomplete="off"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>
+      <input id="cmdText" enterkeyhint="send" placeholder="מה לעשות? למשל: קנינו שידה ב-1,400" aria-label="מה לעשות"><button class="bare" id="cmdGo" aria-label="המשך"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button></form>
+    <div id="cmdUndo"></div>
     <div id="tdSugg"></div>
     <div class="tdsec"><h2 class="sec" id="tdEvTitle">היום שלכם</h2><div class="tdrange" role="group" aria-label="טווח"><button class="bare" data-tdrange="day">היום</button><button class="bare" data-tdrange="week">השבוע</button></div></div>
     <section class="card tdlist" id="tdEvents"></section>
     <div class="tdsec"><h2 class="sec">מקדמים יחד</h2><button class="bare link" data-tdtask="new">+ משימה</button></div>
     <section class="card tdlist" id="tdTasks"></section>
     <div class="tdstatus" id="tdStatus"></div>
+    <button class="bare link tdlearn" data-learned>מה האפליקציה למדה עלינו</button>
   </section>
 
   <section class="tab" id="t-home">
@@ -1135,6 +1157,8 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
     <h2 class="sec" style="margin-top:8px">מה כדאי לדעת</h2>
     <div class="small muted">מחושב מהנתונים באפליקציה בכל פעם שהם משתנים.</div>
     <div id="iCards" style="display:flex;flex-direction:column;gap:12px"></div>
+    <h2 class="sec" style="margin-top:8px">ההעדפות שלכם</h2>
+    <button class="bare card lrncard" data-learned><b>מה האפליקציה למדה עלינו</b><span class="small muted">הצעות שהסתרתם, סוגי הצעות, מוצרים קבועים, וכמה האפליקציה עושה לבד. אפשר לשנות ולמחוק כל דבר.</span></button>
     <div class="pinrow" id="pinRow"></div>
     <form class="field" id="nickForm" style="margin-top:8px"><label class="lbl" for="nickIn">השם שלי בהתראות</label><div class="addline"><input class="in" id="nickIn" maxlength="20" autocomplete="off" placeholder="השם שבן/בת הזוג יראו"><button class="btn" type="submit">שמירה</button></div></form>
     <h2 class="sec" style="margin-top:8px">סנכרון עם הגיליון</h2>
@@ -1191,7 +1215,121 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   </form>
 </div>
 
-<script>/* ---------- the shopping list helpers: pure functions, no DOM ----------
+<script>/* ---------- free text in Hebrew -> a plan of safe actions (pure, no DOM, no language model) ----------
+   CMD.parse(text, ctx) reads a sentence such as
+     "קנינו שידה ב-1,400 שקל, תסמנו שנקנתה ותוסיפו להוצאות"   "תוסיפו לקניות חלב 2 וביצים"
+     "הוצאתי 120 על אוכל בחוץ"   "שילמנו 300 במזומן על אירוע"   "תזכירו לנו לתקן את הברז עד חמישי"
+     "תקבעו ארוחה אצל ההורים בשישי 19:00"
+   and returns {kind, actions, missing, choices, note}. Nothing runs here: the app shows the plan, asks only for
+   what is missing, and runs it after a tap. Amounts are taken exactly as written (no rounding, no guessing).
+   ctx: {baby:[{id, name, status, price}], rows:{food, shop, var, cash}} */
+const CMD = (() => {
+  const clean = s => String(s || '').replace(/\s+/g, ' ').trim();
+  const PREF = /^[הובלשמכ]/;
+  const words = s => clean(s).split(/[\s,.;:!?״"'()\-–]+/).filter(Boolean);
+  const base = w => w.length > 3 && PREF.test(w) ? w.slice(1) : w;
+
+  // an amount written with a currency word, or right after "ב-" / "על סך"; "1,400" and "1400" are the same
+  function amount(t) {
+    const m = t.match(/(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(?:ש["״]?ח|שקל(?:ים)?|₪)/) || t.match(/(?:ב-?|על סך\s|בסך\s)(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)(?!\s*[:/.]\d)/);
+    return m ? Number(m[1].replace(/,/g, '')) : null;
+  }
+  // after "הוצאתי / שילמנו / קנינו" a bare number is the amount too ("הוצאתי 120 על …"); a time or a date is not
+  const money = t => { const a = amount(t); if (a !== null) return a; const m = t.match(/(?:^|\s)(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)(?=\s|$)/); return m ? Number(m[1].replace(/,/g, '')) : null; };
+
+  // the baby items the sentence names: every word of the item (ignoring ה/ו/ב… at the start) appears in the text
+  function babyMatches(t, items) {
+    const tw = new Set(words(t).flatMap(w => [w, base(w)]));
+    const scored = (items || []).map(b => {
+      const nw = words(b.name).filter(w => w.length > 1);
+      const hit = nw.filter(w => tw.has(w) || tw.has(base(w))).length;
+      return { b, hit, all: nw.length && hit === nw.length, first: nw.length && (tw.has(nw[0]) || tw.has(base(nw[0]))) };
+    }).filter(x => x.first);
+    if (!scored.length) return [];
+    const full = scored.filter(x => x.all);
+    const pool = full.length ? full : scored;
+    const best = Math.max(...pool.map(x => x.hit));
+    // "מוניטור" fits both "מוניטור" and "מוניטור נשימה": same number of words matched -> ask which one
+    return scored.filter(x => x.hit === best).map(x => x.b);
+  }
+
+  const ROWWORDS = [['cash', /מזומן/], ['food', /אוכל|מסעד|וולט|wolt|בית קפה|קפה|פיצה|המבורגר|בילוי|סרט|ארוחה בחוץ/], ['shop', /סופר|רמי לוי|שופרסל|קרפור|פארם|קניות לבית/]];
+  const rowOf = t => { for (const [k, re] of ROWWORDS) if (re.test(t)) return k; return 'var'; };
+  // what was bought / paid for: the words after "על" or "ל", without the amount and the filler words
+  const FILLER = /\b(ב-?\d[\d,.]*|\d[\d,.]*|ש["״]?ח|שקלים|שקל|₪|במזומן|באשראי|בכרטיס|היום|אתמול)\b/g;
+  const what = t => clean((t.match(/\s(?:על|עבור)\s(.+)$/) || [, ''])[1].replace(FILLER, ' ').replace(/^(ה)?(אוכל בחוץ|.*)$/, '$&'));
+
+  function parse(text, ctx = {}) {
+    const t = clean(text);
+    const out = { kind: 'unknown', actions: [], missing: [], choices: null, note: '' };
+    if (t.length < 3) return out;
+    const amt = money(t);
+
+    // 1. shopping list: "תוסיפו לקניות …", "צריך לקנות …", "נגמר החלב"
+    let m = t.match(/^(?:תוסיפ[וי]?|הוסיפ[וי]?|תכניס[וי]?|תשים[וי]?|לרשום)\s+(?:ל(?:רשימת ה)?(?:קניות|סופר|רשימה)\s+)?(.+?)(?:\s+ל(?:רשימת ה)?(?:קניות|סופר|רשימה))?$/)
+      || t.match(/^(?:צריך|צריכים)\s+לקנות\s+(.+)$/) || t.match(/^(?:נגמר|נגמרה|נגמרו)\s+(?:ה)?(.+)$/);
+    if (m && /קניות|סופר|רשימה|לקנות|נגמר/.test(t) && !/קנינו|קניתי/.test(t)) {
+      const list = m[1].replace(/^ל(?:רשימת ה)?(?:קניות|סופר|רשימה)\s+/, '');
+      // "חלב 2 וביצים" is two things in a sentence; the list form needs the comma ("חלב 2, ביצים")
+      const split = /,/.test(list) ? list : list.replace(/\s+ו(?!ו)(?=\S)(?!.*\sו(?!ו)\S)/, ', ');
+      out.kind = 'grocery';
+      out.actions = [{ type: 'grocery_add', text: split.replace(/^ה(?=\S)/, '') }];
+      return out;
+    }
+
+    // 2. a purchase: "קנינו שידה ב-1,400" -> mark the baby item bought, its price, and the expense
+    if (/(קנינו|קניתי|קנתה|קנה|הזמנו|הזמנתי|נקנה|נקנתה|נקנו)/.test(t)) {
+      const hits = babyMatches(t, (ctx.baby || []).filter(b => b.status !== 'נקנה'));
+      if (hits.length > 1) { out.kind = 'baby_purchase'; out.choices = hits.map(b => ({ id: b.id, name: b.name })); out.missing.push('item'); }
+      if (hits.length === 1) {
+        const b = hits[0];
+        out.kind = 'baby_purchase'; out.item = { id: b.id, name: b.name };
+        out.actions.push({ type: 'baby_status', id: b.id, name: b.name, status: 'נקנה' });
+        if (amt !== null) out.actions.push({ type: 'baby_price', id: b.id, name: b.name, price: amt });
+      }
+      if (out.kind === 'baby_purchase') {
+        if (amt !== null) out.actions.push({ type: 'expense', name: hits.length === 1 ? hits[0].name : '', amount: amt, row: /מזומן/.test(t) ? 'cash' : 'var' });
+        return out;
+      }
+      // not a baby item: an expense when there is an amount
+      if (amt === null) { out.kind = 'unknown'; out.note = 'לא מצאתי ברשימת התינוק את מה שנקנה, ואין סכום לרישום.'; return out; }
+      out.kind = 'expense';
+      out.actions.push({ type: 'expense', name: what(t) || clean(t.replace(/^(קנינו|קניתי)\s+/, '').replace(FILLER, ' ')), amount: amt, row: rowOf(t) });
+      return out;
+    }
+
+    // 3. an expense: "הוצאתי 120 על אוכל בחוץ", "שילמנו 300 במזומן על אירוע"
+    if (/(הוצאתי|הוצאנו|שילמתי|שילמנו|עלה לנו|עלה לי)/.test(t)) {
+      out.kind = 'expense';
+      const name = what(t);
+      out.actions.push({ type: 'expense', name, amount: amt, row: rowOf(t) });
+      if (amt === null) out.missing.push('amount');
+      if (!name) out.missing.push('name');
+      return out;
+    }
+
+    // 4. a task: "תזכירו לנו לתקן את הברז עד חמישי", "משימה: להזמין טכנאי"
+    m = t.match(/^(?:תזכיר[וי]?\s+(?:לנו|לי|ל\S+)\s+|משימה:?\s+|צריך\s+(?!לקנות))(.+)$/);
+    if (m) {
+      const due = (m[1].match(/\s(?:עד|ב-?|ביום)\s*(היום|מחר|ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת|\d{1,2}[/.]\d{1,2})\s*$/) || [])[1] || null;
+      out.kind = 'task';
+      out.actions.push({ type: 'task', title: clean(m[1].replace(/\s(?:עד|ב-?|ביום)\s*(היום|מחר|ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת|\d{1,2}[/.]\d{1,2})\s*$/, '')), due });
+      return out;
+    }
+
+    // 5. an event: "תקבעו ארוחה אצל ההורים בשישי 19:00"
+    m = t.match(/^(?:תקבע[וי]?|קבע[וי]?|תכניס[וי]? ליומן|ביומן:?)\s+(.+)$/);
+    if (m) { out.kind = 'event'; out.actions.push({ type: 'event', text: m[1] }); return out; }
+
+    out.note = 'לא הבנתי מה לעשות. אפשר לנסות: "תוסיפו לקניות חלב וביצים", "קנינו שידה ב-1,400 שקל", "הוצאתי 120 על אוכל בחוץ", "תזכירו לנו לתקן את הברז עד חמישי", "תקבעו ארוחה בשישי 19:00".';
+    return out;
+  }
+
+  return { parse, amount, babyMatches, rowOf };
+})();
+if (typeof module !== 'undefined') module.exports = CMD;
+
+/* ---------- the shopping list helpers: pure functions, no DOM ----------
    items(text)         "חלב 2, ביצים 12 יח', עגבניות 1 ק"ג ולחם" -> [{name, qty, unit}]
    section(name)       the store section an item belongs to (by words in its name), in the order you walk the store
    regulars(...)       what you buy most often and is not on the list, with the product you picked for it last time
@@ -2824,9 +2962,9 @@ function parseQty(t){let m=t.match(/^(\d{1,3})\s+(.+)$/);if(m)return [m[2].trim(
 const SEC_IC={'ירקות ופירות':'🥕','לחם ומאפים':'🥖','מקרר וחלב':'🥛','בשר ודגים':'🍗','יבשים ושימורים':'🥫','שתייה':'🧃','קפואים':'🧊','תינוק':'🍼','ניקיון וטיפוח':'🧴','אחר':'🛒'};
 const gSec=i=>i.section||SHOP.section(i.name);
 // names you used before (purchases and the list), how often, and the product picked for each
-function gHistory(){const m={};
-  const take=(n,prod,w)=>{n=String(n||'').trim();if(!n)return;const h=m[n]||(m[n]={name:n,count:0,product:null});h.count+=w;if(prod)h.product=prod};
-  S.purchases.forEach(p=>(p.items||[]).forEach(it=>take(it.name,it.product,1)));S.grocery.forEach(g=>take(g.name,g.product,0));
+function gHistory(){const m={},fg={};S.prefs.forEach(p=>{if(p.kind==='prodforget')fg[p.name]=p.at||0});
+  const take=(n,prod,w,at)=>{n=String(n||'').trim();if(!n)return;const h=m[n]||(m[n]={name:n,count:0,product:null});h.count+=w;if(prod&&!(n in fg&&(at||0)<=fg[n]))h.product=prod};
+  S.purchases.forEach(p=>(p.items||[]).forEach(it=>take(it.name,it.product,1,p.createdAt)));S.grocery.forEach(g=>take(g.name,g.product,0,g.createdAt));
   return Object.values(m)}
 const gNew=(x,i=0,prod=null)=>{const d={name:x.name,done:false,priceStatus:prod?'matched':'pending',createdAt:Date.now()+i};
   if(prod)d.product=prod;if(x.qty&&x.qty!==1)d.qty=x.qty;if(x.unit){d.unit=x.unit;d.qty=x.qty}if(S.uid)d.by=S.uid;return d};
@@ -3362,6 +3500,131 @@ function taskSheet(t){
     if(ok)toast(isNew?'המשימה נוספה':'נשמר')};
   if(!isNew){const d=$('tsDel');d.onclick=()=>{if(!d.classList.contains('arm')){d.classList.add('arm');d.textContent='ללחוץ שוב למחיקה';return}closeSheet();store.del('tasks',t.id)}}
 }
+/* ---------- free text: a sentence becomes a plan (CMD.parse); the app shows it, asks only for what is missing, and runs it after a tap ---------- */
+// how much the app does by itself, per area (data/prefs.json, app only). Money and baby purchases always wait for a tap.
+const AUTO_CAP=[
+  {k:'grocery',t:'רשימת קניות',levels:['suggest','prepare','auto']},
+  {k:'tasks',t:'משימות',levels:['suggest','prepare','auto']},
+  {k:'calendar',t:'יומן',levels:['suggest','prepare'],note:'אירוע נשלח ליומן רק אחרי אישור שלכם'},
+  {k:'money',t:'הוצאות',levels:['suggest'],note:'תמיד באישור: הוצאה לא נרשמת בלי לחיצה שלכם'},
+  {k:'baby',t:'קניות לתינוק',levels:['suggest'],note:'תמיד באישור: סימון קנייה ומחיר'}];
+const AUTO_HE={suggest:'להציע',prepare:'להכין',auto:'לבצע לבד'};
+const autoLevel=k=>{const c=AUTO_CAP.find(x=>x.k===k),p=S.prefs.find(x=>x.kind==='auto'&&x.cap===k);return c&&p&&c.levels.includes(p.level)?p.level:'suggest'};
+const CMD_ROW=k=>({var:VAR_ROW,shop:SHOP_ROW,food:foodRow(monthKey(new Date())),cash:CASH})[k]||VAR_ROW;
+const DAYW={'ראשון':0,'שני':1,'שלישי':2,'רביעי':3,'חמישי':4,'שישי':5,'שבת':6};
+function cmdDue(w){if(!w)return null;const d=new Date();d.setHours(0,0,0,0);
+  if(w==='מחר')d.setDate(d.getDate()+1);
+  else if(w in DAYW)d.setDate(d.getDate()+(((DAYW[w]-d.getDay()+7)%7)||7));
+  else if(w!=='היום'){const m=w.match(/(\d{1,2})[/.](\d{1,2})/);if(!m)return null;const t0=new Date(d);d.setMonth(+m[2]-1,+m[1]);if(d<t0)d.setFullYear(d.getFullYear()+1)}
+  return dkey(d)}
+function cmdGroceryDocs(text){const hist={};gHistory().forEach(h=>hist[h.name]=h);return SHOP.items(text).map((x,i)=>gNew(x,i,(hist[x.name]||{}).product||null))}
+const cmdTaskDoc=a=>({title:a.title,owner:myWho()||'shared',status:'new',priority:2,estimatedMinutes:null,dueDate:cmdDue(a.due),waitingReason:null,linkedEntity:null,snoozedUntil:null,completedAt:null,createdAt:Date.now(),progressAt:Date.now(),by:S.uid||null});
+// what ran by itself can be taken back for a few seconds
+function cmdUndoShow(text,col,stamps){S.cmdUndo={text,col,stamps};clearTimeout(cmdUndoShow._t);cmdUndoShow._t=setTimeout(()=>{S.cmdUndo=null;cmdUndoDraw()},8000);cmdUndoDraw()}
+function cmdUndoDraw(){const el=$('cmdUndo');if(!el)return;const u=S.cmdUndo;el.innerHTML=u?`<div class="sgundo" role="status"><span>${esc(u.text)}</span><button class="bare link" data-cmdundo>ביטול</button></div>`:''}
+$('cmdForm').onsubmit=e=>{e.preventDefault();const v=$('cmdText').value.trim();if(!v){$('cmdText').focus();return}cmdStart(v)};
+async function cmdStart(text){
+  const r=CMD.parse(text,{baby:S.baby}),a=r.actions[0];
+  const lv=r.kind==='grocery'?autoLevel('grocery'):r.kind==='task'?autoLevel('tasks'):r.kind==='event'?autoLevel('calendar'):'suggest';
+  if(r.kind==='grocery'&&a&&lv!=='suggest'){
+    if(lv==='prepare'){$('cmdText').value='';showTab('shop');$('gName').value=a.text;gPreview();$('gName').focus();return}
+    const docs=cmdGroceryDocs(a.text);if(!docs.length){cmdSheet(text,r);return}$('cmdText').value='';buzz(10);
+    if(await store.addMany('grocery',docs))cmdUndoShow('נוספו לקניות: '+docs.map(d=>d.name).join(', '),'grocery',docs.map(d=>d.createdAt));return}
+  if(r.kind==='task'&&a&&lv!=='suggest'){$('cmdText').value='';
+    if(lv==='prepare'){taskSheet(null);$('tsTitle').value=a.title;const d=cmdDue(a.due);if(d)$('tsDue').value=d;return}
+    const doc=cmdTaskDoc(a);buzz(10);if(await store.add('tasks',doc))cmdUndoShow('נוספה משימה: '+a.title,'tasks',[doc.createdAt]);return}
+  if(r.kind==='event'&&a&&lv==='prepare'){$('cmdText').value='';showTab('cal');openCalAdd(a.text);return}
+  cmdSheet(text,r);
+}
+// the plan before it runs: each step in words, the money step with its fields open, a choice only when two items fit
+function cmdSheet(text,r){
+  const o=S.cmdO={text,r,owner:myWho()||'shared',target:'shared'};
+  const draw=()=>{
+    const r=o.r,b=r.item&&S.baby.find(x=>x.id===r.item.id),mk=monthKey(new Date());
+    const steps=r.actions.map(a=>{
+      if(a.type==='baby_status'){const tk=bTask(b||{id:a.id});return `<li><b>לסמן את "${esc(a.name)}" כנקנה</b>${tk?`<span class="cmdnote">גם המשימה "${esc(tk.title)}" תסומן כבוצעה</span>`:''}</li>`}
+      if(a.type==='baby_price')return b&&has(b.price)&&Number(b.price)===a.price?'':`<li><b>לעדכן את המחיר של "${esc(a.name)}" ל־${fmt(a.price)} ₪</b>${b&&has(b.price)?`<span class="cmdnote">היום רשום ${fmt(b.price)} ₪</span>`:''}</li>`;
+      if(a.type==='expense'){const baby=r.kind==='baby_purchase',row=CMD_ROW(a.row);
+        return `<li>${baby?'<label class="ck"><input type="checkbox" id="cxOn" checked> <b>גם לרשום הוצאה</b></label>':'<b>לרשום הוצאה</b>'}
+          <div class="tsrow"><div class="field"><label class="lbl" for="cxAmt">סכום (₪)</label><input class="in num" id="cxAmt" inputmode="decimal" value="${a.amount===null?'':a.amount}"></div>
+          <div class="field"><label class="lbl" for="cxName">על מה</label><input class="in" id="cxName" value="${esc(a.name)}" autocomplete="off"></div></div>
+          <div class="field"><label class="lbl" for="cxRow">באיזו רשימה (${esc(monthLabel(mk))})</label><select class="in" id="cxRow">${listRows().map(n=>`<option${n===row?' selected':''}>${esc(n)}</option>`).join('')}</select></div>
+          <span class="cmdnote">${row===CASH?'מזומן מוצג למעקב ולא נספר בסה"כ. ':''}ההוצאה תירשם רק אחרי שתלחצו ביצוע.</span></li>`}
+      if(a.type==='grocery_add'){const its=SHOP.items(a.text);return `<li><b>להוסיף לרשימת הקניות</b><span>${its.map(x=>esc(x.name)+(x.unit?` ${x.qty} ${esc(x.unit)}`:x.qty!==1?` ×${x.qty}`:'')).join(' · ')}</span></li>`}
+      if(a.type==='task')return `<li><b>משימה חדשה</b><input class="in" id="ctTitle" value="${esc(a.title)}" autocomplete="off">
+        <div class="field"><span class="lbl">אחראי</span><div class="chips" data-cmdown>${Object.entries(TD_OWN).map(([k,v])=>`<button type="button" class="chip" data-v="${k}" aria-checked="${o.owner===k}">${v}</button>`).join('')}</div></div>
+        <div class="field"><label class="lbl" for="ctDue">עד מתי</label><input class="in" id="ctDue" type="date" value="${cmdDue(a.due)||''}"></div></li>`;
+      if(a.type==='event'){const p=parseEvent(a.text);return `<li><b>${p.title?esc(p.title):'לא הבנתי מה האירוע'}</b>${p.title?`<span class="num">${esc(whenText(p))}</span>`:''}
+        <div class="chips" data-cmdcal>${['shared','yosef','tchiya'].map(k=>`<button type="button" class="chip" data-v="${k}" aria-checked="${o.target===k}">${k==='shared'?'יומן משותף':'היומן של '+WHO[k].n}</button>`).join('')}</div></li>`}
+      return '';
+    }).join('');
+    const choose=r.choices?`<li><b>לאיזה פריט התכוונתם?</b><div class="chips" data-cmdpick>${r.choices.map(c=>`<button type="button" class="chip" data-v="${esc(c.id)}">${esc(c.name)}</button>`).join('')}</div></li>`:'';
+    const ok=r.actions.length&&!r.choices;
+    openSheet('לפני שמבצעים',`<p class="cmdask">ביקשתם: <q>${esc(o.text)}</q></p>${r.note?`<p class="cmdnote">${esc(r.note)}</p>`:''}
+      ${choose||steps?`<ol class="cmdsteps">${choose}${steps}</ol>`:''}
+      <div class="actions">${ok?'<button class="btn" id="cmdRun">ביצוע</button>':''}<button class="btn ghost" id="cmdFix">תיקון</button></div>`);
+    $('cmdFix').onclick=()=>{closeSheet();showTab('today');$('cmdText').value=o.text;$('cmdText').focus()};
+    if(ok)$('cmdRun').onclick=()=>cmdRun(o);
+    const pk=document.querySelector('[data-cmdpick]');if(pk)pk.onclick=e=>{const bt=e.target.closest('[data-v]'),it=bt&&S.baby.find(x=>x.id===bt.dataset.v);if(!it)return;o.r=CMD.parse(o.text,{baby:[it]});draw()};
+  };
+  draw();
+}
+async function cmdRun(o){
+  const acts=o.r.actions,done=[],val=id=>($(id)||{}).value||'';
+  const ex=acts.find(a=>a.type==='expense');let exp=null;
+  if(ex&&(!$('cxOn')||$('cxOn').checked)){const amount=parseAmt(val('cxAmt')),name=val('cxName').trim();
+    if(!(amount>0)){$('cxAmt').focus();toast('חסר סכום');return}
+    if(!name){$('cxName').focus();toast('כתבו על מה ההוצאה');return}
+    exp={month:monthKey(new Date()),row:val('cxRow')||VAR_ROW,name,amount,date:today(),createdAt:Date.now(),source:'app'};if(S.uid)exp.by=S.uid}
+  const t=acts.find(a=>a.type==='task');let task=null;
+  if(t){const title=val('ctTitle').trim();if(!title){$('ctTitle').focus();toast('כתבו מה צריך לעשות');return}task={...cmdTaskDoc(t),title,owner:o.owner,dueDate:val('ctDue')||null}}
+  const ev=acts.find(a=>a.type==='event');let req=null;
+  if(ev){const p=parseEvent(ev.text);if(!p.title){toast('כתבו מה האירוע');return}
+    req={op:'add',target:o.target,title:p.title,start:p.start,end:p.end,allDay:p.allDay,status:'pending',createdAt:Date.now()};if(S.uid)req.by=S.uid}
+  closeSheet();$('cmdText').value='';S.cmdO=null;buzz(10);
+  const bs=acts.find(a=>a.type==='baby_status'),bp=acts.find(a=>a.type==='baby_price');
+  if(bs){const up={status:'נקנה'};if(bp)up.price=bp.price;
+    if(await store.update('baby',bs.id,up)){done.push(`"${bs.name}" סומן כנקנה`);
+      S.tasks.filter(x=>x.linkedEntity==='baby/'+bs.id&&x.status!=='done'&&x.status!=='cancelled').forEach(x=>store.update('tasks',x.id,{status:'done',completedAt:Date.now(),progressAt:Date.now()}))}}
+  if(exp&&await store.add('variable',exp))done.push(`נרשמה הוצאה של ${fmt(exp.amount)} ₪ ב"${exp.row}"`);
+  const g=acts.find(a=>a.type==='grocery_add');if(g){const docs=cmdGroceryDocs(g.text);if(docs.length&&await store.addMany('grocery',docs))done.push(`נוספו ${docs.length} מוצרים לקניות`)}
+  if(task&&await store.add('tasks',task))done.push('נוספה משימה');
+  if(req&&await store.add('calreq',req))done.push('האירוע נשלח ליומן');
+  if(done.length)toast(done.join(' · '));
+}
+/* ---------- what the app learned about us: every preference can be seen, changed, or deleted ---------- */
+const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה'};
+function learnedSheet(){
+  const keep=!$('sheet').hidden&&$('sheetBody').querySelector('.lrnsec')?$('sheet').scrollTop:0;
+  const now=Date.now(),dt=t=>t?new Date(t).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
+  const hid=S.prefs.filter(p=>p.kind==='sugg'&&(p.state==='dismissed'||(p.state==='snoozed'&&(p.until||0)>now))).sort((a,b)=>(b.at||0)-(a.at||0));
+  const muted=new Set(S.prefs.filter(p=>p.kind==='mute').map(p=>p.type));
+  const prods=gHistory().filter(h=>h.product&&h.count>0).sort((a,b)=>b.count-a.count).slice(0,10),fg=S.prefs.filter(p=>p.kind==='prodforget');
+  const two=(attr,k,on,a,b)=>`<div class="chips" ${attr}="${k}"><button type="button" class="chip" data-v="on" aria-checked="${on}">${a}</button><button type="button" class="chip" data-v="off" aria-checked="${!on}">${b}</button></div>`;
+  openSheet('מה האפליקציה למדה עלינו',`
+   <div class="lrnsec"><h3>כמה האפליקציה עושה לבד</h3><span class="cmdnote">להציע: מראה מה יקרה ומחכה לאישור. להכין: ממלא את הטופס ואתם שולחים. לבצע לבד: מבצע מיד, ואפשר לבטל.</span>
+     ${AUTO_CAP.map(c=>`<div class="lrnrow"><span class="col"><b>${c.t}</b>${c.note?`<small>${c.note}</small>`:''}</span>${c.levels.length>1?`<div class="chips" data-lrnauto="${c.k}">${c.levels.map(l=>`<button type="button" class="chip" data-v="${l}" aria-checked="${autoLevel(c.k)===l}">${AUTO_HE[l]}</button>`).join('')}</div>`:''}</div>`).join('')}</div>
+   <div class="lrnsec"><h3>הצעות שהסתרתם</h3>${hid.length?hid.map(p=>`<div class="lrnrow"><span class="col">${esc(SG_TYPE_HE[p.type]||p.type)}<small>${p.state==='snoozed'?'נדחתה עד '+dt(p.until):'לא רלוונטי · '+dt(p.at)}${p.by&&(S.people||{})[p.by]?' · '+esc(S.people[p.by]):''}</small></span><button class="bare link" data-lrnback="${esc(p.id)}">להחזיר</button></div>`).join(''):'<span class="cmdnote">אין הצעות מוסתרות.</span>'}</div>
+   <div class="lrnsec"><h3>סוגי הצעות</h3><span class="cmdnote">סוג כבוי לא יוצע בכלל.</span>${Object.entries(SG_TYPE_HE).map(([k,v])=>`<div class="lrnrow"><span class="col">${v}</span>${two('data-lrnmute',k,!muted.has(k),'פעיל','כבוי')}</div>`).join('')}</div>
+   <div class="lrnsec"><h3>המוצרים שאתם בוחרים</h3><span class="cmdnote">כשמוסיפים לרשימה, נבחר המוצר שקניתם בפעם הקודמת. "לשכוח" מחזיר את הבחירה אליכם.</span>
+     ${prods.length?prods.map(h=>`<div class="lrnrow"><span class="col">${esc(h.name)}<small>${esc(h.product.name||'')} · נקנה ${h.count} פעמים</small></span><button class="bare link" data-lrnforget="${esc(h.name)}">לשכוח</button></div>`).join(''):'<span class="cmdnote">עוד אין מוצרים קבועים.</span>'}
+     ${fg.length?`<span class="cmdnote">נשכחו: ${fg.map(p=>`${esc(p.name)} <button class="bare link" data-lrnunforget="${esc(p.id)}">החזרה</button>`).join(' · ')}</span>`:''}</div>`);
+  if(keep)$('sheet').scrollTop=keep;
+}
+document.addEventListener('click',async e=>{
+  if(e.target.closest('[data-learned]')){learnedSheet();return}
+  if(e.target.closest('[data-cmdundo]')){const u=S.cmdUndo;if(!u)return;S.cmdUndo=null;cmdUndoDraw();(S[u.col]||[]).filter(d=>u.stamps.includes(d.createdAt)).forEach(d=>store.del(u.col,d.id));toast('בוטל');return}
+  const cc=e.target.closest('[data-cmdown] [data-v],[data-cmdcal] [data-v]');if(cc){const g=cc.parentNode;[...g.children].forEach(x=>x.setAttribute('aria-checked',x===cc));
+    if(S.cmdO){if('cmdown' in g.dataset)S.cmdO.owner=cc.dataset.v;else S.cmdO.target=cc.dataset.v}return}
+  const la=e.target.closest('[data-lrnauto] [data-v]');if(la){const cap=la.parentNode.dataset.lrnauto,lv=la.dataset.v;if(autoLevel(cap)===lv)return;
+    const doc={kind:'auto',cap,level:lv,at:Date.now()};if(S.uid)doc.by=S.uid;
+    if(await store.put('prefs','auto:'+cap,doc)){learnedSheet();toast(`${AUTO_CAP.find(c=>c.k===cap).t}: ${AUTO_HE[lv]}`)}return}
+  const lb=e.target.closest('[data-lrnback]');if(lb){if(await store.del('prefs',lb.dataset.lrnback)){learnedSheet();renderToday();toast('ההצעה יכולה להופיע שוב')}return}
+  const lm=e.target.closest('[data-lrnmute] [data-v]');if(lm){const ty=lm.parentNode.dataset.lrnmute,off=lm.dataset.v==='off',cur=S.prefs.find(p=>p.kind==='mute'&&p.type===ty);if(off===!!cur)return;
+    const ok=off?await store.put('prefs','mute:'+ty,{kind:'mute',type:ty,at:Date.now(),by:S.uid||null}):await store.del('prefs',cur.id);if(ok){learnedSheet();renderToday()}return}
+  const lf=e.target.closest('[data-lrnforget]');if(lf){const n=lf.dataset.lrnforget;if(await store.put('prefs','forget:'+n,{kind:'prodforget',name:n,at:Date.now(),by:S.uid||null})){learnedSheet();toast(`"${n}" נשכח`)}return}
+  const lu=e.target.closest('[data-lrnunforget]');if(lu){if(await store.del('prefs',lu.dataset.lrnunforget))learnedSheet();return}
+});
 document.addEventListener('click',e=>{
   const g=e.target.closest('[data-tdgo]');if(g){if(g.dataset.tdgo==='home')S.month=monthKey(new Date());showTab(g.dataset.tdgo);renderAll();return}
   const cl=e.target.closest('[data-tdcal]');if(cl){S.calDay=cl.dataset.tdcal;showTab('cal');return}
