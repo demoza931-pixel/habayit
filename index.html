@@ -577,6 +577,43 @@ header.top.nomonth .month{position:absolute;inset-inline-start:0;visibility:hidd
 .backlink{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;min-height:40px;padding:0 4px;font-weight:700;font-size:14px;color:var(--accent)}
 .fab .fabn{position:absolute;top:-4px;inset-inline-start:-4px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--clay);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
 @media (prefers-reduced-motion:no-preference){.fab.cart{animation:fabin .35s cubic-bezier(.34,1.4,.5,1)}@keyframes fabin{from{transform:scale(.6) rotate(-20deg)}}}
+/* the shopping list (stage 3) */
+.gcost{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:var(--surface);box-shadow:0 1px 2px rgba(30,41,37,.04),0 6px 18px rgba(30,41,37,.05)}
+.gcost .col{display:flex;flex-direction:column;gap:2px}.gcost b{font:800 30px/1.1 var(--font-body)}.gcost small{font-size:12.5px;color:var(--ink-2)}
+.regcard{display:flex;align-items:center;gap:8px;padding:16px;border-radius:20px;background:var(--accent-soft)}
+.regbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}.regcard .chip{background:var(--surface);min-height:40px}
+.regall{align-self:flex-start;min-height:44px;font-size:15px}
+.gadd{position:relative;display:flex;flex-direction:column;gap:6px}
+#gForm .in{height:56px;border-radius:18px;font-size:16px}
+.gsug{display:flex;flex-direction:column;gap:4px}.gsug:empty{display:none}
+.gs{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:10px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-align:start}
+.gs small{font-size:12px;color:var(--ink-2)}
+.gprev{min-height:0}.gprev:empty{display:none}
+.glhead{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px}.glhead:empty{display:none}.glhead b{font-size:15px}
+.glist.grouped{display:flex;flex-direction:column;gap:10px}
+.glist.grouped .grip{display:none}
+.gsec{padding:0 0 4px;overflow:hidden}
+#gTotal.gtot{border-top:0;padding:0}
+.gsec .gitem{border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;min-height:58px}
+.gsech{display:flex;align-items:center;gap:8px;padding:12px 14px 6px}.gsech b{font-size:16px}.gsech small{color:var(--ink-2)}
+.gsecic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);font-size:16px}
+.gstart{min-height:56px;font-size:17px;border-radius:18px}
+.fsdup{padding:10px 12px;border-radius:12px;background:var(--warn-soft);color:var(--ink);font-size:14px}
+.shopmode{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;justify-content:center}
+.smin{width:100%;max-width:560px;display:flex;flex-direction:column;height:100%;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 0}
+.smhead{display:flex;align-items:center;justify-content:space-between;gap:10px}.smhead .col{display:flex;flex-direction:column}.smhead b{font:800 26px var(--font-body)}.smhead small{color:var(--ink-2);font-size:15px}
+.smx{width:48px;height:48px;border-radius:999px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line)}.smx svg{width:20px;height:20px}
+.smbar{display:block;height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin:12px 0 4px}.smbar i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .3s}
+.smlist{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:8px 0 16px}
+.smsec{font-weight:700;font-size:14px;color:var(--ink-2);padding:10px 4px 2px}
+.smrow{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:10px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);text-align:start}
+.smrow .col{flex:1;min-width:0;display:flex;flex-direction:column}.smrow b{font-size:19px}.smrow small{font-size:14px;color:var(--ink-2)}
+.smck{width:34px;height:34px;flex:none;border-radius:999px;border:2.5px solid var(--accent);display:grid;place-items:center;color:transparent}.smck svg{width:18px;height:18px}
+.smrow.done{opacity:.55}.smrow.done .smck{background:var(--accent);color:var(--accent-ink)}.smrow.done b{text-decoration:line-through}
+.smp{font-weight:700;font-size:15px}
+.smfoot{padding:10px 0 calc(env(safe-area-inset-bottom,0px) + 12px);border-top:1px solid var(--line)}.smfoot .btn{min-height:58px;font-size:18px}
+body.noscroll{overflow:hidden}
+@media (prefers-reduced-motion:no-preference){.smrow{transition:transform .15s,opacity .2s}.smrow:active{transform:scale(.98)}.shopmode:not([hidden]) .smin{animation:smup .25s ease-out}@keyframes smup{from{transform:translateY(24px)}}}
 .tdhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px}
 .tdhead .col{display:flex;flex-direction:column;gap:2px}.tdhead b{font-size:28px}.tdhead small{font-size:14px}
 .tdwho{display:flex}.tdwho .who{width:34px;height:34px;border-radius:999px;border:2px solid var(--bg);background:var(--accent-soft);object-fit:cover}.tdwho .who+.who{margin-inline-start:-10px}
@@ -990,14 +1027,20 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   <section class="tab" id="t-shop" hidden>
     <button class="bare backlink" data-back="home"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>חזרה לכסף</button>
     <div class="phead"><div class="col"><h1 class="ptitle">הקניות שלנו</h1><small class="psub" id="phShop"></small></div><img class="ill phill" src="img/basket.png" alt="" aria-hidden="true"></div>
-        <form class="addline" id="gForm">
-      <input class="in" id="gName" placeholder="מה צריך מהסופר?" autocomplete="off" aria-label="פריט חדש">
-      <button class="sqbtn" type="submit" aria-label="הוספה לרשימה"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-    </form>
-    <div class="again" id="gAgain" hidden></div>
-    <div class="glist" id="gOpen" aria-label="רשימת קניות, אפשר לגרור מהידית לשינוי סדר"></div>
-    <div class="glist" id="gDone"></div>
     <div class="gtot" id="gTotal"></div>
+    <div id="gAgain" hidden></div>
+    <div class="gadd">
+      <form class="addline" id="gForm">
+        <input class="in" id="gName" placeholder="מה חסר בבית? אפשר כמה: חלב 2, ביצים, לחם" autocomplete="off" aria-label="מוצרים חדשים, אפשר כמה מופרדים בפסיק" aria-describedby="gPrev">
+        <button class="sqbtn" type="submit" aria-label="הוספה לרשימה"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      </form>
+      <div class="gsug" id="gSug" role="listbox" aria-label="השלמות"></div>
+      <div class="small muted gprev" id="gPrev" aria-live="polite"></div>
+    </div>
+    <div class="glhead" id="gHead"></div>
+    <div class="glist" id="gOpen" aria-label="רשימת קניות"></div>
+    <div class="glist" id="gDone"></div>
+    <button class="btn block gstart" id="gStart" hidden>מתחילים קנייה</button>
     <div class="finishbar" id="gFinish" hidden>
       <button class="btn block" id="gFinishBtn"></button>
       <button class="btn ghost block" id="gClear">ניקוי פריטים שסומנו</button>
@@ -1052,6 +1095,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 </nav>
 
 <div id="sheetBg" class="sheet-bg" hidden></div>
+<div id="shopMode" class="shopmode" hidden role="dialog" aria-modal="true" aria-labelledby="smT"><div class="smin" id="smBody"></div></div>
 <div id="calBg" class="sheet-bg" hidden></div>
 <div id="calSheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="calShT"><div class="in-sheet">
   <span class="handle" aria-hidden="true"></span>
@@ -1087,7 +1131,95 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   </form>
 </div>
 
-<script>/* ---------- "מנהל הבית": suggestions from what the data already shows ----------
+<script>/* ---------- the shopping list helpers: pure functions, no DOM ----------
+   items(text)         "חלב 2, ביצים 12 יח', עגבניות 1 ק"ג ולחם" -> [{name, qty, unit}]
+   section(name)       the store section an item belongs to (by words in its name), in the order you walk the store
+   regulars(...)       what you buy most often and is not on the list, with the product you picked for it last time
+   complete(text, ...) names from your history that match what is being typed */
+const SHOP = (() => {
+  const UNITS = [['ק"ג', /^(ק["״']?ג|קג|קילו)$/], ['גרם', /^(גרם|ג['׳])$/], ['ליטר', /^(ליטר|ל['׳])$/], ["יח'", /^(יח['׳]?|יחידות|יחידה)$/], ['חבילות', /^(חבילות|חבילה|חב['׳])$/]];
+  const unitOf = w => { for (const [u, re] of UNITS) if (re.test(w)) return u; return null; };
+  const clean = s => String(s || '').replace(/\s+/g, ' ').trim();
+
+  // one item: "2 חלב", "חלב 2", "חלב x2", "עגבניות 1 ק"ג", "1 ק"ג עגבניות"
+  function one(t) {
+    let words = clean(t).split(' ').filter(Boolean), qty = 1, unit = null, m;
+    if (!words.length) return null;
+    // "x2" / "×2" at the end
+    if ((m = words[words.length - 1].match(/^[x×*](\d{1,3})$/i))) { qty = Number(m[1]); words.pop(); }
+    // a number, maybe with a unit after it, at the end or at the start
+    const takeNum = (i, j) => { const n = Number(String(words[i]).replace(',', '.')); if (!(n > 0 && n < 1000)) return false; qty = n; const u = j !== null && words[j] ? unitOf(words[j]) : null; if (u) unit = u; return u ? 2 : 1; };
+    if (words.length > 1 && /^\d+([.,]\d+)?$/.test(words[words.length - 1])) { qty = Number(words.pop().replace(',', '.')); }
+    else if (words.length > 2 && /^\d+([.,]\d+)?$/.test(words[words.length - 2]) && unitOf(words[words.length - 1])) { unit = unitOf(words.pop()); qty = Number(words.pop().replace(',', '.')); }
+    else if (words.length > 1 && /^\d+([.,]\d+)?$/.test(words[0])) { const k = takeNum(0, 1); words = words.slice(k); }
+    const name = clean(words.join(' '));
+    if (!name || /^\d+$/.test(name)) return null;
+    return { name, qty, unit };
+  }
+
+  // a whole line: commas, new lines or ";" separate items; "ו" joins the last two when the line already has a list
+  function items(text) {
+    const parts = String(text || '').split(/[,،;\n]+/).map(clean).filter(Boolean);
+    if (parts.length > 1) {
+      const last = parts.pop(), m = last.match(/^(.+?)\s+ו(\S.*)$/);
+      if (m && !/^ו/.test(m[1])) parts.push(m[1], m[2]); else parts.push(last);
+    }
+    const seen = new Set(), out = [];
+    parts.map(one).filter(Boolean).forEach(x => { const k = x.name; if (!seen.has(k)) { seen.add(k); out.push(x); } });
+    return out;
+  }
+
+  const SECTIONS = [
+    ['ירקות ופירות', /עגבני|מלפפו|בצל|שום|תפוח|בננ|גזר|פלפל|חסה|לימון|אבוקדו|תפו"א|תפוחי אדמה|ירק|פטרוזיל|כוסבר|שמיר|קישוא|חציל|ענב|תות|אבטיח|מלון|תפוז|קלמנטינ|פרי|פטרי|כרוב|ברוקולי|בטט|נענע|סלק|דלעת|אגס|שזיף|אפרסק|מנגו|רימון/],
+    ['לחם ומאפים', /לחם|פית(ה|ות)|לחמני|חל(ה|ות)\b|באגט|טורטי|עוג|קרואסו|בורקס|לחמניות/],
+    ['מקרר וחלב', /חלב|ביצ|גבינ|יוגורט|שמנת|חמאה|קוטג|לבן|מעדן|טופו|נקניק|פסטרמה|חומוס מוכן|סלט/],
+    ['בשר ודגים', /עוף|בשר|חזה|שניצל|טחון|דג\b|דגים|סלמון|קבב|כרעיים|פרגית|המבורגר|נקניקיות/],
+    ['יבשים ושימורים', /אורז|פסטה|ספגטי|קמח|סוכר|מלח|שמן|טונה|רסק|שימור|קטני|עדשים|חומוס|פתיתים|קורנפלקס|דגני|קפה|תה\b|תבלין|ריבה|ממרח|טחינה|דבש|שוקולד|חטיף|במבה|ביסלי|קרקר|אגוז|שקדים|גרנולה/],
+    ['שתייה', /מים|סודה|מיץ|קולה|בירה|יין|משקה|תפוזים/],
+    ['קפואים', /קפוא|גלידה|אפונה|שעועית ירוקה|פיצה קפואה/],
+    ['תינוק', /חיתול|מגבוני|פורמולה|מטרנה|סימילאק|מוצץ|בקבוק/],
+    ['ניקיון וטיפוח', /סבון|אקונומיקה|נוזל|מגבו(ן|נים)|נייר טואלט|טואלט|מגבות נייר|שקיות|אבקת כביסה|מרכך|ספוג|שמפו|משחת שיניים|דאודורנט|מטהר|כביסה|כלים/],
+  ];
+  const ORDER = SECTIONS.map(s => s[0]).concat('אחר');
+  // milk is "מקרר", not a drink; baby wipes are "תינוק" before "ניקיון" (the order of the checks)
+  function section(name) {
+    const n = clean(name);
+    if (/^מגבוני|מגבונים לחים|מגבוני תינוק/.test(n)) return 'תינוק';
+    for (const [s, re] of SECTIONS) if (re.test(n)) return s;
+    return 'אחר';
+  }
+
+  // purchases: [{createdAt, items:[{name, product}]}]; onList: names on the list now
+  function regulars(purchases, onList, limit = 8) {
+    const have = new Set((onList || []).map(clean)), stat = {};
+    [...(purchases || [])].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(p => (p.items || []).forEach(it => {
+      const n = clean(it.name); if (!n || have.has(n)) return;
+      const s = stat[n] || (stat[n] = { name: n, count: 0, product: null, last: 0 });
+      s.count += 1; s.last = p.createdAt || 0; if (it.product) s.product = it.product;
+    }));
+    return Object.values(stat).sort((a, b) => b.count - a.count || b.last - a.last || (a.name < b.name ? -1 : 1)).slice(0, limit);
+  }
+
+  // what is being typed is the last item of the line; names from history that start a word with it
+  function complete(text, history, limit = 4) {
+    const cur = clean(String(text || '').split(/[,،;\n]/).pop());
+    if (cur.length < 2) return [];
+    const q = cur.replace(/^\d+\s+/, '');
+    if (q.length < 2) return [];
+    const out = [], seen = new Set();
+    (history || []).forEach(h => {
+      const n = clean(h.name);
+      if (!n || seen.has(n) || n === q) return;
+      if (n.startsWith(q) || n.includes(' ' + q)) { seen.add(n); out.push(h); }
+    });
+    return out.sort((a, b) => (b.count || 0) - (a.count || 0)).slice(0, limit);
+  }
+
+  return { items, one, section, ORDER, regulars, complete };
+})();
+if (typeof module !== 'undefined') module.exports = SHOP;
+
+/* ---------- "מנהל הבית": suggestions from what the data already shows ----------
    Pure functions, no DOM and no writes: the app hands in signals (facts it derived with its own
    functions: free evenings, patterns due, open lists, the month's numbers) and gets back at most a
    few ranked suggestions. Deterministic rules only, no language model.
@@ -1494,6 +1626,9 @@ async function write(fn,okMsg){const ok=await fn();if(ok&&okMsg)toast(okMsg);ret
 const store={
   // updatedAt: when the sheet sync finds the same value changed in the app and in the sheet, the later edit wins
   async add(col,data){const id=localId();const ok=await mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'add '+col,noteFor('add',col,id,data),col+'/'+id);if(ok&&col==='grocery')pricesNow();return ok},
+  async addMany(col,list){if(!list.length)return true;const ids=list.map(()=>localId()),now=Date.now();
+    const note=col==='grocery'?`נוספו לרשימת הסופר: ${list.map(d=>d.name).join(', ')}`:null;
+    const ok=await mutate(col,d=>{list.forEach((x,i)=>{d[ids[i]]={...x,updatedAt:now}})},'add '+col,note,col+'/'+ids[0]);if(ok&&col==='grocery')pricesNow();return ok},
   put(col,id,data){return mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'save '+col,noteFor('put',col,id,data),col+'/'+id)},
   update(col,id,data){return mutate(col,d=>{if(d[id])d[id]={...d[id],...data,updatedAt:Date.now()}},'update '+col,noteFor('update',col,id,data),col+'/'+id)},
   del(col,id){return mutate(col,d=>{delete d[id]},'delete '+col,noteFor('del',col,id,null),col+'/'+id)},
@@ -2005,7 +2140,7 @@ const GRIP='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r=
 const gPrice=i=>has(i.price)?Number(i.price):i.product?Number(i.product.price):null;
 const gQty=i=>Math.max(1,Math.round(Number(i.qty)||1));
 const gLine=i=>gPrice(i)===null?null:Math.round(gPrice(i)*gQty(i)*100)/100;
-const qtyTag=i=>gQty(i)>1?`<span class="qty num">×${gQty(i)}</span>`:'';
+const qtyTag=i=>i.unit?`<span class="qty num">${Number(i.qty)||1} ${esc(i.unit)}</span>`:gQty(i)>1?`<span class="qty num">×${gQty(i)}</span>`:'';
 function gItemHtml(i){
   const ck=`<button class="bare ck" data-toggle="${esc(i.id)}" aria-label="${i.done?'ביטול סימון':'סימון'} ${esc(i.name)}" aria-pressed="${!!i.done}"><span>${I.check}</span></button>`;
   const who=i.by?`<img class="who" data-uid="${esc(i.by)}" alt="">`:'';
@@ -2069,17 +2204,25 @@ function renderShop(){
   if(S.dragging){S.pendingShop=true;return}
   seed('grocery');
   const open=openGrocery(),done=S.grocery.filter(i=>i.done).sort((a,b)=>gKey(a)-gKey(b));
-  $('gOpen').innerHTML=open.map(gItemHtml).join('')||(done.length?'':`<div class="card"><div class="emptyline" style="border-top:0">הרשימה ריקה. כתבו למעלה מה צריך מהסופר.</div></div>`);
+  // by store section (the order you walk the store), or in your own order (drag)
+  const grouped=!S.gManual;
+  $('gHead').innerHTML=open.length?`<b>${grouped?'לפי מחלקות':'לפי הסדר שלנו'}</b><button class="bare link" data-gorder>${grouped?'לסדר שלנו':'לפי מחלקות'}</button>`:'';
+  $('gOpen').classList.toggle('grouped',grouped);
+  $('gOpen').innerHTML=!open.length?(done.length?'':`<div class="card"><div class="emptyline" style="border-top:0">הרשימה ריקה. כתבו למעלה מה חסר, אפשר כמה מוצרים בשורה אחת.</div></div>`)
+    :grouped?SHOP.ORDER.map(sec=>{const its=open.filter(i=>gSec(i)===sec);return its.length?`<section class="gsec card"><div class="gsech"><span class="gsecic" aria-hidden="true">${SEC_IC[sec]||'•'}</span><b>${sec}</b><small class="num">${its.length}</small></div>${its.map(gItemHtml).join('')}</section>`:''}).join('')
+    :open.map(gItemHtml).join('');
   $('gDone').innerHTML=done.map(gItemHtml).join('');
-  // items bought before and not on the list now, most frequent first
-  const onList=new Set(S.grocery.map(g=>String(g.name).trim())),freq={};
-  S.purchases.forEach(p=>(p.items||[]).forEach(it=>{const n=String(it.name||'').trim();if(n&&!onList.has(n))freq[n]=(freq[n]||0)+1}));
-  const again=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  $('gAgain').hidden=!again.length;
-  $('gAgain').innerHTML=again.length?`<span class="lbl">קנינו שוב?</span><div class="chips">${again.map(([n,c])=>`<button type="button" class="chip" data-again="${esc(n)}">+ ${esc(n)}${c>1?`<span class="cnt num">${c}</span>`:''}</button>`).join('')}</div>`:'';
+  // what you buy most and is not on the list (each one, or all at once), with the product you picked last time
+  const reg=SHOP.regulars(S.purchases,S.grocery.map(g=>g.name),6);S.gReg=reg;
+  $('gAgain').hidden=!reg.length;
+  $('gAgain').innerHTML=reg.length?`<div class="regcard"><div class="regbody"><span class="sgtag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>לפי הקניות הקודמות</span><b class="sgt">להוסיף את הקבועים שלכם?</b>
+    <div class="chips">${reg.map((r,i)=>`<button type="button" class="chip" data-reg="${i}">+ ${esc(r.name)}</button>`).join('')}</div>
+    ${reg.length>1?`<button class="btn regall" data-regall>להוסיף את כולם (${reg.length})</button>`:''}</div><img class="ill sgill" src="img/bag.png" alt="" aria-hidden="true"></div>`:'';
   const priced=open.filter(i=>gPrice(i)!==null),sum=priced.reduce((t,i)=>t+gLine(i),0);
   $('gTotal').hidden=!open.length;
-  $('gTotal').innerHTML=open.length?`<div class="t1"><span>סה"כ משוער</span><span class="num">${ils(sum)}</span></div>${priced.length<open.length?`<div class="warn num">${open.length-priced.length} פריטים עוד בלי מחיר</div>`:''}`:'';
+  $('gTotal').innerHTML=open.length?`<div class="gcost"><span class="col"><small>עלות משוערת</small><b class="num">${ils(Math.round(sum*100)/100)}</b><small>לפי המוצרים שנבחרו · המחיר בקופה עשוי להשתנות${priced.length<open.length?` · ${open.length-priced.length} עוד בלי מחיר`:''}</small></span></div>`:'';
+  $('gStart').hidden=!open.length;$('gStart').textContent=`מתחילים קנייה · ${open.length} מוצרים`;
+  if(S.shopMode)renderShopMode();
   $('gFinish').hidden=!done.length;
   $('gFinishBtn').innerHTML=`${I.check}סיים קנייה · ${done.length} פריטים`;
   $('gClear').classList.remove('arm');$('gClear').textContent=`ניקוי ${done.length} פריטים בלי לשמור קנייה`;
@@ -2146,10 +2289,15 @@ function finishSheet(){
    <div class="field"><label class="lbl" for="fsAmt">כמה שולם בפועל</label><div class="amountbox"><input class="num" id="fsAmt" inputmode="decimal" value="${rl||''}"><span>₪</span></div></div>
    <div class="field"><label class="lbl" for="fsName">תיאור</label><input class="in" id="fsName" value="קניית סופר"></div>
    <div class="small muted">הסכום ייכנס כשורה בפירוט של "${SHOP_ROW}" ב${esc(monthLabel(mk))}, והפריטים יעברו ל"קניות קודמות".</div>
+   <div class="fsdup" id="fsDup" hidden></div>
    <div class="actions"><button class="btn" id="fsSave">סיום ושמירה</button><button class="btn ghost" id="fsCancel">ביטול</button></div>`);
   $('fsCancel').onclick=closeSheet;
+  let dupOk=false;
   $('fsSave').onclick=async()=>{
     const amount=parseAmt($('fsAmt').value);if(amount===null){$('fsAmt').focus();toast('כתבו כמה שולם');return}
+    // an expense like this already recorded today (same list, about the same amount): ask once before a second one
+    const twin=S.variable.find(v=>v.month===mk&&(v.row||VAR_ROW)===SHOP_ROW&&v.date===today()&&Math.abs((Number(v.amount)||0)-amount)<=1);
+    if(twin&&!dupOk){dupOk=true;$('fsDup').hidden=false;$('fsDup').innerHTML=`נראה שכבר נרשמה היום הוצאה דומה: <b>${esc(twin.name)} · ${ils(twin.amount)}</b>. ללחוץ שוב כדי לרשום בכל זאת.`;$('fsSave').textContent='לרשום בכל זאת';return}
     const name=$('fsName').value.trim()||'קניית סופר',pid='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),now=Date.now();
     const purchase={date:today(),month:mk,name,total:amount,rlTotal:rl,createdAt:now,items:items.map(i=>({name:i.name,product:i.product||null,price:gPrice(i),qty:gQty(i)}))};
     const line={month:mk,row:SHOP_ROW,name,amount,date:today(),createdAt:now,purchaseId:pid,source:'app'};
@@ -2540,7 +2688,56 @@ document.addEventListener('click',e=>{
 });
 $('svAdd').onclick=()=>holdingSheet(null);
 function parseQty(t){let m=t.match(/^(\d{1,3})\s+(.+)$/);if(m)return [m[2].trim(),Number(m[1])];m=t.match(/^(.+?)\s*[x×*]\s*(\d{1,3})$/i);if(m)return [m[1].trim(),Number(m[2])];return [t,1]}
-$('gForm').onsubmit=e=>{e.preventDefault();const raw=$('gName').value.trim();if(!raw)return;const [name,qty]=parseQty(raw);const data={name,done:false,priceStatus:'pending',createdAt:Date.now()};if(qty>1)data.qty=qty;if(S.uid)data.by=S.uid;store.add('grocery',data);$('gName').value='';$('gName').focus()};
+/* ---------- the shopping list: one smart line, history, sections, shopping mode ---------- */
+const SEC_IC={'ירקות ופירות':'🥕','לחם ומאפים':'🥖','מקרר וחלב':'🥛','בשר ודגים':'🍗','יבשים ושימורים':'🥫','שתייה':'🧃','קפואים':'🧊','תינוק':'🍼','ניקיון וטיפוח':'🧴','אחר':'🛒'};
+const gSec=i=>i.section||SHOP.section(i.name);
+// names you used before (purchases and the list), how often, and the product picked for each
+function gHistory(){const m={};
+  const take=(n,prod,w)=>{n=String(n||'').trim();if(!n)return;const h=m[n]||(m[n]={name:n,count:0,product:null});h.count+=w;if(prod)h.product=prod};
+  S.purchases.forEach(p=>(p.items||[]).forEach(it=>take(it.name,it.product,1)));S.grocery.forEach(g=>take(g.name,g.product,0));
+  return Object.values(m)}
+const gNew=(x,i=0,prod=null)=>{const d={name:x.name,done:false,priceStatus:prod?'matched':'pending',createdAt:Date.now()+i};
+  if(prod)d.product=prod;if(x.qty&&x.qty!==1)d.qty=x.qty;if(x.unit){d.unit=x.unit;d.qty=x.qty}if(S.uid)d.by=S.uid;return d};
+function gPreview(){
+  const v=$('gName').value,its=SHOP.items(v),hist=gHistory(),on=new Set(openGrocery().map(g=>g.name));
+  $('gPrev').innerHTML=its.length>1||(its[0]&&(its[0].qty!==1||its[0].unit))?`יתווספו: ${its.map(x=>`<b>${esc(x.name)}</b>${x.unit?` ${x.qty} ${esc(x.unit)}`:x.qty!==1?` ×${x.qty}`:''}${on.has(x.name)?' (כבר ברשימה)':''}`).join(' · ')}`:'';
+  const sug=/[,،;\n]\s*$/.test(v)?[]:SHOP.complete(v,hist);
+  $('gSug').innerHTML=sug.map((h,i)=>`<button type="button" class="bare gs" role="option" data-gsug="${i}"><b>${esc(h.name)}</b>${h.product?`<small>${esc(h.product.name)}${has(h.product.price)?' · '+ils(h.product.price):''}</small>`:''}</button>`).join('');
+  S.gSugList=sug;
+}
+$('gName').addEventListener('input',gPreview);
+$('gForm').onsubmit=async e=>{e.preventDefault();const raw=$('gName').value.trim();if(!raw)return;
+  const hist={};gHistory().forEach(h=>hist[h.name]=h);
+  const its=SHOP.items(raw).filter(x=>!openGrocery().some(g=>g.name===x.name));
+  if(!its.length){toast('הכול כבר ברשימה');return}
+  $('gName').value='';$('gPrev').textContent='';$('gSug').innerHTML='';$('gName').focus();buzz(8);
+  const ok=await store.addMany('grocery',its.map((x,i)=>gNew(x,i,(S.gPick||{})[x.name]||(hist[x.name]||{}).product||null)));
+  S.gPick={};if(ok)toast(its.length>1?`נוספו ${its.length} מוצרים`:`נוסף: ${its[0].name}`)};
+function renderShopMode(){
+  const open=openGrocery(),done=S.grocery.filter(i=>i.done),all=open.length+done.length;
+  const row=i=>`<button class="bare smrow${i.done?' done':''}" data-smtog="${esc(i.id)}" aria-pressed="${!!i.done}"><span class="smck" aria-hidden="true">${I.check}</span><span class="col"><b>${esc(i.name)}</b>${i.unit||gQty(i)>1?`<small class="num">${i.unit?`${Number(i.qty)||1} ${esc(i.unit)}`:'×'+gQty(i)}</small>`:''}</span>${gPrice(i)!==null?`<span class="num smp">${ils(gLine(i))}</span>`:''}</button>`;
+  $('smBody').innerHTML=`<div class="smhead"><div class="col"><b id="smT">מצב קנייה</b><small class="num">${done.length} מתוך ${all} בעגלה</small></div><button class="bare smx" data-smclose aria-label="יציאה ממצב קנייה">${I.close}</button></div>
+    <span class="smbar" aria-hidden="true"><i style="width:${all?Math.round(done.length/all*100):0}%"></i></span>
+    <div class="smlist">${SHOP.ORDER.map(sec=>{const its=open.filter(i=>gSec(i)===sec);return its.length?`<div class="smsec">${SEC_IC[sec]} ${sec}</div>${its.map(row).join('')}`:''}).join('')||'<div class="small muted" style="text-align:center;padding:24px">הכול בעגלה</div>'}
+    ${done.length?`<div class="smsec">✓ בעגלה · ${done.length}</div>${done.map(row).join('')}`:''}</div>
+    <div class="smfoot"><button class="btn block" data-smfinish ${done.length?'':'disabled'}>סיימנו · לתשלום (${done.length})</button></div>`;
+}
+const openShopMode=()=>{S.shopMode=true;renderShopMode();$('shopMode').hidden=false;document.body.classList.add('noscroll')};
+const closeShopMode=()=>{S.shopMode=false;$('shopMode').hidden=true;document.body.classList.remove('noscroll')};
+$('gStart').onclick=openShopMode;
+document.addEventListener('click',e=>{
+  const gs=e.target.closest('[data-gsug]');if(gs){const h=(S.gSugList||[])[Number(gs.dataset.gsug)];if(!h)return;
+    const v=$('gName').value,parts=v.split(/([,،;\n])/),last=parts.pop(),q=(last.match(/^\s*(\d+\s+)?/)||[''])[0];
+    $('gName').value=parts.join('')+(parts.length?' ':'')+q.trimStart()+h.name+', ';(S.gPick||(S.gPick={}))[h.name]=h.product||null;gPreview();$('gName').focus();return}
+  const rg=e.target.closest('[data-reg]');if(rg){const r=(S.gReg||[])[Number(rg.dataset.reg)];if(!r)return;buzz(8);
+    store.addMany('grocery',[gNew({name:r.name,qty:1},0,r.product)]).then(ok=>{if(ok)toast('נוסף: '+r.name)});return}
+  if(e.target.closest('[data-regall]')){const rs=S.gReg||[];if(!rs.length)return;buzz(10);
+    store.addMany('grocery',rs.map((r,i)=>gNew({name:r.name,qty:1},i,r.product))).then(ok=>{if(ok)toast(`נוספו ${rs.length} מוצרים קבועים`)});return}
+  if(e.target.closest('[data-gorder]')){S.gManual=!S.gManual;renderShop();return}
+  const st=e.target.closest('[data-smtog]');if(st){const it=S.grocery.find(g=>g.id===st.dataset.smtog);if(!it)return;buzz(8);store.update('grocery',it.id,{done:!it.done});return}
+  if(e.target.closest('[data-smclose]')){closeShopMode();return}
+  if(e.target.closest('[data-smfinish]')){closeShopMode();finishSheet();return}
+});
 $('gFinishBtn').onclick=finishSheet;
 $('gClear').onclick=()=>{const b=$('gClear');if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='ללחוץ שוב לאישור';return}b.classList.remove('arm');S.grocery.filter(g=>g.done).forEach(g=>store.del('grocery',g.id))};
 /* ---------- quick add: a menu with submenus (opened beside, slides in) ---------- */
