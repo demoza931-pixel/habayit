@@ -508,8 +508,36 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .evacts .btn2{min-height:46px;border-radius:14px;border:1px solid var(--line);font-weight:700;background:var(--surface-2)}
 .evacts .btn2.danger{color:var(--neg)}.evacts .btn2.arm{background:var(--neg);color:#fff;border-color:var(--neg)}
 #calQuick .chip{min-height:38px;font-size:13px}
+/* the shared look (from the design): soft cards, big titles, letters for the two of you, illustrations */
+.card{border-radius:20px;box-shadow:0 1px 2px rgba(30,41,37,.04),0 6px 18px rgba(30,41,37,.05)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .card{box-shadow:none}}
+.hwho{display:flex;align-items:center}
+header.top:not(.nomonth) .hwho{display:none}
+/* where there is no month picker it takes no room, so the letters fit next to the bell */
+header.top.nomonth .month{position:absolute;inset-inline-start:0;visibility:hidden}
+.hwho .wl{width:38px;height:38px;border-radius:999px;display:grid;place-items:center;font-weight:800;font-size:16px;border:2px solid var(--bg);color:var(--ink)}
+.hwho .wl+.wl{margin-inline-start:-8px}
+.hwho .wl.y{background:color-mix(in srgb,var(--who-y) 28%,var(--surface))}.hwho .wl.t{background:color-mix(in srgb,var(--who-t) 28%,var(--surface))}.hwho .wl.s{background:var(--surface-2)}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:2px}
+.phead .col{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ptitle{margin:0;font:800 30px/1.1 var(--font-body);letter-spacing:-.01em}
+.psub{font-size:15px;color:var(--ink-2)}
+.ill{display:block;object-fit:contain;pointer-events:none;user-select:none}
+.phill{width:76px;height:64px;flex:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ill{background:radial-gradient(closest-side,#EFE9DE 72%,transparent 100%);border-radius:18px;padding:4px}}
+:root[data-theme="dark"] .ill{background:radial-gradient(closest-side,#EFE9DE 72%,transparent 100%);border-radius:18px;padding:4px}
+@media (prefers-reduced-motion:no-preference){.ill{animation:illfloat 5s ease-in-out infinite}@keyframes illfloat{50%{transform:translateY(-3px)}}
+  .card,.sgcard,.tdst{transition:transform .15s}.tdst:active,.sgdo:active,.sglater:active{transform:scale(.97)}}
+.sgcard.hasill{flex-direction:row;align-items:center;gap:6px}
+.sgbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.sgill{width:104px;height:104px;flex:none;align-self:center}
+.sgtag svg{width:13px;height:13px;fill:#E9B949;stroke:none;margin-inline-end:4px;vertical-align:-2px}
+.sglater{min-height:46px;padding:0 18px;border-radius:var(--r-btn);background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--accent);font-weight:700;font-size:15px}
+.sgmore{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}.sgmore .link{font-size:13px;min-height:32px}
+.bhero .bcrib{width:92px;height:52px;flex:none}.bhero .col b{font-size:17px}.bhero{gap:10px;padding:14px}
+@media (max-width:370px){.sgill{width:72px;height:72px}.bhero .bcrib{display:none}.ptitle{font-size:26px}.phill{width:60px;height:52px}}
 .tdhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px}
-.tdhead .col{display:flex;flex-direction:column;gap:2px}.tdhead b{font-size:24px;line-height:1.15}.tdhead small{font-size:14px}
+.tdhead .col{display:flex;flex-direction:column;gap:2px}.tdhead b{font-size:28px}.tdhead small{font-size:14px}
 .tdwho{display:flex}.tdwho .who{width:34px;height:34px;border-radius:999px;border:2px solid var(--bg);background:var(--accent-soft);object-fit:cover}.tdwho .who+.who{margin-inline-start:-10px}
 .sgcard{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-hero);background:var(--accent-soft);border:1px solid transparent}
 .sgcard.second{background:var(--surface);border-color:var(--line);padding:12px 14px;gap:6px}.sgcard.second .sgt{font-size:15px}
@@ -855,7 +883,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 <div class="wrap">
   <header class="top">
     <div class="brand">הבית שלנו</div>
-    <div class="hright"><button class="bare bell" id="bellBtn" type="button" aria-label="התראות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg><span class="badge num" id="bellCount" hidden></span></button><button class="bare hbtn" id="insBtn" type="button" aria-label="תובנות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
+    <div class="hright"><div class="hwho" id="hWho" aria-hidden="true"></div><button class="bare bell" id="bellBtn" type="button" aria-label="התראות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg><span class="badge num" id="bellCount" hidden></span></button><button class="bare hbtn" id="insBtn" type="button" aria-label="תובנות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
     <div class="month" aria-label="בחירת חודש">
       <button class="bare" id="mPrev" aria-label="חודש קודם"><svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
       <span id="mLabel" class="num"></span>
@@ -868,7 +896,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   <!-- MONTH -->
   <!-- TODAY: "היום שלנו" -->
   <section class="tab" id="t-today" hidden>
-    <div class="tdhead"><div class="col"><b id="tdGreet" class="disp"></b><small id="tdDate" class="muted"></small></div><div class="tdwho" id="tdWho" aria-hidden="true"></div></div>
+    <div class="tdhead"><div class="col"><b id="tdGreet" class="ptitle"></b><small id="tdDate" class="muted"></small></div></div>
     <div id="tdSugg"></div>
     <div class="tdsec"><h2 class="sec" id="tdEvTitle">היום שלכם</h2><div class="tdrange" role="group" aria-label="טווח"><button class="bare" data-tdrange="day">היום</button><button class="bare" data-tdrange="week">השבוע</button></div></div>
     <section class="card tdlist" id="tdEvents"></section>
@@ -878,7 +906,8 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   </section>
 
   <section class="tab" id="t-home">
-    <div id="hero"></div>
+    <div class="phead"><div class="col"><h1 class="ptitle">הכסף שלנו</h1><small class="psub" id="phHome"></small></div><img class="ill phill" src="img/coins.png" alt="" aria-hidden="true"></div>
+        <div id="hero"></div>
     <div id="hCredit"></div>
     <div id="hGroups" style="display:flex;flex-direction:column;gap:12px"></div>
     <div id="hSummary" class="totals">
@@ -891,13 +920,15 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 
   <!-- BABY -->
   <section class="tab" id="t-baby" hidden>
-    <div id="bHero"></div>
+    <div class="phead"><div class="col"><h1 class="ptitle">מתכוננים ביחד</h1><small class="psub" id="phBaby"></small></div></div>
+        <div id="bHero"></div>
     <div id="bSections" class="bsecs"></div>
   </section>
 
   <!-- SCHEDULE -->
   <section class="tab" id="t-cal" hidden>
-    <div class="calhead">
+    <div class="phead"><div class="col"><h1 class="ptitle">השבוע שלנו</h1><small class="psub" id="phCal"></small></div></div>
+        <div class="calhead">
       <button class="bare caltitle" id="calTitle" aria-expanded="false" aria-controls="monthGrid"><b id="wkLabel"></b><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <button class="bare todaypill" id="calToday" hidden>היום</button>
       <div class="people" id="calPeople" role="group" aria-label="למי להציג"></div>
@@ -913,7 +944,8 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 
   <!-- GROCERY -->
   <section class="tab" id="t-shop" hidden>
-    <form class="addline" id="gForm">
+    <div class="phead"><div class="col"><h1 class="ptitle">הקניות שלנו</h1><small class="psub" id="phShop"></small></div><img class="ill phill" src="img/basket.png" alt="" aria-hidden="true"></div>
+        <form class="addline" id="gForm">
       <input class="in" id="gName" placeholder="מה צריך מהסופר?" autocomplete="off" aria-label="פריט חדש">
       <button class="sqbtn" type="submit" aria-label="הוספה לרשימה"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </form>
@@ -932,7 +964,8 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 
   <!-- SAVINGS / INVESTMENTS -->
   <section class="tab" id="t-sav" hidden>
-    <div id="svHero"></div>
+    <div class="phead"><div class="col"><h1 class="ptitle">החיסכון שלנו</h1><small class="psub" id="phSav"></small></div><img class="ill phill" src="img/piggy.png" alt="" aria-hidden="true"></div>
+        <div id="svHero"></div>
     <div id="svAccounts" style="display:flex;flex-direction:column;gap:12px"></div>
     <button class="btn ghost block" id="svAdd">הוספת החזקה</button>
     <div class="small muted">מחירים: מניות, אג"ח ותעודות סל בת"א מהבורסה לפי מספר נייר. ניירות בחו"ל מ־Yahoo Finance, בהמרה לשקלים לפי שער הדולר של אותו יום. קרנות נאמנות מ־Funder. גמל והשתלמות לפי יתרה שמעדכנים ידנית. המחירים מתעדכנים פעם ביום.</div>
@@ -965,10 +998,10 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 <nav class="tabs" aria-label="לשוניות">
   <div class="in-nav">
     <button data-tab="today" id="navToday" hidden><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>בית</button>
-    <button data-tab="home" aria-current="page"><span class="pillwrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>חודש</button>
+    <button data-tab="home" aria-current="page"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3"/><path d="M4 7.5V17a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 1 4 7.5z"/><circle cx="16.5" cy="13.5" r="1.2"/></svg></span>כסף</button>
     <button data-tab="cal"><span class="pillwrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2.2"/></svg></span>לו"ז</button>
     <button data-tab="baby"><span class="pillwrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M9.5 15.5c1.4 1.1 3.6 1.1 5 0M12 5.5c0-1.5 1-2.5 2.5-2.5"/></svg></span>תינוק</button>
-    <button data-tab="shop"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg></span>סופר</button>
+    <button data-tab="shop"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg></span>קניות</button>
     <button data-tab="sav"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-8"/><path d="M15 8h5v5"/></svg></span>חיסכון</button>
 
   </div>
@@ -1704,7 +1737,7 @@ const monthVar=(k,row)=>S.variable.filter(v=>v.month===k&&(v.row||VAR_ROW)===row
 // @rules:end
 
 /* ---------- render ---------- */
-function renderAll(){$('mLabel').textContent=monthLabel(S.month);renderHome();renderBaby();renderShop();renderSav();renderIns();renderCal();renderToday();fillAvatars();runCounters();navInd();chrome()}
+function renderAll(){$('mLabel').textContent=monthLabel(S.month);renderHome();renderBaby();renderShop();renderSav();renderIns();renderCal();renderToday();renderHeads();fillAvatars();runCounters();navInd();chrome()}
 const listNames=()=>[VAR_ROW,'קניות/פארם',foodRow()];
 function rowHtml(r,i){
   const amt=has(r.amount)?`<span class="amt num${r.star?' mute':''}">${ils(r.amount)}</span>`:`<span class="amt mute">${r.star?'*':'—'}</span>`;
@@ -1840,7 +1873,7 @@ function renderBaby(){
   $('bHero').innerHTML=total?`<button class="bare card bhero" id="bHeroBtn" aria-label="נקנו ${bought.length} מתוך ${total}. פרטים על הקופה והמתנות">
     <span class="ringwrap"><svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fg" cx="18" cy="18" r="15.9" style="--to:${100-bp}"/></svg><span class="rv num"><b>${bp}%</b></span></span>
     <span class="col"><b class="num">נקנו ${bought.length} מתוך ${total}</b><small class="num">${buy.length?`נשארו ${buy.length} לקנות${st.buySum?` · כ־${ils(st.buySum)}`:''}`:'אין כרגע מה לקנות'}</small>${fp?`<small class="num">בקופת הקנייה הראשונה: ${ils(fp.budget-fpSum)}</small>`:''}</span>
-    <span class="chev" aria-hidden="true">${I.chevL}</span></button>`:'';
+    <img class="ill bcrib" src="img/crib.png" alt="" aria-hidden="true"></button>`:'';
   if(!total){$('bSections').innerHTML='<div class="emptyline" style="border-top:0">הרשימה ריקה. הוסיפו את הפריט הראשון עם כפתור הפלוס.</div>';return}
   const ord=(a,b)=>(a.order||0)-(b.order||0);
   const row=b=>{const done=b.status==='נקנה';
@@ -2764,10 +2797,12 @@ function suggestions(){const now=Date.now();return AGENT.suggest(FLAGS.demo?DEMO
 const PART_HE={urgency:'דחיפות',usefulness:'תועלת',confidence:'ביטחון בנתונים',timing:'תזמון',annoyance:'הפרעה',duplication:'כפילות'};
 function sgCard(c,main){
   const why=S.sgWhy===c.id;
-  return `<article class="sgcard${main?'':' second'}" data-sid="${esc(c.id)}">
-    ${main?'<span class="sgtag">הצעה בשבילכם</span>':''}<b class="sgt">${esc(c.title)}</b><span class="sgr">${esc(c.reason)}</span>
-    <div class="sgacts"><button class="btn sgdo" data-sgdo="${esc(c.id)}">${esc(c.primaryAction.label||'בואו נעשה את זה')}</button><button class="bare sgbtn" data-sglater="${esc(c.id)}">אחר כך</button><button class="bare sgbtn" data-sgno="${esc(c.id)}">לא רלוונטי</button></div>
-    <button class="bare link sgwhy" data-sgwhy="${esc(c.id)}" aria-expanded="${why}">למה הצעתם את זה?</button>
+  const ill=main&&SG_ILL[c.type];
+  return `<article class="sgcard${main?'':' second'}${ill?' hasill':''}" data-sid="${esc(c.id)}">
+    <div class="sgbody">${main?'<span class="sgtag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>הצעה בשבילכם</span>':''}<b class="sgt">${esc(c.title)}</b><span class="sgr">${esc(c.reason)}</span>
+    <div class="sgacts"><button class="btn sgdo" data-sgdo="${esc(c.id)}">${esc(c.primaryAction.label||'בואו נעשה את זה')}</button><button class="bare sglater" data-sglater="${esc(c.id)}">אחר כך</button></div>
+    <div class="sgmore"><button class="bare link" data-sgno="${esc(c.id)}">לא רלוונטי</button><span aria-hidden="true">·</span><button class="bare link sgwhy" data-sgwhy="${esc(c.id)}" aria-expanded="${why}">למה הצעתם את זה?</button></div></div>
+    ${ill?`<img class="ill sgill" src="img/${ill}.png" alt="" aria-hidden="true">`:''}
     ${why?`<div class="sgwhybox"><span>ההצעה מבוססת על: ${esc(c.reason)}</span><span class="muted">מקורות: ${c.sourceRefs.map(esc).join(' · ')}${(c.merged||[]).length?` · אוחדו כאן עוד ${c.merged.length} הצעות דומות`:''}</span>
       <span class="sgparts num">${Object.entries(c.parts).map(([k,v])=>`<i>${PART_HE[k]} ${k==='annoyance'||k==='duplication'?'−':''}${v}</i>`).join('')}<i><b>ציון ${c.score}</b></i></span></div>`:''}
   </article>`;
@@ -2777,7 +2812,6 @@ function renderToday(){
   const now=new Date(),h=now.getHours(),me=(S.people||{})[S.uid];
   $('tdGreet').textContent=(h>=5&&h<12?'בוקר טוב':h>=12&&h<17?'צהריים טובים':'ערב טוב')+(me?`, ${me}`:'');
   $('tdDate').textContent=now.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'});
-  $('tdWho').innerHTML=Object.keys(S.people||{}).filter(l=>l!=='updatedAt').map(l=>`<img class="who" data-uid="${esc(l)}" alt="">`).join('');
   // the suggestion (at most one big, one small)
   const sg=suggestions();
   const undo=S.sgUndo?`<div class="sgundo" role="status"><span>${esc(S.sgUndo.text)}</span><button class="bare link" data-sgundo>ביטול</button></div>`:'';
@@ -2867,6 +2901,21 @@ document.addEventListener('click',e=>{
     S.sgUndo={text:`"${t.title}" בוצע`,task:t.id,before};clearTimeout(sgFeedback._t);sgFeedback._t=setTimeout(()=>{S.sgUndo=null;renderToday()},6000);
     store.update('tasks',t.id,{status:'done',completedAt:Date.now()}).then(ok=>{if(!ok){S.sgUndo=null;renderToday()}});return}
 });
+
+/* ---------- the look shared by every screen: who is here, and each screen's title line ---------- */
+const SG_ILL={free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
+function renderHeads(){
+  const ppl=S.people||{},who=Object.keys(ppl).filter(l=>l!=='updatedAt');
+  const tone=n=>n==='יוסף'?'y':n==='תחיה'?'t':'s';
+  if($('hWho'))$('hWho').innerHTML=who.map(l=>`<span class="wl ${tone(ppl[l])}" title="${esc(ppl[l])}">${esc(String(ppl[l]||l).slice(0,1))}</span>`).join('');
+  const set=(id,t)=>{const el=$(id);if(el)el.textContent=t};
+  set('phHome',`לפי הגיליון · ${monthLabel(S.month)}`);
+  set('phBaby','עוד קצת, והבית מוכן');
+  const n=openGrocery().length;set('phShop',`רשימה משותפת · ${n?n+' פריטים':'ריקה'}`);
+  set('phSav','חסכונות, השקעות ויעדים');
+  const d=new Date((S.calDay||dkey(new Date()))+'T00:00'),w0=startOfWeek(d),w6=new Date(w0);w6.setDate(w6.getDate()+6);
+  set('phCal',w0.getMonth()===w6.getMonth()?`${w0.getDate()}–${w6.getDate()} ב${w0.toLocaleDateString('he-IL',{month:'long'})}`:`${w0.getDate()}/${w0.getMonth()+1} – ${w6.getDate()}/${w6.getMonth()+1}`);
+}
 
 /* ---------- celebrations ---------- */
 const buzz=ms=>{try{if(navigator.vibrate)navigator.vibrate(ms)}catch(_){}};
