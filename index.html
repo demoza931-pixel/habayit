@@ -1812,6 +1812,45 @@ const AGENT = (() => {
       primaryAction: { type: 'find_time', taskId: fit.id, label: 'מציאת זמן' },
     }, { urgency: daysBetween(now, fitW.s) === 0 ? 20 : 15, usefulness: 25, confidence: 25, timing: hour < 18 ? 10 : 0, annoyance: annoy('task_fit'), duplication: 0 }));
 
+    // a task whose date passed and is still open (spec 11: follow-up after the date)
+    const today = dayKey(now);
+    T.filter(t => t.due && t.due < today && t.status !== 'waiting').forEach(t => out.push(make({
+      id: `task_overdue:${t.id}:${t.due}`, type: 'task_overdue', domain: 'tasks', topic: `task:${t.id}`,
+      title: `"${t.title}" עברה את המועד`,
+      reason: `היה צריך לסיים עד ${t.due.slice(8, 10)}/${t.due.slice(5, 7)}, לפני ${daysBetween(new Date(t.due + 'T12:00').getTime(), now)} ימים. אפשר לשבץ זמן או לקבוע תאריך חדש.`,
+      sourceRefs: [`tasks:${t.id}`], validUntil: null, taskId: t.id,
+      primaryAction: { type: 'find_time', taskId: t.id, label: 'מציאת זמן' },
+    }, { urgency: 25 + Math.min(10, daysBetween(new Date(t.due + 'T12:00').getTime(), now)), usefulness: 20, confidence: 35, timing: 5, annoyance: annoy('task_overdue'), duplication: 0 })));
+
+    /* two events at the same time for the same person (a shared event counts for both), next 7 days (spec 10).
+       conflicts: [{day, who, a:{title, s}, b:{title, s}}], found by the app from the calendar */
+    (sig.conflicts || []).forEach(x => out.push(make({
+      id: `cal_conflict:${x.day}:${x.a.title}:${x.b.title}`, type: 'cal_conflict', domain: 'calendar', topic: `day:${x.day}`,
+      title: `${when(now, new Date(x.day + 'T12:00').getTime())} יש שני אירועים באותה שעה`,
+      reason: `"${x.a.title}" ב-${hm(x.a.s)} ו"${x.b.title}" ב-${hm(x.b.s)}${x.who === 'shared' ? '' : ` (${x.who === 'yosef' ? 'יוסף' : 'תחיה'})`}. אולי אחד מהם צריך לזוז.`,
+      sourceRefs: [`calendar:${x.day}`], validUntil: new Date(x.day + 'T23:59').getTime(),
+      primaryAction: { type: 'open_tab', tab: 'cal', day: x.day, label: 'ללו"ז של היום' },
+    }, { urgency: daysBetween(now, new Date(x.day + 'T12:00').getTime()) <= 1 ? 30 : 20, usefulness: 25, confidence: 30, timing: 5, annoyance: annoy('cal_conflict'), duplication: 0 })));
+
+    /* a list on its way over its frame: spent so far ÷ days gone × days in the month (spec 12), only after the first week
+       and only while still under the frame (over it is money_over). pace: [{row, spent, frame, projected, day, days}] */
+    (m.pace || []).filter(p => p.day >= 7 && p.spent <= p.frame && p.projected > p.frame * 1.05).forEach(p => out.push(make({
+      id: `money_pace:${m.month}:${p.row}:${Math.round(p.projected / 100)}`, type: 'money_pace', domain: 'money', topic: 'money',
+      title: `"${p.row}" בדרך לעבור את המסגרת`,
+      reason: `עד היום ${Math.round(p.spent).toLocaleString('he-IL')} ₪ מתוך ${Math.round(p.frame).toLocaleString('he-IL')} ₪. בקצב הזה סוף החודש יגיע לכ־${Math.round(p.projected).toLocaleString('he-IL')} ₪ (הוצאה עד היום ÷ ${p.day} ימים × ${p.days}). זו הערכה, לא נתון.`,
+      sourceRefs: [`months:${m.month}`, `variable:${m.month}:${p.row}`], validUntil: null,
+      primaryAction: { type: 'open_tab', tab: 'home', row: p.row, label: 'לפירוט' },
+    }, { urgency: 15, usefulness: 20, confidence: Math.round(10 + 25 * Math.min(1, p.day / p.days)), timing: 5, annoyance: annoy('money_pace'), duplication: 0 })));
+
+    // a balance typed in from a statement and not updated for a long time (spec 15.10). stale: [{hid, name, days}]
+    (sig.stale || []).filter(s => s.days >= 45).forEach(s => out.push(make({
+      id: `savings_stale:${s.hid}:${Math.floor(s.days / 30)}`, type: 'savings_stale', domain: 'savings', topic: `savings:${s.hid}`,
+      title: `לעדכן את היתרה של ${s.name}?`,
+      reason: `היתרה הוזנה לפני ${s.days} ימים. מספיק להעתיק אותה מהדוח האחרון, וההפקדות שאחריו ימשיכו להתווסף לבד.`,
+      sourceRefs: [`holdings:${s.hid}`], validUntil: null,
+      primaryAction: { type: 'holding', hid: s.hid, label: 'לעדכון היתרה' },
+    }, { urgency: 10 + Math.min(10, Math.floor((s.days - 45) / 15)), usefulness: 15, confidence: 30, timing: 5, annoyance: annoy('savings_stale'), duplication: 0 })));
+
     return out;
   }
 
@@ -3917,12 +3956,25 @@ function agentSignals(now){
         check:S.baby.filter(b=>b.status==='לבדוק').map(b=>({id:b.id,name:b.name})),
         dups:Object.entries(g).filter(([,bs])=>bs.length>1&&new Set(bs.map(b=>b.status)).size>1).map(([name,bs])=>({name,statuses:[...new Set(bs.map(b=>b.status))].slice(0,2),ids:bs.map(b=>b.id)})),
         budget:{left:st.fp?Math.round((st.fp.budget-st.fpSum)*100)/100:null,planned:Math.round(st.buySum*100)/100}}})(),
-    money:c?{month:k,isCurrent:true,hasIncome:c.income!==null,over}:{},
+    money:c?{month:k,isCurrent:true,hasIncome:c.income!==null,over,
+      // the lists' pace: spent so far ÷ days gone × days in the month (a projection, shown as one)
+      pace:(()=>{const d=new Date(now),day=d.getDate(),days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+        // only the everyday lists (shop, food), and not when the row is just the sum of its list (a sheet formula, no frame to keep)
+        return ['קניות/פארם',foodRow(k)].map(rn=>{const row=c.rows.find(r=>r.name===rn),rv=row&&has(row.amount)&&!row.star?Number(row.amount):null,spent=varSum(monthVar(k,rn));
+          return rv&&Math.abs(rv-spent)>=1?{row:rn,spent,frame:rv,projected:spent/day*days,day,days}:null}).filter(Boolean)})()}:{},
+    // two timed events that overlap for the same person (a shared one counts for both), next 7 days
+    conflicts:S.calendar?(()=>{const out=[],seen=new Set(),ev=evs.filter(e=>!e.allDay&&e.e>now&&e.s<soon).sort((a,b)=>a.s-b.s);
+      for(let i=0;i<ev.length;i++)for(let j=i+1;j<ev.length&&ev[j].s<ev[i].e;j++){const a=ev[i],b=ev[j];
+        const who=a.who===b.who?a.who:a.who==='shared'?b.who:b.who==='shared'?a.who:null;if(!who||nt(a.title)===nt(b.title))continue;
+        const day=dkey(a.s),key=day+a.title+b.title;if(seen.has(key))continue;seen.add(key);out.push({day,who,a:{title:a.title,s:+a.s},b:{title:b.title,s:+b.s}})}
+      return out.slice(0,3)})():[],
+    // a balance typed in from a statement: how many days since
+    stale:S.holdings.filter(h=>h.source==='manual'&&has(h.value)&&h.opened!==false).map(h=>{const iso=SAV.isoOf(h.valueDate);return iso?{hid:h.id,name:h.name,days:Math.floor((now-new Date(iso+'T12:00'))/864e5)}:null}).filter(Boolean),
     savings:S.holdings.filter(h=>h.mirror).flatMap(h=>SAV.due(h,S.deposits,now).map(x=>({...x,hid:h.id,name:h.name}))),
     history:{dismissedByType},
     tasks:S.tasks.filter(t=>['new','planned','waiting'].includes(t.status)&&!(t.snoozedUntil>now)).map(t=>{const st=taskSync(t);
       return {id:t.id,title:t.title,status:t.status,minutes:Number(t.estimatedMinutes)||null,idleDays:Math.floor((now-(t.progressAt||t.createdAt||now))/864e5),
-        postponed:t.postponeCount||0,waiting:t.waitingReason||'',scheduled:!!st&&st.state!=='failed'}})};
+        postponed:t.postponeCount||0,waiting:t.waitingReason||'',scheduled:!!st&&st.state!=='failed',due:t.dueDate||null}})};
 }
 function agentPrefs(){const sugg={},mutedTypes={};S.prefs.forEach(p=>{if(p.kind==='sugg')sugg[p.sid]={state:p.state,until:p.until};if(p.kind==='mute')mutedTypes[p.type]=true});return {sugg,mutedTypes}}
 // fixed suggestions for looking at the screen without real data (#flags=demo)
@@ -4078,6 +4130,7 @@ function runAction(c){
   if(a.type==='ask_blocker'){blockerSheet(S.tasks.find(t=>t.id===a.taskId));return}
   if(a.type==='baby_review'){babyReviewSheet();return}
   if(a.type==='baby_item'){babySheet(S.baby.find(b=>b.id===a.id));return}
+  if(a.type==='holding'){const h=S.holdings.find(x=>x.id===a.hid);if(h){showTab('sav');holdingSheet(h)}return}
   if(a.type==='deposit'){const h=S.holdings.find(x=>x.id===a.hid);if(h){showTab('sav');depositSheet(h,null,a.month)}return}
   if(a.type==='open_tab'){
     if(a.tab==='home'){S.month=monthKey(new Date());S.openGroups['משתנות']=true;if(a.row)S.rowOpen[a.row]=true}
@@ -4228,7 +4281,7 @@ function voiceStart(){
   try{r.start()}catch(e){S.rec=null;mic.classList.remove('rec');toast('לא הצלחתי להתחיל הקלטה')}
 }
 /* ---------- what the app learned about us: every preference can be seen, changed, or deleted ---------- */
-const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה'};
+const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה',task_overdue:'משימה שעבר המועד שלה',cal_conflict:'שני אירועים באותה שעה',money_pace:'קצב הוצאה לקראת חריגה',savings_stale:'יתרה שלא עודכנה'};
 function learnedSheet(){
   const keep=!$('sheet').hidden&&$('sheetBody').querySelector('.lrnsec')?$('sheet').scrollTop:0;
   const now=Date.now(),dt=t=>t?new Date(t).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
@@ -4356,7 +4409,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ---------- the look shared by every screen: who is here, and each screen's title line ---------- */
-const SG_ILL={savings_due:'piggy',savings_missed:'piggy',baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
+const SG_ILL={task_overdue:'checklist',cal_conflict:'together',money_pace:'coins',savings_stale:'piggy',savings_due:'piggy',savings_missed:'piggy',baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
 function renderHeads(){
   const ppl=S.people||{},who=Object.keys(ppl).filter(l=>l!=='updatedAt');
   const tone=n=>n==='יוסף'?'y':n==='תחיה'?'t':'s';
