@@ -635,6 +635,11 @@ body.noscroll{overflow:hidden}
 .gpastrow{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:0 6px;color:var(--ink-2);text-align:start}
 .gpastrow b{font-size:15px;color:var(--ink)}.gpastrow small{flex:1}.gpastrow .chev::before{content:"‹";font-size:20px}
 .gnote{text-align:center}
+.regline{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;font-size:14px;padding:0 4px}
+.regline .rlbl{color:var(--ink-2);font-size:13px;margin-inline-end:2px}
+.regline .rg{min-height:36px;padding:0 4px;color:var(--accent);font-weight:600}
+.regline .rg.all{margin-inline-start:6px;padding:0 10px;border-radius:999px;background:var(--accent-soft);font-size:13px;min-height:32px}
+.regline .rsep{color:var(--leader)}
 .picks{display:flex;flex-direction:column;gap:8px}
 .pickrow{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:56px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);text-align:start}
 .pedit{display:flex;justify-content:space-between}
@@ -1058,6 +1063,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
       </form>
       <div class="gsug" id="gSug" role="listbox" aria-label="השלמות"></div>
       <div class="small muted gprev" id="gPrev" aria-live="polite"></div>
+      <div class="regline" id="gAgain" hidden></div>
     </div>
     <section class="card glcard" id="gList" aria-label="רשימת קניות">
       <div class="glhead" id="gHead"></div>
@@ -1066,7 +1072,6 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
     </section>
     <button class="bare gpastrow" data-gpast><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></span><b>קניות קודמות</b><small class="num" id="gPastN"></small><span class="chev" aria-hidden="true"></span></button>
     <div class="gtot" id="gTotal" hidden></div>
-    <div id="gAgain" hidden></div>
     <div class="finishbar" id="gFinish" hidden><button id="gFinishBtn"></button><button id="gClear"></button></div>
     <button class="btn block gstart" id="gStart" hidden>מתחילים קנייה</button>
     <div class="small muted gnote">המחירים מרמי לוי אונליין, ומתעדכנים לבד. בקופה המחיר עשוי להשתנות.</div>
@@ -2241,9 +2246,11 @@ function renderShop(){
   if(!open.length&&!done.length)$('gList').hidden=true;
   const empty=$('gEmpty');if(!open.length&&!done.length&&!empty){$('gList').insertAdjacentHTML('beforebegin','<div class="card gempty" id="gEmpty"><div class="emptyline" style="border-top:0">הרשימה ריקה. כתבו למעלה מה חסר, אפשר כמה מוצרים בשורה אחת.</div></div>')}else if((open.length||done.length)&&empty)empty.remove();
   // what you buy most and is not on the list (each one, or all at once), with the product you picked last time
-  const reg=[];S.gReg=reg;
-  $('gAgain').hidden=true;
-  $('gAgain').innerHTML=reg.length?`<div class="regcard"><div class="regbody"><span class="sgtag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>לפי הקניות הקודמות</span><b class="sgt">להוסיף את הקבועים שלכם?</b>
+  // the regulars: one small line of what you buy most and is not on the list, each a tap, or all at once
+  const reg=SHOP.regulars(S.purchases,S.grocery.filter(g=>!g.done).map(g=>g.name),6);S.gReg=reg;
+  $('gAgain').hidden=!reg.length;
+  $('gAgain').innerHTML=reg.length?`<span class="rlbl">קבועים:</span>${reg.map((r,i)=>`<button type="button" class="bare rg" data-reg="${i}">+ ${esc(r.name)}</button>`).join('<span class="rsep" aria-hidden="true">·</span>')}${reg.length>1?`<button type="button" class="bare rg all" data-regall>כולם (${reg.length})</button>`:''}`:'';
+  if(false)$('gAgain').innerHTML=reg.length?`<div class="regcard"><div class="regbody"><span class="sgtag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>לפי הקניות הקודמות</span><b class="sgt">להוסיף את הקבועים שלכם?</b>
     <div class="chips">${reg.map((r,i)=>`<button type="button" class="chip" data-reg="${i}">+ ${esc(r.name)}</button>`).join('')}</div>
     ${reg.length>1?`<button class="btn regall" data-regall>להוסיף את כולם (${reg.length})</button>`:''}</div><img class="ill sgill" src="img/bag.png" alt="" aria-hidden="true"></div>`:'';
   const priced=open.filter(i=>gPrice(i)!==null),sum=priced.reduce((t,i)=>t+gLine(i),0);
