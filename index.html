@@ -564,6 +564,16 @@ header.top.nomonth .month{position:absolute;inset-inline-start:0;visibility:hidd
 .tline .aitem .dot.hollow{background:var(--surface);border:2px dashed var(--c)}
 .tline .aitem .t{order:9;min-width:48px;text-align:end;font-size:16px;color:var(--ink)}
 .tline .aitem.free,.tline .aitem.pending{border-style:dashed;background:transparent}
+.aiw{display:flex;align-items:center;gap:6px}.aiw>.aitem{flex:1;min-width:0}
+.tline:has(.aiw)::before{inset-inline-end:116px} /* the timeline line through the dots, beside the trash column */
+.evdel{flex:none;min-width:34px;height:40px;padding:0 4px;border-radius:12px;display:grid;place-items:center;color:var(--ink-2);font-size:13px;font-weight:700}.evdel svg{width:18px;height:18px}
+.evdel.arm{background:var(--neg-soft);color:var(--neg)}
+.tdev.now{background:color-mix(in srgb,var(--c) 7%,var(--surface))}
+.tline .aitem.now{border-color:color-mix(in srgb,var(--c) 55%,var(--line));background:color-mix(in srgb,var(--c) 7%,var(--surface))}
+.evnow{display:inline-flex;align-items:center;gap:5px;margin-inline-start:8px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;vertical-align:2px;background:color-mix(in srgb,var(--c,var(--accent)) 16%,var(--surface));color:color-mix(in srgb,var(--c,var(--accent)) 80%,var(--ink))}
+.evnow i{width:7px;height:7px;border-radius:50%;background:currentColor}.evnow.soon{background:var(--surface-2);color:var(--ink-2)}
+@media (prefers-reduced-motion:no-preference){.evnow i{animation:evpulse 2s ease-in-out infinite}.tline .aitem.now .dot{animation:evring 2s ease-out infinite}
+  @keyframes evpulse{50%{opacity:.35}}@keyframes evring{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 45%,transparent)}100%{box-shadow:0 0 0 8px transparent}}}
 .planrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:16px}
 .planrow .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:start;min-height:44px;justify-content:center}.planrow .col b{font-size:16px}.planrow .col small{font-size:13px;color:var(--ink-2)}
 .pill{flex:none;min-height:42px;padding:0 16px;border-radius:999px;font-weight:700;font-size:14px;background:var(--accent-soft);color:var(--accent)}
@@ -1216,6 +1226,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
     </div>
     <div class="legend" id="calPeople" role="group" aria-label="למי להציג"></div>
     <div id="calSuggest"></div>
+    <div id="evUndo"></div>
     <section class="card agenda" id="dayView" aria-live="polite"></section>
     <section class="card plan" id="calPlan"></section>
     <button class="bare caladdbar" data-caladd><span>מה תרצו להוסיף ללו"ז?</span><i aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></i></button>
@@ -3862,7 +3873,7 @@ function renderCal(){
   $('dayView').innerHTML=`<div class="dv-hd"><span class="dvic" aria-hidden="true">${evIcon('cal')}</span><span class="col"><b>${dayName}</b><small class="muted">${sel.getDate()} ב${sel.toLocaleDateString('he-IL',{month:'long'})}${de.length?` · ${de.length} אירועים`:''}${hidden?` · ${hidden} מוסתרים`:''}</small></span></div>`+
     (items.length?`<div class="tline">${items.map((e,i)=>e.free
       ?`<button class="bare aitem free" style="--c:var(--who-s);--i:${i}" data-calfree="${HDAYS[sel.getDay()]} ${sel.getDate()}/${sel.getMonth()+1} ${hm(e.s)}"><span class="eic" aria-hidden="true">${evIcon('heart')}</span><span class="col"><b>ערב פנוי לשניכם</b><small>הצעה · נגיעה כדי לקבוע משהו ביחד</small></span><span class="dot hollow" aria-hidden="true"></span><span class="t num">${hm(e.s)}</span></button>`
-      :`<button class="bare aitem${e.pending?' pending':''}" style="--c:var(${WHO[e.who].c});--i:${i}" data-calev="${esc(e.id)}"><span class="eic" aria-hidden="true">${evIcon(evKind(e))}</span><span class="col"><b>${esc(e.title)}</b><small>${WHO[e.who].n}${e.allDay?'':' · '+rng(e.s,e.e)}${e.place?' · '+esc(e.place):''}${e.pending?' · ממתין לסנכרון':''}</small></span><span class="dot${e.pending?' hollow':''}" aria-hidden="true"></span><span class="t num">${e.allDay?'כל היום':hm(e.s)}</span></button>`).join('')}</div>`
+      :`<div class="aiw${evNow(e)?' now':''}"><button class="bare aitem${e.pending?' pending':''}${evNow(e)?' now':''}" style="--c:var(${WHO[e.who].c});--i:${i}" data-calev="${esc(e.id)}"><span class="eic" aria-hidden="true">${evIcon(evKind(e))}</span><span class="col"><b>${esc(e.title)}${evNowTag(e)}</b><small>${WHO[e.who].n}${e.allDay?'':' · '+rng(e.s,e.e)}${e.place?' · '+esc(e.place):''}${e.pending?' · ממתין לסנכרון':''}</small></span><span class="dot${e.pending?' hollow':''}" aria-hidden="true"></span><span class="t num">${e.allDay?'כל היום':hm(e.s)}</span></button><button class="bare evdel${S.evArm===e.id?' arm':''}" data-evdel="${esc(e.id)}" data-calw="${e.who}" aria-label="${S.evArm===e.id?'אישור מחיקה':'מחיקת'}: ${esc(e.title)}">${S.evArm===e.id?'למחוק?':I.trash}</button></div>`).join('')}</div>`
       :`<button class="bare aitem empty" data-caladd><span class="col"><b>אין כלום ביום הזה</b><small>נגיעה כדי להוסיף אירוע</small></span></button>`);
   // the best suggestion about time (calendar or a task), and the tasks that still need a time
   const cs=suggestions(8).find(c=>c.domain==='calendar'||c.domain==='tasks');
@@ -3907,6 +3918,26 @@ function openCalAdd(text,o={}){
 }
 function closeCalAdd(){$('calSheet').hidden=true;$('calBg').hidden=true;S.calMove=null;S.calPlace='';$('calOcr').innerHTML=''}
 $('calBg').onclick=closeCalAdd;$('calShClose').onclick=closeCalAdd;
+/* now: a timed event that is going on (start ≤ now < end) gets a soft pulse and "עכשיו"; one starting within the hour, "בעוד X דק'" */
+const evNow=e=>!e.allDay&&e.s<=Date.now()&&Date.now()<e.e;
+function evNowTag(e){if(e.allDay)return '';const n=Date.now();if(evNow(e))return '<span class="evnow"><i></i>עכשיו</span>';
+  const m=Math.round((e.s-n)/6e4);return m>0&&m<=60?`<span class="evnow soon">בעוד ${m} דק׳</span>`:''}
+// keep the marker true while the screen is open: redraw once a minute when today is on screen
+setInterval(()=>{if(document.hidden)return;if(S.tab==='cal'&&(!S.calDay||S.calDay===dkey(new Date())))renderCal();if(S.tab==='today')renderToday()},60000);
+// deleting from the timeline: the first tap asks, the second sends the delete; a few seconds to take it back
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-evdel]');
+  if(!b){if(S.evArm&&!e.target.closest('.evdel')){S.evArm=null;renderCal()}return}
+  const id=b.dataset.evdel;if(S.evArm!==id){S.evArm=id;renderCal();return}S.evArm=null;
+  const ev=calEvents().find(x=>x.id===id);buzz(10);
+  if(id.startsWith('req-')){const rid=id.slice(4);await store.del('calreq',rid);renderCal();toast('האירוע לא יישלח ליומן');return}
+  const now=Date.now();if(await store.add('calreq',{op:'delete',target:b.dataset.calw||'shared',eventId:id,title:ev?ev.title:'',status:'pending',createdAt:now})){
+    S.evUndo={eventId:id,at:now,title:ev?ev.title:''};renderCal();evUndoShow()}});
+function evUndoShow(){const u=S.evUndo;if(!u)return;clearTimeout(evUndoShow._t);
+  toast(`"${u.title||'האירוע'}" יימחק בסנכרון הבא`);const el=$('evUndo');if(el){el.innerHTML=`<div class="sgundo" role="status"><span>"${esc(u.title||'האירוע')}" יימחק מהיומן</span><button class="bare link" data-evundo>ביטול</button></div>`}
+  evUndoShow._t=setTimeout(()=>{S.evUndo=null;const x=$('evUndo');if(x)x.innerHTML=''},8000)}
+document.addEventListener('click',async e=>{if(!e.target.closest('[data-evundo]'))return;const u=S.evUndo;if(!u)return;S.evUndo=null;$('evUndo').innerHTML='';
+  // only while the delete is still waiting for the sync; once done, the event is gone from the calendar
+  const r=S.calreq.find(x=>x.op==='delete'&&x.eventId===u.eventId&&x.status==='pending');if(r&&await store.del('calreq',r.id)){renderCal();toast('המחיקה בוטלה')}else toast('כבר נמחק ביומן')});
 function openCalEvent(e){
   const when=e.allDay?`${HDAYS[e.s.getDay()]} ${dm(e.s)} · כל היום`:`${HDAYS[e.s.getDay()]} ${dm(e.s)} · ${rng(e.s,e.e)}`;
   openSheet(esc(e.title),`<div class="evsheet" style="--c:var(${WHO[e.who].c})">
@@ -4189,7 +4220,7 @@ function renderToday(){
   const evs=calEvents().filter(e=>e.e>now&&e.s<end).slice(0,3);
   const draft=sg.find(c=>c.primaryAction.type==='prepare_event');
   let dp=null;if(draft&&evs.length<3){const p=parseEvent(draft.primaryAction.text);if(p.title&&p.s>=now&&p.s<end)dp={...p,who:draft.primaryAction.target}}
-  const evRow=e=>`<button class="bare tdev${e.pending?' pending':''}" style="--c:var(${WHO[e.who].c})" data-tdcal="${dkey(e.s)}"><span class="t num">${e.allDay?'כל היום':hm(e.s)}</span><span class="col"><b>${esc(e.title)}</b><small>${S.tdRange==='week'?HDAYS[e.s.getDay()]+' · ':''}${WHO[e.who].n}${e.pending?' · נשלח ליומן':''}</small></span></button>`;
+  const evRow=e=>`<button class="bare tdev${e.pending?' pending':''}${evNow(e)?' now':''}" style="--c:var(${WHO[e.who].c})" data-tdcal="${dkey(e.s)}"><span class="t num">${e.allDay?'כל היום':hm(e.s)}</span><span class="col"><b>${esc(e.title)}${evNowTag(e)}</b><small>${S.tdRange==='week'?HDAYS[e.s.getDay()]+' · ':''}${WHO[e.who].n}${e.pending?' · נשלח ליומן':''}</small></span></button>`;
   $('tdEvents').innerHTML=!S.calendar?'<div class="emptyline">היומנים עוד לא מחוברים.</div>':
     (evs.length||dp?evs.map(evRow).join('')+(dp?`<button class="bare tdev draft" style="--c:var(${WHO[dp.who].c})" data-sgdo="${esc(draft.id)}"><span class="t num">${dp.allDay?'כל היום':hm(dp.s)}</span><span class="col"><b>${esc(dp.title)}</b><small>טרם נקבע · הצעה</small></span></button>`:''):`<div class="emptyline">${S.tdRange==='week'?'אין אירועים השבוע.':'אין עוד אירועים היום.'}</div>`)+
     `<button class="bare tdmore" data-tdcal="${dkey(now)}">ללו"ז המלא</button>`;
