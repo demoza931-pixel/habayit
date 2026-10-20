@@ -2874,7 +2874,7 @@ function renderSav(){
 // one holding inside an open account (the same details as before: owner, balance date, pending, pension, fees)
 function holdingRow(h){const hv=hValue(h),p=has(h.cost)&&hv!==null?hv-Number(h.cost):null;
   const meta=(h.owner?esc(h.owner)+' · ':'')+(h.opened===false?'עוד לא נפתח · ':'')+(h.source==='manual'?`יתרה ידנית${h.valueDate?' · '+esc(h.valueDate):''}`:`${esc(h.type||'')}${has(h.qty)?` · ${fmt(h.qty)} יח'`:''}${has(h.price)?` × ${fmt(h.price)} ₪`:' · ממתין למחיר'}${h.priceDate?` · ${esc(h.priceDate)}`:''}`)
-    +(()=>{const a=hAdd(h);return a.count?` · כולל ${ils(a.sum)} מ־${a.count} ${a.count===1?'הפקדה':'הפקדות'}${a.since?` מאז ${dmy(a.since)}`:''}${hBase(h)===null?' (היתרה שלפני לא ידועה)':''}`:''})()+(has(h.pensionMonthly)?` · קצבה צפויה ${ils(h.pensionMonthly)}`:'')+(has(h.feeSavings)?` · דמי ניהול ${fmt(h.feeSavings)}% מהחיסכון, ${fmt(h.feeDeposit||0)}% מהפקדה`:'');
+    +(has(h.pending)?` · ${ils(h.pending)} בתהליך הפקדה`:'')+(()=>{const a=hAdd(h);return a.count?` · כולל ${ils(a.sum)} מ־${a.count} ${a.count===1?'הפקדה':'הפקדות'}${a.since?` מאז ${dmy(a.since)}`:''}${hBase(h)===null?' (היתרה שלפני לא ידועה)':''}`:''})()+(has(h.pensionMonthly)?` · קצבה צפויה ${ils(h.pensionMonthly)}`:'')+(has(h.feeSavings)?` · דמי ניהול ${fmt(h.feeSavings)}% מהחיסכון, ${fmt(h.feeDeposit||0)}% מהפקדה`:'');
   return `<button class="bare hrow" data-hold="${esc(h.id)}"><span class="col"><b>${esc(h.name)}</b><small class="num">${meta}</small></span><span class="side"><span class="num">${hv===null?'—':ils(hv)}</span>${p!==null?`<small class="num pl ${p<0?'dn':'up'}">${signed(p)}</small>`:''}${chgPill(h.change)}</span></button>`}
 // the chart: one point a month; "הכול" shows the actual total, an account with a mirror also its deposits and mirror
 function renderSavChart(hist){
@@ -2982,8 +2982,8 @@ function renderMirror(){
 }
 // one line per account: automatic or by hand, and this month's deposit
 function depSummary(h){const m=h.mirror||{},mk=monthKey(new Date()),d=S.deposits.find(x=>x.id===SAV.depId(h.id,mk));
-  const how=m.auto?`מופקד אוטומטית${has(m.planned)?` · ${ils0(m.planned)}`:''}${has(m.day)?` ב־${m.day} לחודש`:''}`:m.row?'ידני · מסמנים ✓ במסך הכסף':`ידני${has(m.planned)?` · ${ils0(m.planned)} בחודש`:''}`;
-  const st=d&&SAV.counted(d)?`<span class="depst ok">✓ ${ils0(d.confirmedAmount)}</span>`:d&&d.status==='skipped'?'<span class="depst">לא החודש</span>':m.auto?'<span class="depst">יירשם לבד</span>':'<span class="depst">עוד לא</span>';
+  const how=m.auto?`מופקד אוטומטית${has(m.planned)?` · ${ils0(m.planned)}`:''}${has(m.day)?` ב־${m.day} לחודש`:''}${m.autoFrom&&mk<m.autoFrom?` · נספר מ${monthLabel(m.autoFrom).split(' ')[0]}`:''}`:m.row?'ידני · מסמנים ✓ במסך הכסף':`ידני${has(m.planned)?` · ${ils0(m.planned)} בחודש`:''}`;
+  const st=d&&SAV.counted(d)?`<span class="depst ok">✓ ${ils0(d.confirmedAmount)}</span>`:d&&d.status==='skipped'?'<span class="depst">לא החודש</span>':m.auto&&m.autoFrom&&mk<m.autoFrom&&has(h.pending)?`<span class="depst">${ils0(h.pending)} בתהליך</span>`:m.auto?'<span class="depst">יירשם לבד</span>':'<span class="depst">עוד לא</span>';
   return `<span class="col"><b>${esc(m.row||h.name)}</b><small>${how}${m.row?` · אל ${esc(h.account==='תיק מסחר'?'תיק המסחר':h.name)}`:''}</small></span>${st}<span class="chev" aria-hidden="true">${I.chevL}</span>`}
 // the account's mirror settings: what it tracks, the plan, and where it starts from
 function mirrorSheet(h){
@@ -3113,8 +3113,8 @@ function holdingSheet(h){
 }
 
 /* goals: numbers come from the sheets (2026, 2027) and from what the two of you told me in chat; nothing else */
-// the balance in the savings tab (already counting the deposits made since the statement)
-const holdVal=id=>{const h=S.holdings.find(x=>x.id===id);return h&&hValue(h)!==null?hValue(h):0};
+// the balance in the savings tab (with the deposits made since the statement) and what is on its way in
+const holdVal=id=>{const h=S.holdings.find(x=>x.id===id);return h&&hValue(h)!==null?hValue(h)+(Number(h.pending)||0):0};
 const GOALS={
   cushion:{target:56400,basis:'3 חודשי הוצאות לפי תוכנית 2027 (244,398 ₪ ב־13 חודשים, כ־18,800 בחודש)'},
   equity:{get gemel(){return holdVal('gemel')},gemelMonthly:1000,get hishtalmut(){return holdVal('hishtalmut')},hishtalmutMonthly:1800,hishtalmutYear:2030,hishtalmutMonth:3,loan:100000,loanRepay:1000},
@@ -3192,7 +3192,7 @@ function renderGoals(){
       ${big?`<li><b>"הוצאות גדולות":</b> החודש ${ils(big.a)}. אם חלק מזה לא מנוצל, הוא יכול לעבור להון העצמי.</li>`:''}
       <li><b>מגורים או השקעה:</b> מאפריל 2027 השכירות ${ils(G.y2027.rentFromApr)} בחודש (${ils(G.y2027.rentFromApr*12)} בשנה). בית למגורים מחליף את השכירות הזו. בית להשקעה מכניס שכירות, אבל אתם ממשיכים לשלם את שלכם. ההחלטה שלכם. כדאי לבדוק אותה מול יועץ משכנתאות עם המספרים האלה.</li>
     </ul></details>
-    <div class="src">${gm?`קופת גמל רשומה החודש ${ils(gm.a)}${gm.star?'*':''}. `:''}יתרות הגמל וההשתלמות לפי מסך החיסכון (מסמך החסכונות), כולל ההפקדות שנרשמו מאז הדוח. ההלוואה לפי מה שסיפרתם. החישוב לא כולל תשואה.</div>
+    <div class="src">${gm?`קופת גמל רשומה החודש ${ils(gm.a)}${gm.star?'*':''}. `:''}יתרות הגמל וההשתלמות לפי מסך החיסכון (מסמך החסכונות), כולל ההפקדות שנרשמו מאז הדוח ומה שבתהליך הפקדה. ההלוואה לפי מה שסיפרתם. החישוב לא כולל תשואה.</div>
   </div></article>
   <article class="ins goalc goal"><div class="body">
     <div class="gh"><span class="tag">3 · לילדה</span><span class="tgt num">${ils(G.girl.tradeMonthly+G.girl.parent)} בחודש מכם</span></div>
