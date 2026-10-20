@@ -635,7 +635,10 @@ body.noscroll{overflow:hidden}
 .gpastrow{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:0 6px;color:var(--ink-2);text-align:start}
 .gpastrow b{font-size:15px;color:var(--ink)}.gpastrow small{flex:1}.gpastrow .chev::before{content:"‹";font-size:20px}
 .gnote{text-align:center}
-.regline{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;font-size:14px;padding:0 4px}
+.regline{display:flex;align-items:center;gap:8px;font-size:14px;padding:8px 12px;border-radius:18px;background:var(--accent-soft)}
+.regline .regtxt{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px}
+.regline .regill{width:66px;height:56px;flex:none}
+.regline .rg.all{background:var(--surface)!important}
 .regline .rlbl{color:var(--ink-2);font-size:13px;margin-inline-end:2px}
 .regline .rg{min-height:36px;padding:0 4px;color:var(--accent);font-weight:600}
 .regline .rg.all{margin-inline-start:6px;padding:0 10px;border-radius:999px;background:var(--accent-soft);font-size:13px;min-height:32px}
@@ -2249,7 +2252,7 @@ function renderShop(){
   // the regulars: one small line of what you buy most and is not on the list, each a tap, or all at once
   const reg=SHOP.regulars(S.purchases,S.grocery.filter(g=>!g.done).map(g=>g.name),6);S.gReg=reg;
   $('gAgain').hidden=!reg.length;
-  $('gAgain').innerHTML=reg.length?`<span class="rlbl">קבועים:</span>${reg.map((r,i)=>`<button type="button" class="bare rg" data-reg="${i}">+ ${esc(r.name)}</button>`).join('<span class="rsep" aria-hidden="true">·</span>')}${reg.length>1?`<button type="button" class="bare rg all" data-regall>כולם (${reg.length})</button>`:''}`:'';
+  $('gAgain').innerHTML=reg.length?`<span class="regtxt"><span class="rlbl">קבועים:</span>${reg.map((r,i)=>`<button type="button" class="bare rg" data-reg="${i}">+ ${esc(r.name)}</button>`).join('<span class="rsep" aria-hidden="true">·</span>')}${reg.length>1?`<button type="button" class="bare rg all" data-regall>כולם (${reg.length})</button>`:''}</span><img class="ill regill" src="img/bag.png" alt="" aria-hidden="true">`:'';
   if(false)$('gAgain').innerHTML=reg.length?`<div class="regcard"><div class="regbody"><span class="sgtag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>לפי הקניות הקודמות</span><b class="sgt">להוסיף את הקבועים שלכם?</b>
     <div class="chips">${reg.map((r,i)=>`<button type="button" class="chip" data-reg="${i}">+ ${esc(r.name)}</button>`).join('')}</div>
     ${reg.length>1?`<button class="btn regall" data-regall>להוסיף את כולם (${reg.length})</button>`:''}</div><img class="ill sgill" src="img/bag.png" alt="" aria-hidden="true"></div>`:'';
