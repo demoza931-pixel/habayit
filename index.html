@@ -696,6 +696,9 @@ body.noscroll{overflow:hidden}
 .cmdbar button{width:36px;height:36px;border-radius:50%;background:var(--accent);display:grid;place-items:center;flex:none}
 .cmdbar button svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .cmdbar:focus-within{border-color:var(--accent)}
+.cmdbar .cmdmic{background:var(--accent-soft)}.cmdbar .cmdmic svg{stroke:var(--accent)}
+.cmdbar .cmdmic.rec{background:var(--neg,#c0392b)}.cmdbar .cmdmic.rec svg{stroke:#fff}
+@media (prefers-reduced-motion:no-preference){.cmdbar .cmdmic.rec{animation:micp 1.2s ease-in-out infinite}@keyframes micp{50%{box-shadow:0 0 0 7px rgba(192,57,43,.18)}}}
 .cmdask{font-size:14px;color:var(--ink-2);margin:-4px 0 4px}.cmdask q{color:var(--ink)}
 .cmdsteps{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
 .cmdsteps li{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:var(--r-card);background:var(--surface);border:1px solid var(--line)}
@@ -1057,7 +1060,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   <section class="tab" id="t-today" hidden>
     <div class="tdhead"><div class="col"><b id="tdGreet" class="ptitle"></b><small id="tdDate" class="muted"></small></div></div>
     <form class="cmdbar" id="cmdForm" autocomplete="off"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>
-      <input id="cmdText" enterkeyhint="send" placeholder="מה לעשות? למשל: קנינו שידה ב-1,400" aria-label="מה לעשות"><button class="bare" id="cmdGo" aria-label="המשך"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button></form>
+      <input id="cmdText" enterkeyhint="send" placeholder="מה לעשות? למשל: קנינו שידה ב-1,400" aria-label="מה לעשות"><button type="button" class="bare cmdmic" id="cmdMic" aria-label="אמירה בקול" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button><button class="bare" id="cmdGo" aria-label="המשך"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button></form>
     <div id="cmdUndo"></div>
     <div id="tdSugg"></div>
     <div class="tdsec"><h2 class="sec" id="tdEvTitle">היום שלכם</h2><div class="tdrange" role="group" aria-label="טווח"><button class="bare" data-tdrange="day">היום</button><button class="bare" data-tdrange="week">השבוע</button></div></div>
@@ -3603,6 +3606,29 @@ async function cmdRun(o){
   if(task&&await store.add('tasks',task))done.push('נוספה משימה');
   if(req&&await store.add('calreq',req))done.push('האירוע נשלח ליומן');
   if(done.length)toast(done.join(' · '));
+}
+
+/* ---------- saying it out loud: the browser's speech-to-text fills the line, then the same plan and confirmation ----------
+   The browser sends the audio to its own speech service (Google in Chrome, Apple in Safari) to turn it into text;
+   the app keeps only the text. So the first time on each phone it explains that and asks. */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const voiceOk=()=>{try{return localStorage.getItem('hb_voice_ok')==='1'}catch(e){return false}};
+if(SR&&$('cmdMic')){$('cmdMic').hidden=false;$('cmdMic').onclick=()=>{if(S.rec){S.rec.stop();return}voiceOk()?voiceStart():voiceAsk()}}
+function voiceAsk(){
+  openSheet('אמירה בקול',`<p class="cmdnote" style="font-size:14px;line-height:1.6">כדי להפוך את הדיבור לטקסט, הדפדפן שולח את ההקלטה לשירות זיהוי הדיבור שלו (Google בכרום, Apple בספארי). האפליקציה לא שומרת את ההקלטה, רק את הטקסט שיצא, ותמיד מציגה לכם מה יתבצע לפני הביצוע.</p>
+    <p class="cmdnote" style="font-size:14px">אם לא נוח לכם, אפשר להשתמש במיקרופון של המקלדת בטלפון. גם הוא עובד בשורה הזו.</p>
+    <div class="actions"><button class="btn" id="vOk">מסכים, להתחיל</button><button class="btn ghost" id="vNo">לא עכשיו</button></div>`);
+  $('vNo').onclick=closeSheet;$('vOk').onclick=()=>{try{localStorage.setItem('hb_voice_ok','1')}catch(e){}closeSheet();voiceStart()};
+}
+function voiceStart(){
+  const r=new SR(),inp=$('cmdText'),mic=$('cmdMic'),was=inp.value;let fin='';
+  r.lang='he-IL';r.interimResults=true;r.maxAlternatives=1;S.rec=r;
+  mic.classList.add('rec');mic.setAttribute('aria-label','עצירת ההקלטה');inp.placeholder='מקשיב…';buzz(10);
+  r.onresult=e=>{let tmp='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=t;else tmp+=t}inp.value=(fin+tmp).trim()};
+  r.onerror=e=>{const m={'not-allowed':'אין הרשאה למיקרופון. אפשר לאשר בהגדרות הדפדפן','service-not-allowed':'הדפדפן לא מאפשר זיהוי דיבור כאן','no-speech':'לא שמעתי כלום. נסו שוב','network':'אין חיבור לשירות זיהוי הדיבור'}[e.error];if(m)toast(m)};
+  r.onend=()=>{S.rec=null;mic.classList.remove('rec');mic.setAttribute('aria-label','אמירה בקול');inp.placeholder='מה לעשות? למשל: קנינו שידה ב-1,400';
+    const v=fin.trim();if(v){inp.value=v;cmdStart(v)}else if(!inp.value.trim())inp.value=was};
+  try{r.start()}catch(e){S.rec=null;mic.classList.remove('rec');toast('לא הצלחתי להתחיל הקלטה')}
 }
 /* ---------- what the app learned about us: every preference can be seen, changed, or deleted ---------- */
 const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה'};
