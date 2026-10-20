@@ -368,8 +368,8 @@ select.in{padding:0 10px}
 nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);
   padding-top:6px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(4px,env(safe-area-inset-left,0px));padding-right:max(4px,env(safe-area-inset-right,0px))}
 nav.tabs .in-nav{max-width:560px;margin:0 auto;display:flex}
-nav.tabs button{flex:1;border:0;background:transparent;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-2);font-weight:600;font-size:12px}
-nav.tabs .pillwrap{width:52px;height:28px;border-radius:999px;display:grid;place-items:center}
+nav.tabs button{flex:1;min-width:0;border:0;background:transparent;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-2);font-weight:600;font-size:12px}
+nav.tabs .pillwrap{width:min(52px,calc(100% - 6px));height:28px;border-radius:999px;display:grid;place-items:center}
 nav.tabs svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:700}
 nav.tabs button[aria-current="page"] .pillwrap{background:var(--accent-soft)}
@@ -508,6 +508,39 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .evacts .btn2{min-height:46px;border-radius:14px;border:1px solid var(--line);font-weight:700;background:var(--surface-2)}
 .evacts .btn2.danger{color:var(--neg)}.evacts .btn2.arm{background:var(--neg);color:#fff;border-color:var(--neg)}
 #calQuick .chip{min-height:38px;font-size:13px}
+.tdhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px}
+.tdhead .col{display:flex;flex-direction:column;gap:2px}.tdhead b{font-size:24px;line-height:1.15}.tdhead small{font-size:14px}
+.tdwho{display:flex}.tdwho .who{width:34px;height:34px;border-radius:999px;border:2px solid var(--bg);background:var(--accent-soft);object-fit:cover}.tdwho .who+.who{margin-inline-start:-10px}
+.sgcard{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-hero);background:var(--accent-soft);border:1px solid transparent}
+.sgcard.second{background:var(--surface);border-color:var(--line);padding:12px 14px;gap:6px}.sgcard.second .sgt{font-size:15px}
+.sgcard.calm{background:var(--surface);border-color:var(--line)}
+.sgtag{align-self:flex-start;font-weight:700;font-size:12px;color:var(--accent);background:var(--surface);border-radius:999px;padding:3px 10px}
+.sgt{font-size:18px;line-height:1.3}.sgr{font-size:14px;color:var(--ink-2)}
+.sgacts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}.sgacts .btn{min-height:44px}
+.sgbtn{min-height:44px;padding:0 12px;border-radius:999px;font-weight:600;font-size:14px;color:var(--ink-2)}
+.sgwhy{align-self:flex-start;font-size:13px;min-height:32px}
+.sgwhybox{display:flex;flex-direction:column;gap:6px;font-size:13px;padding:10px 12px;border-radius:12px;background:var(--surface)}
+.sgparts{display:flex;flex-wrap:wrap;gap:6px}.sgparts i{font-style:normal;padding:2px 8px;border-radius:999px;background:var(--surface-2);font-size:12px}
+.sgundo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-radius:var(--r-card);background:var(--surface);border:1px dashed var(--line);font-size:14px}
+.tdsec{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.tdrange{display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--surface-2)}
+.tdrange button{min-height:36px;padding:0 12px;border-radius:999px;font-weight:600;font-size:13px;color:var(--ink-2)}.tdrange button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+.tdlist{padding:0;overflow:hidden}
+.tdev{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:start;padding:12px 14px;border-top:1px solid var(--line);border-inline-start:4px solid var(--c)}
+.tdev:first-child{border-top:0}.tdev .t{flex:none;min-width:44px;font-weight:700;font-size:14px;color:var(--ink-2)}
+.tdev .col{display:flex;flex-direction:column;gap:2px;min-width:0}.tdev .col b{font-size:15px;overflow-wrap:anywhere}.tdev .col small{font-size:12.5px;color:var(--ink-2)}
+.tdev.pending,.tdev.draft{border-inline-start-style:dashed;background:color-mix(in srgb,var(--c) 6%,var(--surface))}
+.tdmore{display:block;width:100%;text-align:center;padding:12px;border-top:1px solid var(--line);font-weight:600;font-size:14px;color:var(--accent)}
+.tdtask{display:flex;align-items:center;gap:12px;padding:8px 14px;border-top:1px solid var(--line)}.tdtask:first-child{border-top:0}
+.tdck{flex:none;width:30px;height:30px;border-radius:999px;border:2px solid var(--accent);display:grid;place-items:center;color:transparent}.tdck svg{width:16px;height:16px}
+.tdck:active{background:var(--accent);color:var(--accent-ink)}
+.tdtask .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:start;min-height:44px;justify-content:center}.tdtask .col b{font-size:15px}.tdtask .col small{font-size:12.5px;color:var(--ink-2)}
+.tdempty{width:100%;text-align:center}
+.tdstatus{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tdst{display:flex;flex-direction:column;gap:2px;min-height:64px;padding:10px 12px;border-radius:var(--r-card);background:var(--surface);border:1px solid var(--line);text-align:start}
+.tdst small{font-size:12px;color:var(--ink-2)}.tdst b{font-size:14px;line-height:1.3}
+.tsrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:360px){.tdstatus{grid-template-columns:1fr}.tdhead b{font-size:21px}}
 #calForm .cam{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);cursor:pointer}
 .ocrbox{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);font-size:13px}
 .ocrbox.warn{background:var(--warn-soft)}.ocrbox pre{white-space:pre-wrap;font:inherit;font-size:12px;max-height:160px;overflow:auto;margin:6px 0 0;color:var(--ink-2)}
@@ -833,6 +866,17 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   <div class="ptr" id="ptr" data-state="pull"><span class="ball" aria-hidden="true"><svg class="arrow" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg><svg class="spin" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg><svg class="ok" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="txt" id="ptrTxt" role="status" aria-live="polite"></span></div>
 
   <!-- MONTH -->
+  <!-- TODAY: "היום שלנו" -->
+  <section class="tab" id="t-today" hidden>
+    <div class="tdhead"><div class="col"><b id="tdGreet" class="disp"></b><small id="tdDate" class="muted"></small></div><div class="tdwho" id="tdWho" aria-hidden="true"></div></div>
+    <div id="tdSugg"></div>
+    <div class="tdsec"><h2 class="sec" id="tdEvTitle">היום שלכם</h2><div class="tdrange" role="group" aria-label="טווח"><button class="bare" data-tdrange="day">היום</button><button class="bare" data-tdrange="week">השבוע</button></div></div>
+    <section class="card tdlist" id="tdEvents"></section>
+    <div class="tdsec"><h2 class="sec">מקדמים יחד</h2><button class="bare link" data-tdtask="new">+ משימה</button></div>
+    <section class="card tdlist" id="tdTasks"></section>
+    <div class="tdstatus" id="tdStatus"></div>
+  </section>
+
   <section class="tab" id="t-home">
     <div id="hero"></div>
     <div id="hCredit"></div>
@@ -920,6 +964,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 
 <nav class="tabs" aria-label="לשוניות">
   <div class="in-nav">
+    <button data-tab="today" id="navToday" hidden><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>בית</button>
     <button data-tab="home" aria-current="page"><span class="pillwrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>חודש</button>
     <button data-tab="cal"><span class="pillwrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2.2"/></svg></span>לו"ז</button>
     <button data-tab="baby"><span class="pillwrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M9.5 15.5c1.4 1.1 3.6 1.1 5 0M12 5.5c0-1.5 1-2.5 2.5-2.5"/></svg></span>תינוק</button>
@@ -1112,7 +1157,7 @@ const label=n=>DISPLAY_NAMES[n]||n;
 const STATUSES=[{k:'לקנות',c:'st-buy',m:'●'},{k:'נקנה',c:'st-done',m:'✓'},{k:'לקבל',c:'st-gift',m:'◆'},{k:'לבדוק',c:'st-check',m:'?'},{k:'לא חובה',c:'st-opt',m:'○'}];
 const BABY_CATS=['','שינה וריהוט','עגלה ורכב','האכלה','הנקה','טיפול והחתלה','בגדים וטקסטיל','כביסה ומתכלים','משחק והתפתחות'];
 
-const S={tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -1233,11 +1278,11 @@ function navInd(){
   const p=nav.querySelector('[aria-current="page"] .pillwrap');ind.style.opacity=p?'1':'0';if(!p)return;
   const r=p.getBoundingClientRect(),n=nav.getBoundingClientRect();
   const first=!ind.dataset.placed;if(first)ind.style.transition='none';
-  ind.style.transform=`translate(${r.left-n.left}px,${r.top-n.top}px)`;ind.classList.toggle('clay',S.tab==='baby');
+  ind.style.width=r.width+'px';ind.style.transform=`translate(${r.left-n.left}px,${r.top-n.top}px)`;ind.classList.toggle('clay',S.tab==='baby');
   if(first){void ind.offsetWidth;ind.style.transition='';ind.dataset.placed='1'}
 }
 addEventListener('resize',navInd);
-const NO_MONTH=['baby','shop','sav','cal'];
+const NO_MONTH=['today','baby','shop','sav','cal'];
 function chrome(){
   const f=$('fab');if(f)f.classList.toggle('away',S.tab==='shop')
   const h=document.querySelector('header.top');if(h)h.classList.toggle('nomonth',NO_MONTH.includes(S.tab));
@@ -1659,7 +1704,7 @@ const monthVar=(k,row)=>S.variable.filter(v=>v.month===k&&(v.row||VAR_ROW)===row
 // @rules:end
 
 /* ---------- render ---------- */
-function renderAll(){$('mLabel').textContent=monthLabel(S.month);renderHome();renderBaby();renderShop();renderSav();renderIns();renderCal();fillAvatars();runCounters();navInd();chrome()}
+function renderAll(){$('mLabel').textContent=monthLabel(S.month);renderHome();renderBaby();renderShop();renderSav();renderIns();renderCal();renderToday();fillAvatars();runCounters();navInd();chrome()}
 const listNames=()=>[VAR_ROW,'קניות/פארם',foodRow()];
 function rowHtml(r,i){
   const amt=has(r.amount)?`<span class="amt num${r.star?' mute':''}">${ils(r.amount)}</span>`:`<span class="amt mute">${r.star?'*':'—'}</span>`;
@@ -2290,7 +2335,7 @@ function babySheet(b){
 }
 
 /* ---------- events ---------- */
-const TABS=['home','cal','baby','shop','sav','ins'];
+const TABS=['today','home','cal','baby','shop','sav','ins'];
 function showTab(t,dx){
   S.tab=t;
   document.querySelectorAll('nav.tabs [data-tab]').forEach(x=>x.dataset.tab===t?x.setAttribute('aria-current','page'):x.removeAttribute('aria-current'));
@@ -2678,6 +2723,151 @@ document.addEventListener('click',e=>{
     const ev=calEvents().find(x=>x.id===cd.dataset.caldel);store.add('calreq',{op:'delete',target:cd.dataset.calw||'shared',eventId:cd.dataset.caldel,title:ev?ev.title:'',status:'pending',createdAt:Date.now()});closeSheet();renderCal();toast('יימחק '+({yosef:'מהיומן של יוסף',tchiya:'מהיומן של תחיה'}[cd.dataset.calw]||'מהיומן המשותף'))}
 });
 
+/* ---------- "היום שלנו": the home screen ----------
+   What is going on today, what needs attention, what can move now. Suggestions come from AGENT (src/agent.js in the
+   built app) over signals this file derives with its own functions; nothing here writes without a tap. */
+const FLAGS=(()=>{const f={home:true,demo:false};
+  try{const v=localStorage.getItem('hb_flags');if(v)Object.assign(f,JSON.parse(v))}catch(_){}
+  const m=location.hash.match(/flags=([\w,-]+)/);
+  if(m){m[1].split(',').forEach(x=>{const off=x[0]==='-',k=off?x.slice(1):x;if(k)f[k]=!off});try{localStorage.setItem('hb_flags',JSON.stringify(f))}catch(_){}}
+  return f})();
+const TD_OWN={yosef:'יוסף',tchiya:'תחיה',shared:'משותף'};
+const TD_STATUS={new:'חדש',planned:'מתוכנן',waiting:'ממתין',done:'בוצע',cancelled:'בוטל'};
+const TD_PRIO={1:'גבוהה',2:'רגילה',3:'נמוכה'};
+const myWho=()=>{const n=(S.people||{})[S.uid];return n==='יוסף'?'yosef':n==='תחיה'?'tchiya':null};
+const openTasks=()=>S.tasks.filter(t=>t.status!=='done'&&t.status!=='cancelled'&&!(t.snoozedUntil>Date.now()))
+  .sort((a,b)=>(a.priority||2)-(b.priority||2)||String(a.dueDate||'9').localeCompare(String(b.dueDate||'9'))||(a.createdAt||0)-(b.createdAt||0));
+// the facts the engine ranks; every number comes from the app's own data and functions
+function agentSignals(now){
+  const evs=calEvents(),t0=new Date(now);t0.setHours(0,0,0,0);
+  const days=[0,1,2,3].map(i=>{const d=new Date(t0);d.setDate(d.getDate()+i);return d});
+  const nt=x=>String(x||'').replace(/[0-9"'׳״()\-–:.,!?]/g,' ').replace(/\s+/g,' ').trim();
+  const soon=new Date(t0);soon.setDate(soon.getDate()+7);
+  const k=monthKey(new Date(now)),c=calc(k);
+  const over=c?[VAR_ROW,'קניות/פארם',foodRow(k)].map(rn=>{const sum=varSum(monthVar(k,rn)),row=c.rows.find(r=>r.name===rn),rv=row&&has(row.amount)&&!row.star?Number(row.amount):null;
+    return rv!==null&&sum>rv?{row:rn,over:Math.round((sum-rv)*100)/100}:null}).filter(Boolean):[];
+  const cutoff=now-30*864e5,dismissedByType={};
+  S.prefs.filter(p=>p.kind==='sugg'&&p.state==='dismissed'&&(p.at||0)>cutoff).forEach(p=>dismissedByType[p.type]=(dismissedByType[p.type]||0)+1);
+  return {now,
+    freeEvenings:S.calendar?days.flatMap(d=>freeTogether(evs,d).map(([s,e])=>({s,e}))):[],
+    patternsDue:((S.calendar&&S.calendar.patterns)||[]).filter(p=>new Date(p.next+'T00:00')<=soon&&!evs.some(e=>e.s>=t0&&nt(e.title)===nt(p.title))),
+    busyDays:S.calendar?days.map(d=>({day:dkey(d),count:onDay(evs,d).filter(e=>!e.allDay).length})):[],
+    grocery:{open:openGrocery().length},
+    baby:{toBuy:S.baby.filter(b=>b.status==='לקנות').sort((a,b)=>(a.order||0)-(b.order||0)).map(b=>({id:b.id,name:b.name,price:b.price}))},
+    money:c?{month:k,isCurrent:true,hasIncome:c.income!==null,over}:{},
+    history:{dismissedByType}};
+}
+function agentPrefs(){const sugg={},mutedTypes={};S.prefs.forEach(p=>{if(p.kind==='sugg')sugg[p.sid]={state:p.state,until:p.until};if(p.kind==='mute')mutedTypes[p.type]=true});return {sugg,mutedTypes}}
+// fixed suggestions for looking at the screen without real data (#flags=demo)
+const DEMO_SIG=now=>({now,freeEvenings:[{s:now+8*36e5,e:now+12*36e5}],grocery:{open:9},baby:{toBuy:[{id:'d1',name:'מנשא'},{id:'d2',name:'מוניטור'},{id:'d3',name:'שידה'}]},money:{}});
+function suggestions(){const now=Date.now();return AGENT.suggest(FLAGS.demo?DEMO_SIG(now):agentSignals(now),agentPrefs(),2).filter(c=>!S.sgHide[c.id])}
+const PART_HE={urgency:'דחיפות',usefulness:'תועלת',confidence:'ביטחון בנתונים',timing:'תזמון',annoyance:'הפרעה',duplication:'כפילות'};
+function sgCard(c,main){
+  const why=S.sgWhy===c.id;
+  return `<article class="sgcard${main?'':' second'}" data-sid="${esc(c.id)}">
+    ${main?'<span class="sgtag">הצעה בשבילכם</span>':''}<b class="sgt">${esc(c.title)}</b><span class="sgr">${esc(c.reason)}</span>
+    <div class="sgacts"><button class="btn sgdo" data-sgdo="${esc(c.id)}">${esc(c.primaryAction.label||'בואו נעשה את זה')}</button><button class="bare sgbtn" data-sglater="${esc(c.id)}">אחר כך</button><button class="bare sgbtn" data-sgno="${esc(c.id)}">לא רלוונטי</button></div>
+    <button class="bare link sgwhy" data-sgwhy="${esc(c.id)}" aria-expanded="${why}">למה הצעתם את זה?</button>
+    ${why?`<div class="sgwhybox"><span>ההצעה מבוססת על: ${esc(c.reason)}</span><span class="muted">מקורות: ${c.sourceRefs.map(esc).join(' · ')}${(c.merged||[]).length?` · אוחדו כאן עוד ${c.merged.length} הצעות דומות`:''}</span>
+      <span class="sgparts num">${Object.entries(c.parts).map(([k,v])=>`<i>${PART_HE[k]} ${k==='annoyance'||k==='duplication'?'−':''}${v}</i>`).join('')}<i><b>ציון ${c.score}</b></i></span></div>`:''}
+  </article>`;
+}
+function renderToday(){
+  if(!$('t-today'))return;
+  const now=new Date(),h=now.getHours(),me=(S.people||{})[S.uid];
+  $('tdGreet').textContent=(h>=5&&h<12?'בוקר טוב':h>=12&&h<17?'צהריים טובים':'ערב טוב')+(me?`, ${me}`:'');
+  $('tdDate').textContent=now.toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'long'});
+  $('tdWho').innerHTML=Object.keys(S.people||{}).filter(l=>l!=='updatedAt').map(l=>`<img class="who" data-uid="${esc(l)}" alt="">`).join('');
+  // the suggestion (at most one big, one small)
+  const sg=suggestions();
+  const undo=S.sgUndo?`<div class="sgundo" role="status"><span>${esc(S.sgUndo.text)}</span><button class="bare link" data-sgundo>ביטול</button></div>`:'';
+  $('tdSugg').innerHTML=undo+(sg.length?sgCard(sg[0],true)+(sg[1]?sgCard(sg[1],false):''):(undo?'':`<div class="sgcard calm"><b class="sgt">אין כרגע מה לקדם</b><span class="sgr">כשיהיה משהו שכדאי לטפל בו, הוא יופיע כאן.</span></div>`));
+  // events: today (and tomorrow morning) or the week, at most three; a suggested event shows dashed
+  document.querySelectorAll('[data-tdrange]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tdrange===S.tdRange));
+  $('tdEvTitle').textContent=S.tdRange==='week'?'השבוע שלכם':'היום שלכם';
+  const end=new Date(now);end.setHours(0,0,0,0);end.setDate(end.getDate()+(S.tdRange==='week'?7:1));
+  const evs=calEvents().filter(e=>e.e>now&&e.s<end).slice(0,3);
+  const draft=sg.find(c=>c.primaryAction.type==='prepare_event');
+  let dp=null;if(draft&&evs.length<3){const p=parseEvent(draft.primaryAction.text);if(p.title&&p.s>=now&&p.s<end)dp={...p,who:draft.primaryAction.target}}
+  const evRow=e=>`<button class="bare tdev${e.pending?' pending':''}" style="--c:var(${WHO[e.who].c})" data-tdcal="${dkey(e.s)}"><span class="t num">${e.allDay?'כל היום':hm(e.s)}</span><span class="col"><b>${esc(e.title)}</b><small>${S.tdRange==='week'?HDAYS[e.s.getDay()]+' · ':''}${WHO[e.who].n}${e.pending?' · נשלח ליומן':''}</small></span></button>`;
+  $('tdEvents').innerHTML=!S.calendar?'<div class="emptyline">היומנים עוד לא מחוברים.</div>':
+    (evs.length||dp?evs.map(evRow).join('')+(dp?`<button class="bare tdev draft" style="--c:var(${WHO[dp.who].c})" data-sgdo="${esc(draft.id)}"><span class="t num">${dp.allDay?'כל היום':hm(dp.s)}</span><span class="col"><b>${esc(dp.title)}</b><small>טרם נקבע · הצעה</small></span></button>`:''):`<div class="emptyline">${S.tdRange==='week'?'אין אירועים השבוע.':'אין עוד אירועים היום.'}</div>`)+
+    `<button class="bare tdmore" data-tdcal="${dkey(now)}">ללו"ז המלא</button>`;
+  // tasks: the three that matter most
+  const ts=openTasks().slice(0,3);
+  $('tdTasks').innerHTML=ts.length?ts.map(t=>`<div class="tdtask"><button class="bare tdck" data-tddone="${esc(t.id)}" aria-label="סימון בוצע: ${esc(t.title)}">${I.check}</button>
+      <button class="bare col" data-tdtask="${esc(t.id)}"><b>${esc(t.title)}</b><small>${[TD_OWN[t.owner]||'משותף',TD_STATUS[t.status]||'חדש',t.dueDate?'עד '+esc(t.dueDate.slice(8,10)+'/'+t.dueDate.slice(5,7)):'',t.estimatedMinutes?t.estimatedMinutes+' דק׳':''].filter(Boolean).join(' · ')}</small></button></div>`).join('')+
+      (openTasks().length>3?`<div class="small muted tdmore">ועוד ${openTasks().length-3} משימות פתוחות</div>`:'')
+    :'<button class="bare emptyline tdempty" data-tdtask="new">אין משימות פתוחות. + משימה חדשה</button>';
+  // the house at a glance: one line each, a tap opens the place
+  const k=monthKey(now),c=calc(k),bs=babyStats(),gn=openGrocery().length;
+  const money=!c?'אין עדיין נתונים לחודש':c.flow===null?'אין הכנסה רשומה, אי אפשר לחשב':`${c.flow<0?'במינוס':'בפלוס'} ${signed(c.flow)}`;
+  $('tdStatus').innerHTML=`<button class="bare tdst" data-tdgo="home"><small>${esc(monthLabel(k))}</small><b>${money}</b></button>
+    <button class="bare tdst" data-tdgo="shop"><small>קניות</small><b class="num">${gn?gn+' ברשימה':'הרשימה ריקה'}</b></button>
+    <button class="bare tdst" data-tdgo="baby"><small>תינוק</small><b class="num">${bs.total?`${bs.bp}% מוכן`:'אין רשימה'}</b></button>`;
+}
+// feedback on a suggestion: kept in data/prefs.json (app only), shown as gone at once with an undo
+async function sgFeedback(id,state,text){
+  const c=suggestions().find(x=>x.id===id);if(!c)return;
+  const t=new Date();t.setDate(t.getDate()+1);t.setHours(8,0,0,0);
+  const doc={kind:'sugg',sid:id,type:c.type,state,at:Date.now()};if(state==='snoozed')doc.until=+t;if(S.uid)doc.by=S.uid;
+  S.sgHide[id]=true;S.sgUndo={id,text};clearTimeout(sgFeedback._t);sgFeedback._t=setTimeout(()=>{S.sgUndo=null;renderToday()},6000);renderToday();
+  const ok=await store.put('prefs',id,doc);
+  delete S.sgHide[id];if(!ok){S.sgUndo=null;renderToday()}
+}
+function runAction(c){
+  const a=c.primaryAction;
+  if(a.type==='prepare_event'){showTab('cal');openCalAdd(a.text,{target:a.target});return}
+  if(a.type==='open_tab'){
+    if(a.tab==='home'){S.month=monthKey(new Date());S.openGroups['משתנות']=true;if(a.row)S.rowOpen[a.row]=true}
+    if(a.tab==='cal'&&a.day)S.calDay=a.day;
+    showTab(a.tab);renderAll();
+  }
+}
+// a task: title, who, status, priority, minutes, date, waiting reason; written through the usual store (tasks)
+function taskSheet(t){
+  const isNew=!t;t=t||{title:'',owner:myWho()||'shared',status:'new',priority:2,estimatedMinutes:null,dueDate:'',waitingReason:''};
+  const chips=(name,map,cur)=>`<div class="chips" data-tsf="${name}" role="radiogroup">${Object.entries(map).map(([k,v])=>`<button type="button" class="chip" role="radio" data-v="${k}" aria-checked="${String(cur)===String(k)}">${v}</button>`).join('')}</div>`;
+  openSheet(isNew?'משימה חדשה':'משימה',`
+  <div class="field"><label class="lbl" for="tsTitle">מה צריך לעשות</label><input class="in" id="tsTitle" value="${esc(t.title)}" autocomplete="off"></div>
+  <div class="field"><span class="lbl">אחראי</span>${chips('owner',TD_OWN,t.owner)}</div>
+  <div class="field"><span class="lbl">סטטוס</span>${chips('status',TD_STATUS,t.status)}</div>
+  <div class="field"><span class="lbl">עדיפות</span>${chips('priority',TD_PRIO,t.priority||2)}</div>
+  <div class="tsrow"><div class="field"><label class="lbl" for="tsMin">כמה זמן (דקות)</label><input class="in num" id="tsMin" inputmode="numeric" value="${has(t.estimatedMinutes)?t.estimatedMinutes:''}"></div>
+    <div class="field"><label class="lbl" for="tsDue">עד מתי</label><input class="in" id="tsDue" type="date" value="${esc(t.dueDate||'')}"></div></div>
+  <div class="field"><label class="lbl" for="tsWait">ממתין ל… (אם ממתין)</label><input class="in" id="tsWait" value="${esc(t.waitingReason||'')}" autocomplete="off"></div>
+  <div class="actions"><button class="btn" id="tsSave">שמירה</button><button class="btn ghost" id="tsCancel">ביטול</button></div>
+  ${isNew?'':'<button class="bare danger-link" id="tsDel">מחיקת משימה</button>'}`);
+  const val={owner:t.owner,status:t.status,priority:t.priority||2};
+  document.querySelectorAll('[data-tsf]').forEach(g=>g.onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;val[g.dataset.tsf]=b.dataset.v;[...g.children].forEach(x=>x.setAttribute('aria-checked',x===b))});
+  $('tsCancel').onclick=closeSheet;
+  $('tsSave').onclick=async()=>{const title=$('tsTitle').value.trim();if(!title){$('tsTitle').focus();toast('כתבו מה צריך לעשות');return}
+    const mins=$('tsMin').value.trim(),data={title,owner:val.owner,status:val.status,priority:Number(val.priority),estimatedMinutes:mins&&!isNaN(Number(mins))?Number(mins):null,
+      dueDate:$('tsDue').value||null,waitingReason:$('tsWait').value.trim()||null};
+    if(data.status==='done'&&t.status!=='done')data.completedAt=Date.now();
+    closeSheet();
+    const ok=isNew?await store.add('tasks',{...data,linkedEntity:null,snoozedUntil:null,completedAt:null,createdAt:Date.now(),by:S.uid||null}):await store.update('tasks',t.id,data);
+    if(ok)toast(isNew?'המשימה נוספה':'נשמר')};
+  if(!isNew){const d=$('tsDel');d.onclick=()=>{if(!d.classList.contains('arm')){d.classList.add('arm');d.textContent='ללחוץ שוב למחיקה';return}closeSheet();store.del('tasks',t.id)}}
+}
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-tdgo]');if(g){if(g.dataset.tdgo==='home')S.month=monthKey(new Date());showTab(g.dataset.tdgo);renderAll();return}
+  const cl=e.target.closest('[data-tdcal]');if(cl){S.calDay=cl.dataset.tdcal;showTab('cal');return}
+  const rg=e.target.closest('[data-tdrange]');if(rg){S.tdRange=rg.dataset.tdrange;renderToday();return}
+  const dd=e.target.closest('[data-sgdo]');if(dd){const c=suggestions().find(x=>x.id===dd.dataset.sgdo);if(c)runAction(c);return}
+  const lt=e.target.closest('[data-sglater]');if(lt){sgFeedback(lt.dataset.sglater,'snoozed','הוסתר עד מחר בבוקר');return}
+  const no=e.target.closest('[data-sgno]');if(no){sgFeedback(no.dataset.sgno,'dismissed','ההצעה הוסרה');return}
+  const wy=e.target.closest('[data-sgwhy]');if(wy){S.sgWhy=S.sgWhy===wy.dataset.sgwhy?null:wy.dataset.sgwhy;renderToday();return}
+  if(e.target.closest('[data-sgundo]')){const u=S.sgUndo;if(!u)return;S.sgUndo=null;
+    if(u.task){renderToday();store.update('tasks',u.task,u.before);return}
+    delete S.sgHide[u.id];renderToday();store.del('prefs',u.id);return}
+  const tk=e.target.closest('[data-tdtask]');if(tk){taskSheet(tk.dataset.tdtask==='new'?null:S.tasks.find(t=>t.id===tk.dataset.tdtask));return}
+  const tdn=e.target.closest('[data-tddone]');if(tdn){const t=S.tasks.find(x=>x.id===tdn.dataset.tddone);if(!t)return;
+    buzz(10);const before={status:t.status,completedAt:t.completedAt||null};
+    S.sgUndo={text:`"${t.title}" בוצע`,task:t.id,before};clearTimeout(sgFeedback._t);sgFeedback._t=setTimeout(()=>{S.sgUndo=null;renderToday()},6000);
+    store.update('tasks',t.id,{status:'done',completedAt:Date.now()}).then(ok=>{if(!ok){S.sgUndo=null;renderToday()}});return}
+});
+
 /* ---------- celebrations ---------- */
 const buzz=ms=>{try{if(navigator.vibrate)navigator.vibrate(ms)}catch(_){}};
 // a short burst of paper bits from a point (screen center when none), gone after a second and a half
@@ -2711,7 +2901,7 @@ document.addEventListener('touchend',e=>{
   if(SW.x===null||PTR.on)return;const t=e.changedTouches[0],dx=t.clientX-SW.x,dy=t.clientY-SW.y;SW.x=null;
   if(Math.abs(dx)<70||Math.abs(dy)>45||Date.now()-SW.t>700)return;
   // the tab bar runs right to left: a finger moving left brings in the tab on the right (the previous one)
-  const order=['home','cal','baby','shop','sav'],i=order.indexOf(S.tab),j=i+(dx<0?-1:1);
+  const order=[...(FLAGS.home?['today']:[]),'home','cal','baby','shop','sav'],i=order.indexOf(S.tab),j=i+(dx<0?-1:1);
   if(i<0||j<0||j>=order.length)return;
   showTab(order[j],dx<0?-28:28);
   if(navigator.vibrate)navigator.vibrate(6);
@@ -2759,6 +2949,8 @@ document.addEventListener('touchmove',e=>{
 },{passive:false});
 function ptrEnd(){if(PTR.y0===null&&!PTR.on)return;const was=PTR.on;PTR.y0=null;PTR.on=false;if(!was)return;PTR.pull>=PTR_GO?ptrRefresh():ptrRelease()}
 document.addEventListener('touchend',ptrEnd);document.addEventListener('touchcancel',ptrEnd);
+// the new home ("בית") is behind a flag: #flags=home or #flags=-home on the address switches it per phone
+if(FLAGS.home){$('navToday').hidden=false;showTab('today')}
 boot();
 
 // the sheet sync log (data/synclog.json, written by the Apps Script in the sheet), newest first
