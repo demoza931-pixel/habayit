@@ -711,6 +711,11 @@ body.noscroll{overflow:hidden}
 .lrnrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:14px}
 .lrnrow .col{min-width:0}.lrnrow small{display:block;color:var(--ink-2);font-size:12px}
 .lrnrow .chips{flex:none}.lrnrow .chip{font-size:12px;padding:0 10px;min-height:34px}
+.mirc{display:flex;flex-direction:column;gap:10px;padding:16px}
+.mhd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.mhd small{display:block;color:var(--ink-2);font-size:13px}
+.mrow{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
+.mrow .k{font-size:14px;color:var(--ink-2)}.mrow .v{font-weight:700;font-size:17px}.mrow small{grid-column:1/-1;font-size:12px;text-align:end}
+.deplist{display:flex;flex-direction:column;border-top:1px solid var(--line)}
 .sgundo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-radius:var(--r-card);background:var(--surface);border:1px dashed var(--line);font-size:14px}
 .tdsec{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .tdrange{display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--surface-2)}
@@ -1145,6 +1150,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
         <div id="svHero"></div>
     <div id="svAccounts" style="display:flex;flex-direction:column;gap:12px"></div>
     <button class="btn ghost block" id="svAdd">הוספת החזקה</button>
+    <div id="svMirror" style="display:flex;flex-direction:column;gap:12px"></div>
     <div class="small muted">מחירים: מניות, אג"ח ותעודות סל בת"א מהבורסה לפי מספר נייר. ניירות בחו"ל מ־Yahoo Finance, בהמרה לשקלים לפי שער הדולר של אותו יום. קרנות נאמנות מ־Funder. גמל והשתלמות לפי יתרה שמעדכנים ידנית. המחירים מתעדכנים פעם ביום.</div>
   </section>
 
@@ -1222,7 +1228,84 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   </form>
 </div>
 
-<script>/* ---------- free text in Hebrew -> a plan of safe actions (pure, no DOM, no language model) ----------
+<script>/* ---------- savings: deposits and the mirror portfolio (pure, no DOM, no writes) ----------
+   Three layers that never mix:
+     1. deposits that were confirmed (typed in by you in the app)
+     2. the actual value of the account (typed in, or a price from a checked source)
+     3. the mirror: the same deposits as if each one bought the tracked index on its day
+   A deposit is one document per account and month, id `dep:<holdingId>:<YYYY-MM>` (opening balance: `dep:<holdingId>:open`),
+   so the same month cannot be counted twice. Only 'confirmed' and 'adjusted' count.
+   A deposit without a price (or without a dollar rate for a dollar index) counts as money in, but has no units yet:
+   the mirror then shows as partial, and no price is ever guessed.
+     units = (amount − fees) [÷ ILS per USD on that day] ÷ index price on that day
+     mirror value = units × index price now [× ILS per USD now] */
+const SAV = (() => {
+  const COUNTED = ['confirmed', 'adjusted'];
+  const STATUS_HE = { planned: 'מתוכננת', pending_confirmation: 'ממתינה לאישור', confirmed: 'אושרה', adjusted: 'סכום שונה', skipped: 'דולג', reversed: 'בוטלה' };
+  const num = v => v !== null && v !== undefined && v !== '' && isFinite(Number(v)) ? Number(v) : null;
+  const depId = (hid, month) => `dep:${hid}:${month}`;
+  const amountOf = d => num(d.confirmedAmount);
+  const counted = d => COUNTED.includes(d.status) && amountOf(d) !== null && amountOf(d) > 0;
+
+  // the simulated units of one deposit, or null when something it needs is missing
+  function units(d, cur) {
+    if (!counted(d)) return null;
+    const price = num(d.assetPrice), fees = num(d.fees) || 0, net = amountOf(d) - fees;
+    if (!(price > 0) || !(net > 0)) return null;
+    // the currency the price was taken in (written with the price); the account's setting until then
+    if ((d.assetCurrency || cur || 'ILS') === 'USD') {
+      const fx = num(d.exchangeRate);
+      if (!(fx > 0)) return null;
+      return net / fx / price;
+    }
+    return net / price;
+  }
+
+  /* h: the holding with h.mirror = {ticker, cur 'USD'|'ILS', planned, day, fees}, h.mirrorPrice, h.mirrorFx (ILS per USD now)
+     actual: the account's value now (from the app), or null */
+  function summary(h, deposits, actual) {
+    const m = h.mirror || {}, cur = h.mirrorCur || m.cur || 'ILS';
+    const mine = deposits.filter(d => d.holdingId === h.id);
+    const inn = mine.filter(counted);
+    const confirmed = inn.reduce((t, d) => t + amountOf(d), 0);
+    let totalUnits = 0, pricedIn = 0, missing = 0;
+    inn.forEach(d => { const u = units(d, cur); if (u === null) missing++; else { totalUnits += u; pricedIn += amountOf(d); } });
+    const now = num(h.mirrorPrice), fx = cur === 'USD' ? num(h.mirrorFx) : 1;
+    const mirror = inn.length && now > 0 && fx > 0 && pricedIn > 0 ? totalUnits * now * fx : null;
+    const hasOpening = mine.some(d => d.kind === 'opening' && counted(d));
+    const act = num(actual);
+    return {
+      count: inn.length, confirmed, hasOpening, units: totalUnits, missing, partial: missing > 0, pricedIn,
+      mirror, mirrorPL: mirror === null ? null : mirror - pricedIn,
+      actual: act,
+      // profit on the actual value only makes sense when the opening balance is one of the deposits
+      actualPL: act !== null && hasOpening ? act - confirmed : null,
+      gap: act !== null && mirror !== null && !missing && hasOpening ? act - mirror : null,
+      needsPrice: !(now > 0) || !(fx > 0),
+    };
+  }
+
+  // what the savings agent can point at: a month whose deposit day passed with nothing written, an old actual value
+  function due(h, deposits, now) {
+    const m = h.mirror || {}, out = [];
+    if (!(num(m.planned) > 0) || !(num(m.day) >= 1)) return out;
+    const d = new Date(now), month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const has = mo => deposits.some(x => x.holdingId === h.id && x.month === mo);
+    if (d.getDate() >= Number(m.day) && !has(month)) out.push({ kind: 'due', month, planned: num(m.planned) });
+    const p = new Date(d.getFullYear(), d.getMonth() - 1, 1), prev = `${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, '0')}`;
+    const first = deposits.filter(x => x.holdingId === h.id && x.month && x.kind !== 'opening').map(x => x.month).sort()[0];
+    if (first && first <= prev && !has(prev)) out.push({ kind: 'missed', month: prev, planned: num(m.planned) });
+    return out;
+  }
+
+  // a typed-in amount is "adjusted" when it differs from the plan
+  const statusFor = (amount, planned) => num(planned) !== null && num(amount) !== null && Math.abs(num(amount) - num(planned)) > 0.005 ? 'adjusted' : 'confirmed';
+
+  return { depId, units, summary, due, counted, statusFor, STATUS_HE, COUNTED };
+})();
+if (typeof module !== 'undefined') module.exports = SAV;
+
+/* ---------- free text in Hebrew -> a plan of safe actions (pure, no DOM, no language model) ----------
    CMD.parse(text, ctx) reads a sentence such as
      "קנינו שידה ב-1,400 שקל, תסמנו שנקנתה ותוסיפו להוצאות"   "תוסיפו לקניות חלב 2 וביצים"
      "הוצאתי 120 על אוכל בחוץ"   "שילמנו 300 במזומן על אירוע"   "תזכירו לנו לתקן את הברז עד חמישי"
@@ -1542,6 +1625,15 @@ const AGENT = (() => {
       primaryAction: { type: 'open_tab', tab: 'baby', label: 'לרשימה' },
     }, { urgency: 20, usefulness: 20, confidence: 30, timing: 5, annoyance: annoy('baby_budget'), duplication: 0 }));
 
+    // savings: the deposit day passed and nothing was written, or a month in between has no deposit (SAV.due)
+    (sig.savings || []).forEach(s => out.push(make({
+      id: `savings_${s.kind}:${s.hid}:${s.month}`, type: s.kind === 'due' ? 'savings_due' : 'savings_missed', domain: 'savings', topic: `savings:${s.hid}`,
+      title: s.kind === 'due' ? `נכנסה ההפקדה ל${s.name}?` : `אין הפקדה ל${s.name} בחודש שעבר`,
+      reason: s.kind === 'due' ? `לפי התוכנית ${s.planned.toLocaleString('he-IL')} ₪ בכל חודש, והיום שלה כבר עבר. רק הפקדה שאישרתם נספרת.` : 'אם היא נכנסה, אפשר לרשום אותה. אם לא, לסמן שלא הופקד.',
+      sourceRefs: [`holdings:${s.hid}`, `deposits:${s.hid}:${s.month}`], validUntil: null,
+      primaryAction: { type: 'deposit', hid: s.hid, month: s.month, label: s.kind === 'due' ? 'לרשום הפקדה' : 'לעדכן' },
+    }, { urgency: s.kind === 'due' ? 20 : 15, usefulness: 20, confidence: 30, timing: 5, annoyance: annoy(s.kind === 'due' ? 'savings_due' : 'savings_missed'), duplication: 0 })));
+
     // money: a list over its frame, or no income so the month cannot be computed
     const m = sig.money || {};
     if (m.isCurrent && !m.hasIncome) out.push(make({
@@ -1643,7 +1735,7 @@ const label=n=>DISPLAY_NAMES[n]||n;
 const STATUSES=[{k:'לקנות',c:'st-buy',m:'●'},{k:'נקנה',c:'st-done',m:'✓'},{k:'לקבל',c:'st-gift',m:'◆'},{k:'לבדוק',c:'st-check',m:'?'},{k:'לא חובה',c:'st-opt',m:'○'}];
 const BABY_CATS=['','שינה וריהוט','עגלה ורכב','האכלה','הנקה','טיפול והחתלה','בגדים וטקסטיל','כביסה ומתכלים','משחק והתפתחות'];
 
-const S={tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -1793,7 +1885,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(navInd);
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
 // tasks and prefs (feedback on suggestions) are new and live in the app's data only; a missing file reads as empty
-const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs'];
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -1849,7 +1941,7 @@ function mutate(col,fn,msg,note,ref){
 }
 // a new grocery item gets Rami Levy prices from the cloud job right away; without the Actions permission
 // the dispatch is refused and the hourly run picks the item up instead
-function pricesNow(){gh(`/repos/${REPO}/actions/workflows/grocery.yml/dispatches`,{method:'POST',body:JSON.stringify({ref:BRANCH})}).catch(()=>{})}
+function pricesNow(wf='grocery.yml'){gh(`/repos/${REPO}/actions/workflows/${wf}/dispatches`,{method:'POST',body:JSON.stringify({ref:BRANCH})}).catch(()=>{})}
 const localId=()=>'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 async function write(fn,okMsg){const ok=await fn();if(ok&&okMsg)toast(okMsg);return ok}
 const store={
@@ -1858,7 +1950,8 @@ const store={
   async addMany(col,list){if(!list.length)return true;const ids=list.map(()=>localId()),now=Date.now();
     const note=col==='grocery'?`נוספו לרשימת הסופר: ${list.map(d=>d.name).join(', ')}`:null;
     const ok=await mutate(col,d=>{list.forEach((x,i)=>{d[ids[i]]={...x,updatedAt:now}})},'add '+col,note,col+'/'+ids[0]);if(ok&&col==='grocery')pricesNow();return ok},
-  put(col,id,data){return mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'save '+col,noteFor('put',col,id,data),col+'/'+id)},
+  // a deposit without its day's index price: the daily price job runs now instead of tonight
+  async put(col,id,data){const ok=await mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'save '+col,noteFor('put',col,id,data),col+'/'+id);if(ok&&col==='deposits'&&SAV.counted(data)&&!has(data.assetPrice))pricesNow('prices.yml');return ok},
   update(col,id,data){return mutate(col,d=>{if(d[id])d[id]={...d[id],...data,updatedAt:Date.now()}},'update '+col,noteFor('update',col,id,data),col+'/'+id)},
   del(col,id){return mutate(col,d=>{delete d[id]},'delete '+col,noteFor('del',col,id,null),col+'/'+id)},
   setMonth(k,data){return write(()=>mutate('months',d=>{d[k]={...data,updatedAt:Date.now()}},'month '+k,monthNote(k,data),'months/'+k),'נשמר')}
@@ -1896,6 +1989,8 @@ function noteFor(op,col,id,data){
     if(d.op==='delete')return `נמחק אירוע ${where.replace('ל','מה',1)}: ${d.title||'אירוע'}`;
     const s=new Date(d.start);return `נוסף ${where}: ${d.title} · ${['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'][s.getDay()]} ${s.getDate()}/${s.getMonth()+1}${d.allDay?'':' '+s.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}`}
   if(col==='holdings')return `עודכן בחיסכון: ${d.name||(prev&&prev.name)||''}`;
+  if(col==='deposits'){if(op==='del')return null;const h=S.holdings.find(x=>x.id===d.holdingId);
+    return `חיסכון · ${h?h.name:''}: ${d.kind==='opening'?'יתרת פתיחה':'הפקדה ל'+monthLabel(d.month)} · ${SAV.STATUS_HE[d.status]||d.status}${has(d.confirmedAmount)?' · '+ils(d.confirmedAmount):''}`}
   // tasks and prefs: no push for now (a suggestion or a dismissal is not news; section 3.2 of the spec)
   return null;
 }
@@ -2595,7 +2690,7 @@ function renderSav(){
   const stamps=hs.filter(h=>h.priceUpdatedAt).map(h=>h.priceUpdatedAt).sort(),last=stamps.pop();
   if(!hs.length){
     $('svHero').innerHTML=`<div class="emptyhero"><span class="ic">${I.page}</span><span class="disp" style="font-weight:700;font-size:18px">עוד אין החזקות</span><span class="muted" style="font-size:15px">שלחו לי את קובץ ההחזקות ממיטב טרייד, או הוסיפו החזקה ידנית.</span></div>`;
-    $('svAccounts').innerHTML='';return;
+    $('svAccounts').innerHTML='';renderMirror();return;
   }
   const byType={};hs.forEach((h,i)=>{const t=H_TYPES.includes(h.type)?h.type:'מניות';byType[t]=(byType[t]||0)+(val[i]||0)});
   $('svHero').innerHTML=`<div class="hero" style="cursor:default">
@@ -2613,7 +2708,132 @@ function renderSav(){
       ${open?items.map(h=>{const hv=hValue(h),p=has(h.cost)&&hv!==null?hv-Number(h.cost):null;
         const meta=h.source==='manual'?`יתרה ידנית${h.valueDate?' · '+esc(h.valueDate):''}`:`${esc(h.type||'')}${has(h.qty)?` · ${fmt(h.qty)} יח'`:''}${has(h.price)?` × ${fmt(h.price)} ₪`:' · ממתין למחיר'}${h.priceDate?` · ${esc(h.priceDate)}`:''}`;
         return `<button class="bare hrow" data-hold="${esc(h.id)}"><span class="col"><b>${esc(h.name)}</b><small class="num">${meta}</small></span><span class="side"><span class="num">${hv===null?'—':ils(hv)}</span>${p!==null?`<small class="num pl ${p<0?'dn':'up'}">${signed(p)}</small>`:''}${chgPill(h.change)}</span></button>`}).join(''):''}</section>`}).join('');
+  renderMirror();
 }
+/* ---------- the mirror portfolio: deposits you type in, each one "bought" the tracked index on its day (SAV in src/savings.js) ----------
+   data/deposits.json, one document per account and month (dep:<holdingId>:<YYYY-MM>), so a month is never counted twice.
+   The index price and dollar rate of the deposit day are filled by the daily cloud job (prices.yml), or typed in;
+   until then the deposit shows "ממתין למחיר" and no price is guessed. A change to a confirmed deposit is kept in its corrections. */
+const dmy=s=>s?String(s).slice(0,10).split('-').reverse().join('/'):'';
+const curSign=c=>c==='USD'?'$':'₪';
+function renderMirror(){
+  const el=$('svMirror');if(!el)return;S.mirOpen=S.mirOpen||{};
+  const ms=S.holdings.filter(h=>h.mirror&&h.mirror.ticker);
+  if(!ms.length){el.innerHTML=S.holdings.length?`<section class="card mirc"><b>תיק מראה</b><span class="small muted">מה היה קורה אם כל הפקדה הייתה נכנסת למדד שתבחרו, ביום ההפקדה. בוחרים חשבון ומגדירים מדד מעקב, ואת ההפקדות מזינים כאן.</span><div class="actions"><button class="btn ghost" data-mirset>להגדרת תיק מראה</button></div></section>`:'';return}
+  el.innerHTML=ms.map(h=>{const m=h.mirror,s=SAV.summary(h,S.deposits,hValue(h)),cur=h.mirrorCur||m.cur||'ILS',open=!!S.mirOpen[h.id];
+    const deps=S.deposits.filter(d=>d.holdingId===h.id).sort((a,b)=>(b.kind==='opening')-(a.kind==='opening')||String(b.month).localeCompare(String(a.month)));
+    const row=(k,v,sub,cls)=>`<div class="mrow"><span class="k">${k}</span><span class="v num">${v}</span>${sub?`<small class="num ${cls||''}">${sub}</small>`:''}</div>`;
+    const pl=n=>n===null?'':`<span class="pl ${n<0?'dn':'up'}">${signed(n)}</span>`;
+    return `<section class="card mirc">
+     <div class="mhd"><span class="col"><b>תיק מראה · ${esc(h.name)}</b><small class="num">עוקב אחרי ${esc(m.label||m.ticker)}${cur==='USD'?' בדולרים':''}${has(m.planned)?` · ${ils(m.planned)} בחודש`:''}${has(m.day)?` · ב־${m.day} לחודש`:''}</small></span><button class="bare link" data-mirset="${esc(h.id)}">הגדרות</button></div>
+     ${row('הפקדות שאושרו',ils(s.confirmed),`${s.count} הפקדות`)}
+     ${row('שווי בפועל',s.actual===null?'אין נתון':ils(s.actual),pl(s.actualPL))}
+     ${row('תיק מראה',s.mirror===null?(s.count?(s.needsPrice?'ממתין למחיר':'ממתין למחירי ההפקדות'):'אין עדיין הפקדות'):ils(s.mirror),s.mirrorPL!==null?pl(s.mirrorPL)+(s.partial?` <span class="muted">על ${ils(s.pricedIn)} שכבר יש להם מחיר</span>`:''):'')}
+     ${s.gap!==null?`<div class="small muted num">פער בין השווי בפועל לתיק המראה: ${signed(s.gap)}. אפשריים כמה הסברים (דמי ניהול, מסלול אחר, מועד ביצוע, מטבע), ובלי נתונים אי אפשר לקבוע מה מהם.</div>`:s.count&&s.actual!==null&&!s.hasOpening?'<div class="small muted">כדי להשוות לשווי בפועל, הזינו בהגדרות את היתרה ביום שממנו מתחילים.</div>':''}
+     ${s.missing?`<div class="small muted">${s.missing} ${s.missing===1?'הפקדה ממתינה':'הפקדות ממתינות'} למחיר המדד ביום ההפקדה. המחיר נמשך פעם ביום, ואפשר גם להזין אותו ידנית בהפקדה.</div>`:''}
+     <div class="actions"><button class="btn" data-depadd="${esc(h.id)}">+ הפקדה</button>${deps.length?`<button class="btn ghost" data-mirlist="${esc(h.id)}" aria-expanded="${open}">${open?'הסתרת ההפקדות':`כל ההפקדות (${deps.length})`}</button>`:''}</div>
+     ${open?`<div class="deplist">${deps.map(d=>{const u=SAV.units(d,cur);
+       return `<button class="bare hrow" data-dep="${esc(d.id)}"><span class="col"><b>${d.kind==='opening'?'יתרת פתיחה':esc(monthLabel(d.month))}</b><small class="num">${esc(SAV.STATUS_HE[d.status]||d.status)}${d.confirmedDate?' · '+dmy(d.confirmedDate):''}${u!==null?` · ${u.toLocaleString('he-IL',{maximumFractionDigits:4})} יח' במחיר ${fmt(d.assetPrice)} ${curSign(d.assetCurrency||cur)}${d.assetPriceDate&&d.assetPriceDate!==d.confirmedDate?' ('+dmy(d.assetPriceDate)+')':''}`:SAV.counted(d)?' · ממתין למחיר':''}</small></span><span class="side"><span class="num">${has(d.confirmedAmount)?ils(d.confirmedAmount):'—'}</span></span></button>`}).join('')}</div>`:''}
+    </section>`}).join('');
+}
+// the account's mirror settings: what it tracks, the plan, and where it starts from
+function mirrorSheet(h){
+  const pick=!h,opts=S.holdings;h=h||opts[0];if(!h)return;
+  const m=h.mirror||{},op=S.deposits.find(d=>d.id===SAV.depId(h.id,'open'));let cur=m.cur||'USD';
+  openSheet('תיק מראה',`
+   ${pick?`<div class="field"><label class="lbl" for="msH">לאיזה חשבון</label><select class="in" id="msH">${opts.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select></div>`:`<p class="cmdask">${esc(h.name)}</p>`}
+   <div class="field"><label class="lbl" for="msLabel">שם המדד</label><input class="in" id="msLabel" value="${esc(m.label||'')}" placeholder="למשל S&P 500" autocomplete="off"></div>
+   <div class="field"><label class="lbl" for="msTicker">סימול ב־Yahoo Finance</label><input class="in num" id="msTicker" dir="ltr" value="${esc(m.ticker||'')}" placeholder="SPY" autocomplete="off"><span class="small muted">SPY היא קרן סל על S&P 500 בדולרים. נייר בבורסה בתל אביב נכתב עם ‎.TA בסוף.</span></div>
+   <div class="field"><span class="lbl">המטבע של המדד</span><div class="chips" id="msCur">${[['USD','דולר'],['ILS','שקל']].map(([k,v])=>`<button type="button" class="chip" data-v="${k}" aria-checked="${cur===k}">${v}</button>`).join('')}</div></div>
+   <div class="tsrow"><div class="field"><label class="lbl" for="msPlan">הפקדה חודשית מתוכננת</label><div class="amountbox"><input class="num" id="msPlan" inputmode="decimal" value="${has(m.planned)?m.planned:''}"><span>₪</span></div></div>
+     <div class="field"><label class="lbl" for="msDay">יום בחודש</label><input class="in num" id="msDay" inputmode="numeric" value="${has(m.day)?m.day:''}" placeholder="1–28"></div></div>
+   <div class="field"><label class="lbl" for="msFees">עמלה לכל הפקדה (ריק = אין)</label><div class="amountbox"><input class="num" id="msFees" inputmode="decimal" value="${has(m.fees)&&m.fees?m.fees:''}"><span>₪</span></div></div>
+   <div class="field"><span class="lbl">נקודת התחלה (לא חובה)</span><span class="small muted">היתרה ביום שממנו מתחילים. בלי זה אפשר לראות את תיק המראה, אבל לא להשוות אותו לשווי בפועל.</span>
+     <div class="tsrow"><div class="amountbox"><input class="num" id="msOpen" inputmode="decimal" value="${op&&has(op.confirmedAmount)?op.confirmedAmount:''}" aria-label="יתרת פתיחה"><span>₪</span></div><input class="in" id="msOpenD" type="date" value="${esc(op&&op.confirmedDate||'')}" aria-label="תאריך היתרה"></div></div>
+   <div class="actions"><button class="btn" id="msSave">שמירה</button><button class="btn ghost" id="msCancel">ביטול</button></div>
+   ${h.mirror?'<button class="bare danger-link" id="msDel">הסרת תיק המראה (ההפקדות נשמרות)</button>':''}`);
+  $('msCur').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;cur=b.dataset.v;[...$('msCur').children].forEach(x=>x.setAttribute('aria-checked',x===b))};
+  $('msCancel').onclick=closeSheet;
+  $('msSave').onclick=async()=>{const hid=pick?$('msH').value:h.id,hh=S.holdings.find(x=>x.id===hid),ticker=$('msTicker').value.trim().toUpperCase();
+    if(!ticker){$('msTicker').focus();toast('כתבו סימול של מדד או נייר');return}
+    const day=parseAmt($('msDay').value);if(day!==null&&!(day>=1&&day<=28)){$('msDay').focus();toast('יום בין 1 ל־28');return}
+    const old=hh.mirror||{},mirror={label:$('msLabel').value.trim()||ticker,ticker,cur,planned:parseAmt($('msPlan').value),day,fees:parseAmt($('msFees').value)||0};
+    const up={mirror};if(old.ticker!==ticker){up.mirrorPrice=null;up.mirrorFx=null;up.mirrorPriceDate=null;up.mirrorCur=null}
+    const oa=parseAmt($('msOpen').value),od=$('msOpenD').value;
+    if(oa!==null&&!od){$('msOpenD').focus();toast('בחרו את תאריך היתרה');return}
+    closeSheet();if(!(await store.update('holdings',hid,up)))return;
+    const opId=SAV.depId(hid,'open'),prev=S.deposits.find(d=>d.id===opId);
+    if(oa!==null)await depositSave(hh,prev,{kind:'opening',month:null,confirmedDate:od,confirmedAmount:oa,status:'confirmed'});
+    else if(prev&&SAV.counted(prev))await depositSave(hh,prev,{status:'reversed'});
+    if(old.ticker&&old.ticker!==ticker)toast('המדד הוחלף. הפקדות קיימות שומרות את המחיר של המדד הקודם; אפשר לתקן כל אחת בנפרד');
+    else toast('תיק המראה נשמר')};
+  if(h.mirror){const d=$('msDel');d.onclick=()=>{if(!d.classList.contains('arm')){d.classList.add('arm');d.textContent='ללחוץ שוב להסרה';return}closeSheet();store.update('holdings',h.id,{mirror:null})}}
+}
+// one write per deposit; a change to a confirmed one keeps what it was before (spec 15.6: a historical fix is explicit and recorded)
+async function depositSave(h,prev,data){
+  const m=h.mirror||{},id=data.kind==='opening'?SAV.depId(h.id,'open'):SAV.depId(h.id,data.month),now=Date.now();
+  const doc={holdingId:h.id,kind:data.kind||'monthly',month:data.month||null,currency:'ILS',ticker:m.ticker||null,fees:Number(m.fees)||0,source:'manual',
+    plannedAmount:data.kind==='opening'?null:(has(m.planned)?Number(m.planned):null),
+    plannedDate:data.month&&has(m.day)?`${data.month}-${String(m.day).padStart(2,'0')}`:null,
+    ...(prev||{}),...data,updatedAt:now};
+  delete doc.id;
+  if(!prev){doc.createdAt=now;if(S.uid)doc.by=S.uid}
+  // the price belongs to a date and a ticker: when either changes, the old price no longer fits (unless it was typed in now)
+  if(prev&&!('assetPrice' in data)&&(prev.confirmedDate!==doc.confirmedDate||prev.ticker!==doc.ticker)&&prev.priceSource!=='manual'){
+    Object.assign(doc,{assetPrice:null,assetPriceDate:null,exchangeRate:null,exchangeRateDate:null,assetCurrency:null,priceSource:null})}
+  const u=SAV.units(doc,h.mirrorCur||m.cur);doc.simulatedUnits=u===null?null:Math.round(u*1e6)/1e6;
+  if(prev&&SAV.counted(prev)){const ch={};['confirmedAmount','confirmedDate','status','assetPrice','exchangeRate'].forEach(k=>{if((prev[k]??null)!==(doc[k]??null))ch[k]=[prev[k]??null,doc[k]??null]});
+    if(Object.keys(ch).length)doc.corrections=[...(prev.corrections||[]),{at:now,by:S.uid||null,changes:ch}]}
+  const r=(S.months[data.month]||{}).rows||[],row=r.find(x=>x.name===h.name||x.name===h.account);if(row)doc.linkedMonthRef=`months:${data.month}:${row.name}`;
+  return store.put('deposits',id,doc);
+}
+function depositSheet(h,dep,month){
+  const m=h.mirror||{};month=dep?dep.month:month||monthKey(new Date());
+  if(!dep){const ex=S.deposits.find(d=>d.id===SAV.depId(h.id,month));if(ex)dep=ex}
+  const opening=dep&&dep.kind==='opening',d=dep||{},cur=d.assetCurrency||h.mirrorCur||m.cur||'ILS';
+  let st=d.status==='skipped'?'skipped':d.status==='reversed'?'reversed':'confirmed';
+  const defDate=has(m.day)?`${month}-${String(m.day).padStart(2,'0')}`:today();
+  const sheetRow=()=>{const mk=$('dpMonth')?$('dpMonth').value:month,r=((S.months[mk]||{}).rows||[]).find(x=>x.name===h.name||x.name===h.account);return r&&has(r.amount)?`בגיליון, בשורה "${esc(r.name)}" של ${esc(monthLabel(mk))}: ${ils(r.amount)}`:''};
+  openSheet(opening?'יתרת פתיחה':dep?'הפקדה':'הפקדה חדשה',`
+   <p class="cmdask">${esc(h.name)}${dep&&!opening?' · '+esc(monthLabel(month)):''}</p>
+   ${opening?'':`<div class="tsrow"><div class="field"><label class="lbl" for="dpMonth">חודש</label><input class="in" id="dpMonth" type="month" value="${esc(month)}" ${dep?'disabled':''}></div>
+     <div class="field"><label class="lbl" for="dpDate">תאריך ההפקדה</label><input class="in" id="dpDate" type="date" value="${esc(d.confirmedDate||defDate)}"></div></div>`}
+   ${opening?`<div class="field"><label class="lbl" for="dpDate">תאריך היתרה</label><input class="in" id="dpDate" type="date" value="${esc(d.confirmedDate||'')}"></div>`:''}
+   <div class="field"><label class="lbl" for="dpAmt">${opening?'היתרה':'הסכום שהופקד'}</label><div class="amountbox"><input class="num" id="dpAmt" inputmode="decimal" value="${has(d.confirmedAmount)?d.confirmedAmount:has(m.planned)&&!opening?m.planned:''}"><span>₪</span></div>
+     <span class="small muted" id="dpSheet">${opening?'':sheetRow()}</span></div>
+   ${opening?'':`<div class="field"><span class="lbl">מה קרה החודש</span><div class="chips" id="dpSt">${[['confirmed','הופקד'],['skipped','לא הופקד החודש']].concat(dep&&SAV.counted(dep)?[['reversed','ביטול ההפקדה']]:[]).map(([k,v])=>`<button type="button" class="chip" data-v="${k}" aria-checked="${st===k}">${v}</button>`).join('')}</div></div>`}
+   <details class="field" ${d.priceSource==='manual'?'open':''}><summary class="lbl">מחיר המדד ביום ההפקדה ${has(d.assetPrice)?`· ${fmt(d.assetPrice)} ${curSign(cur)}${d.priceSource==='yahoo'?' (מ־Yahoo)':' (הוזן ידנית)'}`:'· נמשך אוטומטית'}</summary>
+     <span class="small muted">ריק = האפליקציה תביא את מחיר הסגירה של יום ההפקדה (ואם לא היה מסחר, של יום המסחר הבא). שינוי מחיר של הפקדה שאושרה נשמר כתיקון.</span>
+     <div class="tsrow"><div class="field"><label class="lbl" for="dpPrice">מחיר (${curSign(cur)})</label><input class="in num" id="dpPrice" inputmode="decimal" value="${has(d.assetPrice)?d.assetPrice:''}"></div>
+       ${cur==='USD'?`<div class="field"><label class="lbl" for="dpFx">שער הדולר</label><input class="in num" id="dpFx" inputmode="decimal" value="${has(d.exchangeRate)?d.exchangeRate:''}"></div>`:''}</div></details>
+   ${(d.corrections||[]).length?`<span class="small muted">תוקנה ${d.corrections.length} ${d.corrections.length===1?'פעם':'פעמים'}, אחרונה ב־${new Date(d.corrections[d.corrections.length-1].at).toLocaleDateString('he-IL')}</span>`:''}
+   <div class="actions"><button class="btn" id="dpSave">שמירה</button><button class="btn ghost" id="dpCancel">ביטול</button></div>`);
+  if($('dpMonth'))$('dpMonth').onchange=()=>{const mk=$('dpMonth').value,ex=S.deposits.find(x=>x.id===SAV.depId(h.id,mk));if(ex){depositSheet(h,ex);toast('לחודש הזה כבר יש הפקדה. אפשר לעדכן אותה כאן');return}
+    if(has(m.day))$('dpDate').value=`${mk}-${String(m.day).padStart(2,'0')}`;$('dpSheet').innerHTML=sheetRow()};
+  if($('dpSt'))$('dpSt').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;st=b.dataset.v;[...$('dpSt').children].forEach(x=>x.setAttribute('aria-checked',x===b))};
+  $('dpCancel').onclick=closeSheet;
+  $('dpSave').onclick=async()=>{
+    const mk=opening?null:$('dpMonth').value,date=$('dpDate').value,amt=parseAmt($('dpAmt').value);
+    if(!opening&&!/^\d{4}-\d{2}$/.test(mk||'')){toast('בחרו חודש');return}
+    const data={kind:opening?'opening':'monthly',month:mk};
+    if(st==='skipped'){Object.assign(data,{status:'skipped',confirmedAmount:null,confirmedDate:null})}
+    else if(st==='reversed')data.status='reversed';
+    else{if(!(amt>0)){$('dpAmt').focus();toast('כתבו את הסכום');return}if(!date){$('dpDate').focus();toast('בחרו תאריך');return}
+      Object.assign(data,{confirmedAmount:amt,confirmedDate:date,status:opening?'confirmed':SAV.statusFor(amt,m.planned)})}
+    const p=parseAmt($('dpPrice').value),fx=$('dpFx')?parseAmt($('dpFx').value):null;
+    if(p!==null&&(p!==(d.assetPrice??null)||fx!==(d.exchangeRate??null))){
+      if(dep&&SAV.counted(dep)&&has(d.assetPrice)&&!confirm('לתקן את המחיר ההיסטורי של ההפקדה? התיקון יישמר.'))return;
+      Object.assign(data,{assetPrice:p,assetCurrency:cur,assetPriceDate:date||d.confirmedDate||null,exchangeRate:cur==='USD'?fx:null,exchangeRateDate:cur==='USD'&&fx!==null?(date||null):null,priceSource:'manual'})}
+    else if(p===null&&d.priceSource==='manual')Object.assign(data,{assetPrice:null,exchangeRate:null,assetPriceDate:null,exchangeRateDate:null,priceSource:null});
+    closeSheet();buzz(10);
+    if(await depositSave(h,dep||null,data))toast(st==='skipped'?'נרשם שלא הופקד החודש':st==='reversed'?'ההפקדה בוטלה ולא נספרת':data.status==='adjusted'?`נשמר. הסכום שונה מהתוכנית (${ils(m.planned)})`:'ההפקדה נשמרה')};
+}
+document.addEventListener('click',e=>{
+  const ms=e.target.closest('[data-mirset]');if(ms){mirrorSheet(ms.dataset.mirset?S.holdings.find(h=>h.id===ms.dataset.mirset):null);return}
+  const da=e.target.closest('[data-depadd]');if(da){const h=S.holdings.find(x=>x.id===da.dataset.depadd);if(h)depositSheet(h,null);return}
+  const ml=e.target.closest('[data-mirlist]');if(ml){S.mirOpen=S.mirOpen||{};S.mirOpen[ml.dataset.mirlist]=!S.mirOpen[ml.dataset.mirlist];renderMirror();return}
+  const dp=e.target.closest('[data-dep]');if(dp){const d=S.deposits.find(x=>x.id===dp.dataset.dep),h=d&&S.holdings.find(x=>x.id===d.holdingId);if(h)depositSheet(h,d);return}
+});
 function holdingSheet(h){
   const isNew=!h;h=h||{name:'',account:'',type:'מניות',source:'tase',secId:'',ticker:'',qty:null,cost:null,value:null};
   let type=h.type||'מניות';
@@ -3402,6 +3622,7 @@ function agentSignals(now){
         dups:Object.entries(g).filter(([,bs])=>bs.length>1&&new Set(bs.map(b=>b.status)).size>1).map(([name,bs])=>({name,statuses:[...new Set(bs.map(b=>b.status))].slice(0,2),ids:bs.map(b=>b.id)})),
         budget:{left:st.fp?Math.round((st.fp.budget-st.fpSum)*100)/100:null,planned:Math.round(st.buySum*100)/100}}})(),
     money:c?{month:k,isCurrent:true,hasIncome:c.income!==null,over}:{},
+    savings:S.holdings.filter(h=>h.mirror&&h.mirror.ticker).flatMap(h=>SAV.due(h,S.deposits,now).map(x=>({...x,hid:h.id,name:h.name}))),
     history:{dismissedByType},
     tasks:S.tasks.filter(t=>['new','planned','waiting'].includes(t.status)&&!(t.snoozedUntil>now)).map(t=>{const st=taskSync(t);
       return {id:t.id,title:t.title,status:t.status,minutes:Number(t.estimatedMinutes)||null,idleDays:Math.floor((now-(t.progressAt||t.createdAt||now))/864e5),
@@ -3482,6 +3703,7 @@ function runAction(c){
   if(a.type==='ask_blocker'){blockerSheet(S.tasks.find(t=>t.id===a.taskId));return}
   if(a.type==='baby_review'){babyReviewSheet();return}
   if(a.type==='baby_item'){babySheet(S.baby.find(b=>b.id===a.id));return}
+  if(a.type==='deposit'){const h=S.holdings.find(x=>x.id===a.hid);if(h){showTab('sav');depositSheet(h,null,a.month)}return}
   if(a.type==='open_tab'){
     if(a.tab==='home'){S.month=monthKey(new Date());S.openGroups['משתנות']=true;if(a.row)S.rowOpen[a.row]=true}
     if(a.tab==='cal'&&a.day)S.calDay=a.day;
@@ -3631,7 +3853,7 @@ function voiceStart(){
   try{r.start()}catch(e){S.rec=null;mic.classList.remove('rec');toast('לא הצלחתי להתחיל הקלטה')}
 }
 /* ---------- what the app learned about us: every preference can be seen, changed, or deleted ---------- */
-const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה'};
+const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה'};
 function learnedSheet(){
   const keep=!$('sheet').hidden&&$('sheetBody').querySelector('.lrnsec')?$('sheet').scrollTop:0;
   const now=Date.now(),dt=t=>t?new Date(t).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
@@ -3759,7 +3981,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ---------- the look shared by every screen: who is here, and each screen's title line ---------- */
-const SG_ILL={baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
+const SG_ILL={savings_due:'piggy',savings_missed:'piggy',baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
 function renderHeads(){
   const ppl=S.people||{},who=Object.keys(ppl).filter(l=>l!=='updatedAt');
   const tone=n=>n==='יוסף'?'y':n==='תחיה'?'t':'s';
