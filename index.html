@@ -536,6 +536,44 @@ header.top.nomonth .month{position:absolute;inset-inline-start:0;visibility:hidd
 .sgmore{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}.sgmore .link{font-size:13px;min-height:32px}
 .bhero .bcrib{width:92px;height:52px;flex:none}.bhero .col b{font-size:17px}.bhero{gap:10px;padding:14px}
 @media (max-width:370px){.sgill{width:72px;height:72px}.bhero .bcrib{display:none}.ptitle{font-size:26px}.phill{width:60px;height:52px}}
+/* stage 2: the week strip as one card, a legend, the day as a timeline, "כדאי לשבץ", the add bar, find time */
+.daystrip{background:var(--surface);border-radius:20px;padding:8px 6px;gap:2px;box-shadow:0 1px 2px rgba(30,41,37,.04),0 6px 18px rgba(30,41,37,.05)}
+.dchip{border:0;background:transparent;min-height:70px;border-radius:14px}
+.dchip+.dchip{box-shadow:inset 1px 0 var(--line)}
+.dchip[aria-selected="true"]{background:var(--accent);box-shadow:none}
+.dchip[aria-selected="true"] .dots i{outline:1.5px solid var(--accent-ink)}
+.legend{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.legend .lg{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;font-size:14px;color:var(--ink-2)}
+.legend .lg i{width:10px;height:10px;border-radius:999px}
+.legend .lg[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+.agenda.card,.plan.card{padding:14px;gap:10px}
+.agenda .dv-hd,.plan .dv-hd{display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:2px 2px 6px}
+.dv-hd .col{display:flex;flex-direction:column}.dv-hd .col b{font-size:18px}
+.dvic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none}
+.dvic svg,.eic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tline{position:relative;display:flex;flex-direction:column;gap:8px}
+.tline::before{content:"";position:absolute;inset-block:12px;inset-inline-end:76px;width:2px;background:var(--line)}
+.tline .aitem{align-items:center;border:1px solid var(--line);border-inline-start:1px solid var(--line);border-radius:16px;padding:12px;background:var(--surface)}
+.tline .aitem .eic{width:46px;height:46px;border-radius:999px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--c) 16%,var(--surface));color:color-mix(in srgb,var(--c) 85%,var(--ink))}
+.tline .aitem .dot{width:12px;height:12px;border-radius:999px;background:var(--c);flex:none;position:relative;z-index:1;margin-inline:6px}
+.tline .aitem .dot.hollow{background:var(--surface);border:2px dashed var(--c)}
+.tline .aitem .t{order:9;min-width:48px;text-align:end;font-size:16px;color:var(--ink)}
+.tline .aitem.free,.tline .aitem.pending{border-style:dashed;background:transparent}
+.planrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:16px}
+.planrow .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:start;min-height:44px;justify-content:center}.planrow .col b{font-size:16px}.planrow .col small{font-size:13px;color:var(--ink-2)}
+.pill{flex:none;min-height:42px;padding:0 16px;border-radius:999px;font-weight:700;font-size:14px;background:var(--accent-soft);color:var(--accent)}
+.pill.strong{background:var(--accent);color:var(--accent-ink)}.pill.quiet{display:inline-grid;place-items:center;background:var(--surface-2);color:var(--ink-2)}
+.caladdbar{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:60px;padding:8px 8px 8px 16px;border-radius:20px;background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-size:16px}
+.caladdbar i{width:56px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.ftwrap{display:flex;flex-direction:column;gap:14px}.ftt{display:flex;flex-direction:column;gap:2px}.ftt b{font-size:18px}
+.ftslots{display:grid;gap:8px}
+.ftslot{display:flex;justify-content:space-between;align-items:center;min-height:52px;padding:0 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface)}
+.ftslot[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.ftsum{padding:12px 14px;border-radius:14px;background:var(--surface-2);font-size:14px}
+.blk{display:flex;flex-direction:column;gap:8px}
+.blkopt{display:flex;flex-direction:column;gap:2px;text-align:start;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--surface)}.blkopt small{color:var(--ink-2)}
+#blkWaitF{display:flex;gap:8px}#blkWaitF .in{flex:1}
+@media (prefers-reduced-motion:no-preference){.tline .aitem{animation:popin .3s ease-out backwards;animation-delay:calc(var(--i,0)*45ms)}.ftslot{transition:background-color .2s,border-color .2s}}
 .tdhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px}
 .tdhead .col{display:flex;flex-direction:column;gap:2px}.tdhead b{font-size:28px}.tdhead small{font-size:14px}
 .tdwho{display:flex}.tdwho .who{width:34px;height:34px;border-radius:999px;border:2px solid var(--bg);background:var(--accent-soft);object-fit:cover}.tdwho .who+.who{margin-inline-start:-10px}
@@ -931,13 +969,16 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
         <div class="calhead">
       <button class="bare caltitle" id="calTitle" aria-expanded="false" aria-controls="monthGrid"><b id="wkLabel"></b><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <button class="bare todaypill" id="calToday" hidden>היום</button>
-      <div class="people" id="calPeople" role="group" aria-label="למי להציג"></div>
     </div>
     <div class="calswipe" id="calSwipe">
       <div class="daystrip" id="dayStrip" role="tablist" aria-label="ימי השבוע"></div>
       <div class="monthgrid" id="monthGrid" hidden></div>
     </div>
-    <section class="agenda" id="dayView" aria-live="polite"></section>
+    <div class="legend" id="calPeople" role="group" aria-label="למי להציג"></div>
+    <div id="calSuggest"></div>
+    <section class="card agenda" id="dayView" aria-live="polite"></section>
+    <section class="card plan" id="calPlan"></section>
+    <button class="bare caladdbar" data-caladd><span>מה תרצו להוסיף ללו"ז?</span><i aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></i></button>
     <details class="calins" id="calIns"><summary><span id="calInsT">תובנות השבוע</span><svg class="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
       <div class="insbody"><div id="calSugg"></div><div id="calCards"></div><div class="small muted" id="calFoot"></div></div></details>
   </section>
@@ -1074,6 +1115,7 @@ const AGENT = (() => {
      grocery             {open, total}           unchecked items and their known price
      baby                {toBuy:[{id, name, price}], gifts, check}
      money               {month, isCurrent, hasIncome, over:[{row, over}]}
+     tasks               [{id, title, status, minutes, idleDays, postponed, waiting, scheduled}] open tasks
      history             {dismissedByType: {type: count in the last 30 days}} */
   function candidates(sig) {
     const now = sig.now, out = [], hour = new Date(now).getHours();
@@ -1153,10 +1195,57 @@ const AGENT = (() => {
       primaryAction: { type: 'open_tab', tab: 'home', row: o.row, label: 'לפירוט' },
     }, { urgency: 20, usefulness: 20, confidence: 30, timing: 5, annoyance: annoy('money_over'), duplication: 0 })));
 
+    // tasks: one that has not moved for a week, and one that fits an evening free for both
+    const T = sig.tasks || [];
+    T.filter(t => ['new', 'planned', 'waiting'].includes(t.status) && t.idleDays >= 7).forEach(t => {
+      const blocked = (t.postponed || 0) >= 2;
+      out.push(make({
+        id: `task_stuck:${t.id}:${blocked ? 'ask' : Math.floor(t.idleDays / 7)}`, type: 'task_stuck', domain: 'tasks', topic: `task:${t.id}`,
+        title: blocked ? `מה עוצר את "${t.title}"?` : `"${t.title}" לא התקדמה ${t.idleDays} ימים`,
+        reason: blocked ? `ההצעה נדחתה ${t.postponed} פעמים. אם משהו חוסם, אפשר לרשום אותו או לוותר על המשימה.`
+          : t.status === 'waiting' && t.waiting ? `היא ממתינה ל${t.waiting}. אולי כדאי לבדוק מה המצב.` : 'אפשר לשבץ לה זמן ביומן ולסגור אותה.',
+        sourceRefs: [`tasks:${t.id}`], validUntil: null, taskId: t.id,
+        primaryAction: blocked ? { type: 'ask_blocker', taskId: t.id, label: 'לרשום מה חוסם' } : { type: 'find_time', taskId: t.id, label: 'מציאת זמן' },
+      }, { urgency: 15 + Math.min(15, t.idleDays - 7), usefulness: 20, confidence: 25, timing: 5, annoyance: annoy('task_stuck'), duplication: 0 }));
+    });
+    const fitW = soon.find(w => w.s > now);
+    const fit = fitW && T.find(t => ['new', 'planned'].includes(t.status) && !t.scheduled && t.minutes && t.minutes * 6e4 <= fitW.e - fitW.s);
+    if (fit) out.push(make({
+      id: `task_fit:${fit.id}:${dayKey(fitW.s)}`, type: 'task_fit', domain: 'tasks', topic: `evening:${dayKey(fitW.s)}`,
+      title: `${when(now, fitW.s)} יש ערב פנוי. לשבץ את "${fit.title}"?`,
+      reason: `המשימה לוקחת בערך ${fit.minutes} דקות, ויש לכם זמן מ-${hm(fitW.s)} עד ${hm(fitW.e)}.`,
+      sourceRefs: [`tasks:${fit.id}`, `calendar:${dayKey(fitW.s)}`], validUntil: fitW.e, taskId: fit.id,
+      primaryAction: { type: 'find_time', taskId: fit.id, label: 'מציאת זמן' },
+    }, { urgency: daysBetween(now, fitW.s) === 0 ? 20 : 15, usefulness: 25, confidence: 25, timing: hour < 18 ? 10 : 0, annoyance: annoy('task_fit'), duplication: 0 }));
+
     return out;
   }
 
-  /* prefs = {sugg: {id: {state: 'dismissed'|'snoozed'|'done', until?}}, mutedTypes: {type: true}} */
+  /* Free time for a task: up to `count` windows in the next `days` days, each at least `minutes` long, inside
+     from..to o'clock, starting at least 30 minutes from now on a quarter hour. `who` is 'yosef', 'tchiya' or
+     'shared' (then both must be free). events: [{who, s, e, allDay}] (ms or Date). One window per day, earliest first;
+     for a shared task an evening (from 18:00) is tried first. */
+  function slots({ events, who, minutes = 30, now, days = 7, from = 8, to = 22, count = 3 }) {
+    const need = Math.max(15, minutes) * 6e4, out = [];
+    const people = who === 'shared' ? ['yosef', 'tchiya'] : [who];
+    const blocks = (events || []).filter(e => !e.allDay && (e.who === 'shared' || people.includes(e.who))).map(e => [+e.s, +e.e]);
+    const start0 = Math.ceil((now + 30 * 6e4) / (15 * 6e4)) * 15 * 6e4;
+    for (let i = 0; i < days && out.length < count; i++) {
+      const d = new Date(now); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i);
+      const a = new Date(d).setHours(from, 0, 0, 0), b = new Date(d).setHours(to, 0, 0, 0);
+      const tryFrom = who === 'shared' ? [new Date(d).setHours(18, 0, 0, 0), a] : [a];
+      for (const lo of tryFrom) {
+        let t = Math.max(lo, start0), found = null;
+        const bs = blocks.filter(([s, e]) => e > t && s < b).sort((x, y) => x[0] - y[0]);
+        for (const [s, e] of bs) { if (s - t >= need) break; t = Math.max(t, Math.ceil(e / (15 * 6e4)) * 15 * 6e4); }
+        if (b - t >= need && !bs.some(([s, e]) => s < t + need && e > t)) found = { s: t, e: t + need };
+        if (found) { out.push(found); break; }
+      }
+    }
+    return out;
+  }
+
+  /* prefs ={sugg: {id: {state: 'dismissed'|'snoozed'|'done', until?}}, mutedTypes: {type: true}} */
   function rank(cands, prefs, now, limit = 2) {
     const sugg = (prefs && prefs.sugg) || {}, muted = (prefs && prefs.mutedTypes) || {};
     const live = cands.filter(c => {
@@ -1178,7 +1267,7 @@ const AGENT = (() => {
   }
 
   const suggest = (sig, prefs, limit = 2) => rank(candidates(sig), prefs, sig.now, limit);
-  return { candidates, rank, suggest, dayKey, daysBetween };
+  return { candidates, rank, suggest, slots, dayKey, daysBetween };
 })();
 if (typeof module !== 'undefined') module.exports = AGENT;
 
@@ -2611,7 +2700,7 @@ function renderCal(){
   $('wkLabel').textContent=sel.toLocaleDateString('he-IL',{month:'long',year:sel.getFullYear()===today.getFullYear()?undefined:'numeric'});
   $('calTitle').setAttribute('aria-expanded',String(month));$('calTitle').setAttribute('aria-label',(month?'סגירת הלוח החודשי, ':'פתיחת הלוח החודשי, ')+$('wkLabel').textContent);
   $('calToday').hidden=month?(sel.getMonth()===today.getMonth()&&sel.getFullYear()===today.getFullYear()):dkey(sel)===dkey(today);
-  $('calPeople').innerHTML=['yosef','tchiya','shared'].map(w=>`<button class="bare pbub ${WHO[w].k}" data-calhide="${w}" aria-pressed="${!hide[w]}" aria-label="${hide[w]?'הצגת':'הסתרת'} ${w==='shared'?'האירועים המשותפים':'האירועים של '+WHO[w].n}">${WHO[w].n[0]}</button>`).join('');
+  $('calPeople').innerHTML=['yosef','tchiya','shared'].map(w=>`<button class="bare lg ${WHO[w].k}" data-calhide="${w}" aria-pressed="${!hide[w]}" aria-label="${hide[w]?'הצגת':'הסתרת'} ${w==='shared'?'האירועים המשותפים':'האירועים של '+WHO[w].n}"><i style="background:var(${WHO[w].c})"></i>${WHO[w].n}</button>`).join('');
   $('dayStrip').hidden=month;$('monthGrid').hidden=!month;
   if(month){
     const m0=new Date(sel.getFullYear(),sel.getMonth(),1),n=new Date(sel.getFullYear(),sel.getMonth()+1,0).getDate();
@@ -2626,11 +2715,21 @@ function renderCal(){
   const free=sel>=today?freeTogether(evs,sel).map(([a,b])=>({free:true,s:new Date(a),e:new Date(b)})).filter(x=>x.e>now):[];
   const items=[...de,...free].sort((a,b)=>(b.allDay?1:0)-(a.allDay?1:0)||a.s-b.s);
   const hidden=onDay(evs,sel).length-de.length;
-  $('dayView').innerHTML=`<div class="dv-hd"><b>${HDAYS[sel.getDay()]} ${dm(sel)}</b><small class="muted">${de.length?de.length+' אירועים':'יום פנוי'}${hidden?` · ${hidden} מוסתרים`:''}</small></div>`+
-    (items.length?items.map((e,i)=>e.free
-      ?`<button class="bare aitem free" style="--i:${i}" data-calfree="${HDAYS[sel.getDay()]} ${sel.getDate()}/${sel.getMonth()+1} ${hm(e.s)}"><span class="t num">${hm(e.s)}</span><span class="col"><b>ערב פנוי לשניכם</b><small>${rng(e.s,e.e)} · נגיעה כדי לקבוע משהו ביחד</small></span></button>`
-      :`<button class="bare aitem${e.pending?' pending':''}" style="--c:var(${WHO[e.who].c});--i:${i}" data-calev="${esc(e.id)}"><span class="t num">${e.allDay?'כל היום':hm(e.s)}</span><span class="col"><b>${esc(e.title)}</b><small>${e.allDay?'':rng(e.s,e.e)+' · '}${WHO[e.who].n}${e.place?' · '+esc(e.place):''}${e.pending?' · נשלח ליומן':''}</small></span></button>`).join('')
+  const isToday=dkey(sel)===dkey(today),tmr=new Date(today);tmr.setDate(tmr.getDate()+1);
+  const dayName=isToday?`היום, יום ${HDAYS[sel.getDay()]}`:dkey(sel)===dkey(tmr)?`מחר, יום ${HDAYS[sel.getDay()]}`:`יום ${HDAYS[sel.getDay()]}`;
+  $('dayView').innerHTML=`<div class="dv-hd"><span class="dvic" aria-hidden="true">${evIcon('cal')}</span><span class="col"><b>${dayName}</b><small class="muted">${sel.getDate()} ב${sel.toLocaleDateString('he-IL',{month:'long'})}${de.length?` · ${de.length} אירועים`:''}${hidden?` · ${hidden} מוסתרים`:''}</small></span></div>`+
+    (items.length?`<div class="tline">${items.map((e,i)=>e.free
+      ?`<button class="bare aitem free" style="--c:var(--who-s);--i:${i}" data-calfree="${HDAYS[sel.getDay()]} ${sel.getDate()}/${sel.getMonth()+1} ${hm(e.s)}"><span class="eic" aria-hidden="true">${evIcon('heart')}</span><span class="col"><b>ערב פנוי לשניכם</b><small>הצעה · נגיעה כדי לקבוע משהו ביחד</small></span><span class="dot hollow" aria-hidden="true"></span><span class="t num">${hm(e.s)}</span></button>`
+      :`<button class="bare aitem${e.pending?' pending':''}" style="--c:var(${WHO[e.who].c});--i:${i}" data-calev="${esc(e.id)}"><span class="eic" aria-hidden="true">${evIcon(evKind(e))}</span><span class="col"><b>${esc(e.title)}</b><small>${WHO[e.who].n}${e.allDay?'':' · '+rng(e.s,e.e)}${e.place?' · '+esc(e.place):''}${e.pending?' · ממתין לסנכרון':''}</small></span><span class="dot${e.pending?' hollow':''}" aria-hidden="true"></span><span class="t num">${e.allDay?'כל היום':hm(e.s)}</span></button>`).join('')}</div>`
       :`<button class="bare aitem empty" data-caladd><span class="col"><b>אין כלום ביום הזה</b><small>נגיעה כדי להוסיף אירוע</small></span></button>`);
+  // the best suggestion about time (calendar or a task), and the tasks that still need a time
+  const cs=suggestions(8).find(c=>c.domain==='calendar'||c.domain==='tasks');
+  $('calSuggest').innerHTML=cs?sgCard(cs,true):'';
+  const plan=S.tasks.filter(t=>['new','planned','waiting'].includes(t.status)&&!(t.snoozedUntil>Date.now())).sort((a,b)=>(a.priority||2)-(b.priority||2)||(a.createdAt||0)-(b.createdAt||0)).slice(0,4);
+  $('calPlan').hidden=!plan.length;
+  $('calPlan').innerHTML=plan.length?`<div class="dv-hd"><span class="dvic" aria-hidden="true">${evIcon('bulb')}</span><span class="col"><b>כדאי לשבץ</b><small class="muted">משימות שעוד אין להן זמן ביומן</small></span></div>`+
+    plan.map(t=>{const st=taskSync(t);return `<div class="planrow"><button class="bare col" data-tdtask="${esc(t.id)}"><b>${esc(t.title)}</b><small>${[TD_OWN[t.owner]||'משותף',t.estimatedMinutes?`כ-${t.estimatedMinutes} דקות`:'',st?st.text:''].filter(Boolean).join(' · ')}</small></button>
+      ${st&&st.state==='failed'?`<button class="bare pill" data-tsretry="${esc(t.id)}">ניסיון חוזר</button>`:st&&st.state!=='failed'?`<span class="pill quiet">${st.state==='done'?'ביומן':'ממתין'}</span>`:`<button class="bare pill strong" data-findtime="${esc(t.id)}">מציאת זמן</button>`}</div>`}).join(''):'';
   // what repeats in the last year and is due soon, with nothing booked for it yet
   const nt=x=>String(x||'').replace(/[0-9"'׳״()\-–:.,!?]/g,' ').replace(/\s+/g,' ').trim();
   const pats=(S.calendar.patterns||[]).filter(pt=>{
@@ -2788,12 +2887,15 @@ function agentSignals(now){
     grocery:{open:openGrocery().length},
     baby:{toBuy:S.baby.filter(b=>b.status==='לקנות').sort((a,b)=>(a.order||0)-(b.order||0)).map(b=>({id:b.id,name:b.name,price:b.price}))},
     money:c?{month:k,isCurrent:true,hasIncome:c.income!==null,over}:{},
-    history:{dismissedByType}};
+    history:{dismissedByType},
+    tasks:S.tasks.filter(t=>['new','planned','waiting'].includes(t.status)&&!(t.snoozedUntil>now)).map(t=>{const st=taskSync(t);
+      return {id:t.id,title:t.title,status:t.status,minutes:Number(t.estimatedMinutes)||null,idleDays:Math.floor((now-(t.progressAt||t.createdAt||now))/864e5),
+        postponed:t.postponeCount||0,waiting:t.waitingReason||'',scheduled:!!st&&st.state!=='failed'}})};
 }
 function agentPrefs(){const sugg={},mutedTypes={};S.prefs.forEach(p=>{if(p.kind==='sugg')sugg[p.sid]={state:p.state,until:p.until};if(p.kind==='mute')mutedTypes[p.type]=true});return {sugg,mutedTypes}}
 // fixed suggestions for looking at the screen without real data (#flags=demo)
 const DEMO_SIG=now=>({now,freeEvenings:[{s:now+8*36e5,e:now+12*36e5}],grocery:{open:9},baby:{toBuy:[{id:'d1',name:'מנשא'},{id:'d2',name:'מוניטור'},{id:'d3',name:'שידה'}]},money:{}});
-function suggestions(){const now=Date.now();return AGENT.suggest(FLAGS.demo?DEMO_SIG(now):agentSignals(now),agentPrefs(),2).filter(c=>!S.sgHide[c.id])}
+function suggestions(limit=2){const now=Date.now();return AGENT.suggest(FLAGS.demo?DEMO_SIG(now):agentSignals(now),agentPrefs(),limit).filter(c=>!S.sgHide[c.id])}
 const PART_HE={urgency:'דחיפות',usefulness:'תועלת',confidence:'ביטחון בנתונים',timing:'תזמון',annoyance:'הפרעה',duplication:'כפילות'};
 function sgCard(c,main){
   const why=S.sgWhy===c.id;
@@ -2830,7 +2932,7 @@ function renderToday(){
   // tasks: the three that matter most
   const ts=openTasks().slice(0,3);
   $('tdTasks').innerHTML=ts.length?ts.map(t=>`<div class="tdtask"><button class="bare tdck" data-tddone="${esc(t.id)}" aria-label="סימון בוצע: ${esc(t.title)}">${I.check}</button>
-      <button class="bare col" data-tdtask="${esc(t.id)}"><b>${esc(t.title)}</b><small>${[TD_OWN[t.owner]||'משותף',TD_STATUS[t.status]||'חדש',t.dueDate?'עד '+esc(t.dueDate.slice(8,10)+'/'+t.dueDate.slice(5,7)):'',t.estimatedMinutes?t.estimatedMinutes+' דק׳':''].filter(Boolean).join(' · ')}</small></button></div>`).join('')+
+      <button class="bare col" data-tdtask="${esc(t.id)}"><b>${esc(t.title)}</b><small>${[TD_OWN[t.owner]||'משותף',TD_STATUS[t.status]||'חדש',t.dueDate?'עד '+esc(t.dueDate.slice(8,10)+'/'+t.dueDate.slice(5,7)):'',t.estimatedMinutes?t.estimatedMinutes+' דק׳':'',(taskSync(t)||{}).text||''].filter(Boolean).join(' · ')}</small></button></div>`).join('')+
       (openTasks().length>3?`<div class="small muted tdmore">ועוד ${openTasks().length-3} משימות פתוחות</div>`:'')
     :'<button class="bare emptyline tdempty" data-tdtask="new">אין משימות פתוחות. + משימה חדשה</button>';
   // the house at a glance: one line each, a tap opens the place
@@ -2842,16 +2944,19 @@ function renderToday(){
 }
 // feedback on a suggestion: kept in data/prefs.json (app only), shown as gone at once with an undo
 async function sgFeedback(id,state,text){
-  const c=suggestions().find(x=>x.id===id);if(!c)return;
+  const c=suggestions(12).find(x=>x.id===id);if(!c)return;
+  if(state==='snoozed'&&c.taskId){const t=S.tasks.find(x=>x.id===c.taskId);if(t)store.update('tasks',t.id,{postponeCount:(t.postponeCount||0)+1})}
   const t=new Date();t.setDate(t.getDate()+1);t.setHours(8,0,0,0);
   const doc={kind:'sugg',sid:id,type:c.type,state,at:Date.now()};if(state==='snoozed')doc.until=+t;if(S.uid)doc.by=S.uid;
-  S.sgHide[id]=true;S.sgUndo={id,text};clearTimeout(sgFeedback._t);sgFeedback._t=setTimeout(()=>{S.sgUndo=null;renderToday()},6000);renderToday();
+  S.sgHide[id]=true;S.sgUndo={id,text};clearTimeout(sgFeedback._t);sgFeedback._t=setTimeout(()=>{S.sgUndo=null;renderToday()},6000);renderToday();renderCal();
   const ok=await store.put('prefs',id,doc);
   delete S.sgHide[id];if(!ok){S.sgUndo=null;renderToday()}
 }
 function runAction(c){
   const a=c.primaryAction;
   if(a.type==='prepare_event'){showTab('cal');openCalAdd(a.text,{target:a.target});return}
+  if(a.type==='find_time'){findTimeSheet(S.tasks.find(t=>t.id===a.taskId));return}
+  if(a.type==='ask_blocker'){blockerSheet(S.tasks.find(t=>t.id===a.taskId));return}
   if(a.type==='open_tab'){
     if(a.tab==='home'){S.month=monthKey(new Date());S.openGroups['משתנות']=true;if(a.row)S.rowOpen[a.row]=true}
     if(a.tab==='cal'&&a.day)S.calDay=a.day;
@@ -2879,6 +2984,7 @@ function taskSheet(t){
     const mins=$('tsMin').value.trim(),data={title,owner:val.owner,status:val.status,priority:Number(val.priority),estimatedMinutes:mins&&!isNaN(Number(mins))?Number(mins):null,
       dueDate:$('tsDue').value||null,waitingReason:$('tsWait').value.trim()||null};
     if(data.status==='done'&&t.status!=='done')data.completedAt=Date.now();
+    data.progressAt=Date.now();
     closeSheet();
     const ok=isNew?await store.add('tasks',{...data,linkedEntity:null,snoozedUntil:null,completedAt:null,createdAt:Date.now(),by:S.uid||null}):await store.update('tasks',t.id,data);
     if(ok)toast(isNew?'המשימה נוספה':'נשמר')};
@@ -2888,7 +2994,7 @@ document.addEventListener('click',e=>{
   const g=e.target.closest('[data-tdgo]');if(g){if(g.dataset.tdgo==='home')S.month=monthKey(new Date());showTab(g.dataset.tdgo);renderAll();return}
   const cl=e.target.closest('[data-tdcal]');if(cl){S.calDay=cl.dataset.tdcal;showTab('cal');return}
   const rg=e.target.closest('[data-tdrange]');if(rg){S.tdRange=rg.dataset.tdrange;renderToday();return}
-  const dd=e.target.closest('[data-sgdo]');if(dd){const c=suggestions().find(x=>x.id===dd.dataset.sgdo);if(c)runAction(c);return}
+  const dd=e.target.closest('[data-sgdo]');if(dd){const c=suggestions(12).find(x=>x.id===dd.dataset.sgdo);if(c)runAction(c);return}
   const lt=e.target.closest('[data-sglater]');if(lt){sgFeedback(lt.dataset.sglater,'snoozed','הוסתר עד מחר בבוקר');return}
   const no=e.target.closest('[data-sgno]');if(no){sgFeedback(no.dataset.sgno,'dismissed','ההצעה הוסרה');return}
   const wy=e.target.closest('[data-sgwhy]');if(wy){S.sgWhy=S.sgWhy===wy.dataset.sgwhy?null:wy.dataset.sgwhy;renderToday();return}
@@ -2899,11 +3005,87 @@ document.addEventListener('click',e=>{
   const tdn=e.target.closest('[data-tddone]');if(tdn){const t=S.tasks.find(x=>x.id===tdn.dataset.tddone);if(!t)return;
     buzz(10);const before={status:t.status,completedAt:t.completedAt||null};
     S.sgUndo={text:`"${t.title}" בוצע`,task:t.id,before};clearTimeout(sgFeedback._t);sgFeedback._t=setTimeout(()=>{S.sgUndo=null;renderToday()},6000);
-    store.update('tasks',t.id,{status:'done',completedAt:Date.now()}).then(ok=>{if(!ok){S.sgUndo=null;renderToday()}});return}
+    store.update('tasks',t.id,{status:'done',completedAt:Date.now(),progressAt:Date.now()}).then(ok=>{if(!ok){S.sgUndo=null;renderToday()}});return}
+});
+
+/* ---------- stage 2: time for tasks ---------- */
+// an icon by what the event is about (words in its title), drawn in the event's person color
+const EV_ICONS={
+  work:'<rect x="4" y="8" width="16" height="11" rx="2"/><path d="M9 8V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M4 13h16"/>',
+  bag:'<path d="M6 8h12l-1 12H7z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+  health:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M9 11h6M12 8v6"/>',
+  heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  study:'<path d="M3 9l9-4 9 4-9 4z"/><path d="M7 11v4c0 1.5 2.5 3 5 3s5-1.5 5-3v-4"/>',
+  cal:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+  dot:'<circle cx="12" cy="12" r="3.5"/>'};
+const evIcon=k=>`<svg viewBox="0 0 24 24">${EV_ICONS[k]||EV_ICONS.dot}</svg>`;
+function evKind(e){const t=String(e.title||'');
+  if(/עבוד|פגיש|זום|ישיב|משמרת|הרצא|לקוח/.test(t))return 'work';
+  if(/קניות|איסוף|סופר|שוק|לקנות/.test(t))return 'bag';
+  if(/רופא|בדיק|טיפול|תור |אולטרסאונד|מרפא|קופת חולים|מכבי|כללית/.test(t))return 'health';
+  if(/לימוד|שיעור|קורס|חוג|הרצאה/.test(t))return 'study';
+  return e.who==='shared'?'heart':'dot'}
+// where a task stands with the calendar: the last calendar request made for it
+function taskSync(t){
+  const r=(S.calreq||[]).filter(x=>x.taskId===t.id&&x.op!=='delete').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
+  if(!r)return null;
+  const when=`${HDAYS[new Date(r.start).getDay()]} ${dm(new Date(r.start))} ${hm(new Date(r.start))}`;
+  if(r.status==='done')return {state:'done',text:`ביומן · ${when}`,r};
+  if(r.status==='failed')return {state:'failed',text:`לא נכנס ליומן${r.error?': '+r.error:''}`,r};
+  return {state:'pending',text:`ממתין לסנכרון · ${when}`,r};
+}
+// "מציאת זמן": up to three free windows, the calendar to write to, a summary, then a calendar request
+function findTimeSheet(t){
+  if(!t)return;
+  const who=t.owner||'shared',mins=Number(t.estimatedMinutes)||30;
+  const ws=AGENT.slots({events:calEvents(),who,minutes:mins,now:Date.now()});
+  let pick=0,target=who;
+  const draw=()=>{
+    const w=ws[pick];
+    $('ftBody').innerHTML=ws.length?`<div class="small muted">חלונות פנויים${who==='shared'?' לשניכם':' של '+TD_OWN[who]} לכ-${mins} דקות, בשבוע הקרוב:</div>
+      <div class="ftslots" role="radiogroup">${ws.map((x,i)=>`<button type="button" class="bare ftslot" role="radio" data-ft="${i}" aria-checked="${i===pick}"><b>${HDAYS[new Date(x.s).getDay()]} ${dm(new Date(x.s))}</b><span class="num">${rng(new Date(x.s),new Date(x.e))}</span></button>`).join('')}</div>
+      <div class="field"><span class="lbl">לאיזה יומן</span><div class="chips" role="radiogroup">${['shared','yosef','tchiya'].map(k=>`<button type="button" class="chip" role="radio" data-ftt="${k}" aria-checked="${k===target}"><i class="wdot" style="background:var(${WHO[k].c})"></i>${k==='shared'?'יומן משותף':'היומן של '+WHO[k].n}</button>`).join('')}</div></div>
+      <div class="ftsum">ייכנס ${target==='shared'?'ליומן המשותף':'ליומן של '+WHO[target].n}: <b>${esc(t.title)}</b> · ${HDAYS[new Date(w.s).getDay()]} ${dm(new Date(w.s))} · ${rng(new Date(w.s),new Date(w.e))}</div>
+      <div class="actions"><button class="btn" id="ftGo">שליחה ליומן</button><button class="btn ghost" id="ftCancel">ביטול</button></div>`
+      :`<div class="emptyline" style="border-top:0">לא מצאתי זמן פנוי של ${mins} דקות בשבוע הקרוב.</div><div class="actions"><button class="btn" id="ftManual">קביעה ידנית</button><button class="btn ghost" id="ftCancel">ביטול</button></div>`;
+    $('ftCancel').onclick=closeSheet;
+    if($('ftManual'))$('ftManual').onclick=()=>{closeSheet();showTab('cal');openCalAdd(t.title+' ',{target:who})};
+    $('ftBody').querySelectorAll('[data-ft]').forEach(b=>b.onclick=()=>{pick=Number(b.dataset.ft);draw()});
+    $('ftBody').querySelectorAll('[data-ftt]').forEach(b=>b.onclick=()=>{target=b.dataset.ftt;draw()});
+    if($('ftGo'))$('ftGo').onclick=async()=>{const x=ws[pick];closeSheet();
+      const data={op:'add',target,title:t.title,start:new Date(x.s).toISOString(),end:new Date(x.e).toISOString(),allDay:false,status:'pending',createdAt:Date.now(),taskId:t.id};if(S.uid)data.by=S.uid;
+      const ok=await store.add('calreq',data);
+      if(!ok)return;
+      await store.update('tasks',t.id,{status:'planned',dueDate:dkey(new Date(x.s)),progressAt:Date.now()});
+      toast('נשלח ליומן · ממתין לסנכרון')};
+  };
+  openSheet('מציאת זמן',`<div class="ftwrap"><div class="ftt"><b>${esc(t.title)}</b><small class="muted">${TD_OWN[who]} · כ-${mins} דקות</small></div><div id="ftBody"></div></div>`);
+  draw();
+}
+// after repeated "later": what is in the way
+function blockerSheet(t){
+  if(!t)return;
+  openSheet(`מה עוצר את "${esc(t.title)}"?`,`<div class="blk">
+    <button class="bare blkopt" data-blk="wait"><b>מחכים למישהו או למשהו</b><small>נרשום למה, והמשימה תסומן "ממתין"</small></button>
+    <div class="field" id="blkWaitF" hidden><input class="in" id="blkWait" placeholder="למשל: תשובה מהמוכר" autocomplete="off"><button class="btn" id="blkWaitGo">שמירה</button></div>
+    <button class="bare blkopt" data-blk="later"><b>אין זמן כרגע</b><small>נחזור אליה בעוד שבוע</small></button>
+    <button class="bare blkopt" data-blk="drop"><b>כבר לא רלוונטי</b><small>המשימה תסומן "בוטל"</small></button></div>`);
+  const done=async(data,msg)=>{closeSheet();const ok=await store.update('tasks',t.id,{...data,postponeCount:0,progressAt:Date.now()});if(ok)toast(msg)};
+  document.querySelector('[data-blk="wait"]').onclick=()=>{$('blkWaitF').hidden=false;$('blkWait').focus()};
+  $('blkWaitGo').onclick=()=>{const w=$('blkWait').value.trim();if(!w){$('blkWait').focus();return}done({status:'waiting',waitingReason:w},'נשמר: ממתין ל'+w)};
+  document.querySelector('[data-blk="later"]').onclick=()=>done({snoozedUntil:Date.now()+7*864e5},'נחזור אליה בעוד שבוע');
+  document.querySelector('[data-blk="drop"]').onclick=()=>done({status:'cancelled'},'המשימה בוטלה');
+}
+document.addEventListener('click',e=>{
+  const ft=e.target.closest('[data-findtime]');if(ft){findTimeSheet(S.tasks.find(t=>t.id===ft.dataset.findtime));return}
+  const rt=e.target.closest('[data-tsretry]');if(rt){const t=S.tasks.find(x=>x.id===rt.dataset.tsretry),st=t&&taskSync(t);if(!st)return;
+    const r={...st.r};delete r.id;delete r.error;delete r.doneAt;delete r.eventId;r.status='pending';r.createdAt=Date.now();
+    store.add('calreq',r).then(ok=>{if(ok)toast('נשלח שוב ליומן')});return}
 });
 
 /* ---------- the look shared by every screen: who is here, and each screen's title line ---------- */
-const SG_ILL={free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
+const SG_ILL={task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
 function renderHeads(){
   const ppl=S.people||{},who=Object.keys(ppl).filter(l=>l!=='updatedAt');
   const tone=n=>n==='יוסף'?'y':n==='תחיה'?'t':'s';
