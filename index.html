@@ -574,6 +574,9 @@ header.top.nomonth .month{position:absolute;inset-inline-start:0;visibility:hidd
 .blkopt{display:flex;flex-direction:column;gap:2px;text-align:start;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--surface)}.blkopt small{color:var(--ink-2)}
 #blkWaitF{display:flex;gap:8px}#blkWaitF .in{flex:1}
 @media (prefers-reduced-motion:no-preference){.tline .aitem{animation:popin .3s ease-out backwards;animation-delay:calc(var(--i,0)*45ms)}.ftslot{transition:background-color .2s,border-color .2s}}
+.backlink{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;min-height:40px;padding:0 4px;font-weight:700;font-size:14px;color:var(--accent)}
+.fab .fabn{position:absolute;top:-4px;inset-inline-start:-4px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--clay);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
+@media (prefers-reduced-motion:no-preference){.fab.cart{animation:fabin .35s cubic-bezier(.34,1.4,.5,1)}@keyframes fabin{from{transform:scale(.6) rotate(-20deg)}}}
 .tdhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px}
 .tdhead .col{display:flex;flex-direction:column;gap:2px}.tdhead b{font-size:28px}.tdhead small{font-size:14px}
 .tdwho{display:flex}.tdwho .who{width:34px;height:34px;border-radius:999px;border:2px solid var(--bg);background:var(--accent-soft);object-fit:cover}.tdwho .who+.who{margin-inline-start:-10px}
@@ -985,6 +988,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 
   <!-- GROCERY -->
   <section class="tab" id="t-shop" hidden>
+    <button class="bare backlink" data-back="home"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>חזרה לכסף</button>
     <div class="phead"><div class="col"><h1 class="ptitle">הקניות שלנו</h1><small class="psub" id="phShop"></small></div><img class="ill phill" src="img/basket.png" alt="" aria-hidden="true"></div>
         <form class="addline" id="gForm">
       <input class="in" id="gName" placeholder="מה צריך מהסופר?" autocomplete="off" aria-label="פריט חדש">
@@ -1042,7 +1046,6 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
     <button data-tab="home" aria-current="page"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3"/><path d="M4 7.5V17a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 1 4 7.5z"/><circle cx="16.5" cy="13.5" r="1.2"/></svg></span>כסף</button>
     <button data-tab="cal"><span class="pillwrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2.2"/></svg></span>לו"ז</button>
     <button data-tab="baby"><span class="pillwrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M9.5 15.5c1.4 1.1 3.6 1.1 5 0M12 5.5c0-1.5 1-2.5 2.5-2.5"/></svg></span>תינוק</button>
-    <button data-tab="shop"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg></span>קניות</button>
     <button data-tab="sav"><span class="pillwrap"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-8"/><path d="M15 8h5v5"/></svg></span>חיסכון</button>
 
   </div>
@@ -1405,8 +1408,18 @@ function navInd(){
 }
 addEventListener('resize',navInd);
 const NO_MONTH=['today','baby','shop','sav','cal'];
+// screens without their own button in the bar: the bar shows the one they belong to
+const NAV_OF={shop:'home'};
+const FAB_PLUS='<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+const FAB_CART='<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>';
 function chrome(){
-  const f=$('fab');if(f)f.classList.toggle('away',S.tab==='shop')
+  const f=$('fab');
+  if(f){f.classList.toggle('away',S.tab==='shop');
+    // on כסף the round button opens the shopping list (with how many items are on it)
+    const cart=S.tab==='home',n=cart?openGrocery().length:0;
+    if(f.dataset.mode!==(cart?'cart':'plus')){f.dataset.mode=cart?'cart':'plus';f.innerHTML=(cart?FAB_CART:FAB_PLUS)+'<span class="fabn num" hidden></span>';f.classList.toggle('cart',cart)}
+    f.setAttribute('aria-label',cart?`רשימת הקניות${n?`, ${n} פריטים`:''}`:'הוספה מהירה');f.setAttribute('aria-haspopup',cart?'false':'menu');
+    const b=f.querySelector('.fabn');if(b){b.hidden=!n;b.textContent=n}}
   const h=document.querySelector('header.top');if(h)h.classList.toggle('nomonth',NO_MONTH.includes(S.tab));
 }
 // fonts and the safe-area padding settle after the first render, which moves the tab buttons
@@ -2460,7 +2473,7 @@ function babySheet(b){
 const TABS=['today','home','cal','baby','shop','sav','ins'];
 function showTab(t,dx){
   S.tab=t;
-  document.querySelectorAll('nav.tabs [data-tab]').forEach(x=>x.dataset.tab===t?x.setAttribute('aria-current','page'):x.removeAttribute('aria-current'));
+  const navT=NAV_OF[t]||t;document.querySelectorAll('nav.tabs [data-tab]').forEach(x=>x.dataset.tab===navT?x.setAttribute('aria-current','page'):x.removeAttribute('aria-current'));
   TABS.forEach(x=>{const sec=$('t-'+x);if(sec)sec.hidden=x!==t});
   const ib=$('insBtn');if(ib)ib.setAttribute('aria-pressed',t==='ins');
   window.scrollTo(0,0);navInd();chrome();enterTab($('t-'+t),dx);if(t==='cal')renderCal();
@@ -2560,7 +2573,7 @@ function renderQuick(dir){
 }
 function openQuick(){Q.open=true;Q.path=[];$('qmenu').hidden=false;$('fab').setAttribute('aria-expanded','true');renderQuick()}
 function closeQuick(){if(!Q.open)return;Q.open=false;$('qmenu').hidden=true;$('fab').setAttribute('aria-expanded','false')}
-$('fab').onclick=e=>{e.stopPropagation();if(S.tab==='cal'&&!Q.open){openCalAdd();return}if(S.tab==='baby'&&!Q.open){babySheet(null);return}Q.open?closeQuick():openQuick()};
+$('fab').onclick=e=>{e.stopPropagation();if(S.tab==='home'&&!Q.open){showTab('shop');return}if(S.tab==='cal'&&!Q.open){openCalAdd();return}if(S.tab==='baby'&&!Q.open){babySheet(null);return}Q.open?closeQuick():openQuick()};
 $('qmenu').onclick=e=>{e.stopPropagation();
   if(e.target.closest('#qBack')){Q.path.pop();renderQuick('back');return}
   const b=e.target.closest('[data-q]');if(!b)return;
@@ -3078,6 +3091,7 @@ function blockerSheet(t){
   document.querySelector('[data-blk="drop"]').onclick=()=>done({status:'cancelled'},'המשימה בוטלה');
 }
 document.addEventListener('click',e=>{
+  const bk=e.target.closest('[data-back]');if(bk){showTab(bk.dataset.back);return}
   const ft=e.target.closest('[data-findtime]');if(ft){findTimeSheet(S.tasks.find(t=>t.id===ft.dataset.findtime));return}
   const rt=e.target.closest('[data-tsretry]');if(rt){const t=S.tasks.find(x=>x.id===rt.dataset.tsretry),st=t&&taskSync(t);if(!st)return;
     const r={...st.r};delete r.id;delete r.error;delete r.doneAt;delete r.eventId;r.status='pending';r.createdAt=Date.now();
@@ -3132,7 +3146,7 @@ document.addEventListener('touchend',e=>{
   if(SW.x===null||PTR.on)return;const t=e.changedTouches[0],dx=t.clientX-SW.x,dy=t.clientY-SW.y;SW.x=null;
   if(Math.abs(dx)<70||Math.abs(dy)>45||Date.now()-SW.t>700)return;
   // the tab bar runs right to left: a finger moving left brings in the tab on the right (the previous one)
-  const order=[...(FLAGS.home?['today']:[]),'home','cal','baby','shop','sav'],i=order.indexOf(S.tab),j=i+(dx<0?-1:1);
+  const order=[...(FLAGS.home?['today']:[]),'home','cal','baby','sav'],i=order.indexOf(S.tab),j=i+(dx<0?-1:1);
   if(i<0||j<0||j>=order.length)return;
   showTab(order[j],dx<0?-28:28);
   if(navigator.vibrate)navigator.vibrate(6);
