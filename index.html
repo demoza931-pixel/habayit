@@ -1381,7 +1381,20 @@ const SAV = (() => {
     return monthKeys.map(k => mine.filter(d => (d.month || String(d.confirmedDate || '').slice(0, 7)) <= k).reduce((t, d) => t + amountOf(d), 0));
   }
 
-  return { depId, units, summary, due, counted, statusFor, forecast, cumulative, STATUS_HE, COUNTED };
+  /* a balance typed in from a statement (h.value on h.valueDate, "30.09.2026") grows with every confirmed deposit dated
+     after it: marked by hand in the money tab, or written by the daily job for a standing order. Typing a newer balance
+     moves the date, so the deposits it already includes stop being added. With no balance at all (a bank deposit whose
+     amount is not known) the deposits are all there is. Only for balances typed in; a priced holding is quantity × price. */
+  const isoOf = s => { const m = String(s || '').match(/(\d{1,2})[./](\d{1,2})[./](\d{4})/); return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : null; };
+  function added(h, deposits) {
+    if (h.source !== 'manual') return { sum: 0, count: 0, since: null };
+    const base = num(h.value), since = isoOf(h.valueDate);
+    if (base !== null && !since) return { sum: 0, count: 0, since: null };
+    const mine = deposits.filter(d => d.holdingId === h.id && d.kind !== 'opening' && counted(d) && d.confirmedDate && (base === null || String(d.confirmedDate).slice(0, 10) > since));
+    return { sum: mine.reduce((t, d) => t + amountOf(d), 0), count: mine.length, since };
+  }
+
+  return { depId, units, summary, due, counted, statusFor, forecast, cumulative, added, isoOf, STATUS_HE, COUNTED };
 })();
 if (typeof module !== 'undefined') module.exports = SAV;
 
@@ -2782,7 +2795,10 @@ function finishSheet(){
 const H_TYPES=['מניות','אג"ח','תעודות סל','קרנות נאמנות','גמל והשתלמות','פנסיה','מזומן ופיקדונות'];
 const H_COLORS={'מניות':'--seg-fixed','אג"ח':'--other','תעודות סל':'--accent','קרנות נאמנות':'--warn-bar','גמל והשתלמות':'--clay','פנסיה':'--seg-save','מזומן ופיקדונות':'--seg-var'};
 const H_SOURCES=[['tase','מספר נייר בבורסה בת"א'],['yahoo','סימול בחו"ל (Yahoo)'],['funder','מספר קרן נאמנות'],['manual','יתרה ידנית (גמל, השתלמות, פנסיה, פיקדון)']];
-const hValue=h=>h.source==='manual'?(has(h.value)?Number(h.value):null):(has(h.qty)&&has(h.price)?Number(h.qty)*Number(h.price):null);
+// a typed-in balance plus the deposits confirmed after its date (SAV.added): marking a deposit, or a standing order, raises it at once
+const hBase=h=>h.source==='manual'?(has(h.value)?Number(h.value):null):(has(h.qty)&&has(h.price)?Number(h.qty)*Number(h.price):null);
+const hAdd=h=>SAV.added(h,S.deposits||[]);
+const hValue=h=>{const b=hBase(h),a=hAdd(h);return b===null&&!a.count?null:(b||0)+a.sum};
 const hDay=h=>{const v=hValue(h);return v!==null&&has(h.change)&&h.source!=='manual'?v-v/(1+Number(h.change)/100):0};
 const pct=n=>`<span class="ltr">${n>0?'+':n<0?'−':''}${fmt(Math.abs(n))}%</span>`;
 function chgPill(c){if(!has(c))return '';const n=Number(c);return `<span class="chg ${n>0?'up':n<0?'dn':'flat'}">${pct(n)}</span>`}
@@ -2858,7 +2874,7 @@ function renderSav(){
 // one holding inside an open account (the same details as before: owner, balance date, pending, pension, fees)
 function holdingRow(h){const hv=hValue(h),p=has(h.cost)&&hv!==null?hv-Number(h.cost):null;
   const meta=(h.owner?esc(h.owner)+' · ':'')+(h.opened===false?'עוד לא נפתח · ':'')+(h.source==='manual'?`יתרה ידנית${h.valueDate?' · '+esc(h.valueDate):''}`:`${esc(h.type||'')}${has(h.qty)?` · ${fmt(h.qty)} יח'`:''}${has(h.price)?` × ${fmt(h.price)} ₪`:' · ממתין למחיר'}${h.priceDate?` · ${esc(h.priceDate)}`:''}`)
-    +(has(h.pending)?` · ${ils(h.pending)} בתהליך הפקדה`:'')+(has(h.pensionMonthly)?` · קצבה צפויה ${ils(h.pensionMonthly)}`:'')+(has(h.feeSavings)?` · דמי ניהול ${fmt(h.feeSavings)}% מהחיסכון, ${fmt(h.feeDeposit||0)}% מהפקדה`:'');
+    +(()=>{const a=hAdd(h);return a.count?` · כולל ${ils(a.sum)} מ־${a.count} ${a.count===1?'הפקדה':'הפקדות'}${a.since?` מאז ${dmy(a.since)}`:''}${hBase(h)===null?' (היתרה שלפני לא ידועה)':''}`:''})()+(has(h.pensionMonthly)?` · קצבה צפויה ${ils(h.pensionMonthly)}`:'')+(has(h.feeSavings)?` · דמי ניהול ${fmt(h.feeSavings)}% מהחיסכון, ${fmt(h.feeDeposit||0)}% מהפקדה`:'');
   return `<button class="bare hrow" data-hold="${esc(h.id)}"><span class="col"><b>${esc(h.name)}</b><small class="num">${meta}</small></span><span class="side"><span class="num">${hv===null?'—':ils(hv)}</span>${p!==null?`<small class="num pl ${p<0?'dn':'up'}">${signed(p)}</small>`:''}${chgPill(h.change)}</span></button>`}
 // the chart: one point a month; "הכול" shows the actual total, an account with a mirror also its deposits and mirror
 function renderSavChart(hist){
@@ -3078,7 +3094,7 @@ function holdingSheet(h){
    <div class="field"><label class="lbl" for="hsSrc">מאיפה המחיר</label><select class="in" id="hsSrc">${H_SOURCES.map(([k,l])=>`<option value="${k}" ${k===h.source?'selected':''}>${l}</option>`).join('')}</select></div>
    <div class="field" id="hsIdF"><label class="lbl" for="hsId">מספר נייר / סימול</label><input class="in num" id="hsId" dir="ltr" value="${esc(h.secId||h.ticker||'')}"></div>
    <div class="field" id="hsQtyF"><label class="lbl" for="hsQty">כמות יחידות</label><input class="in num" id="hsQty" inputmode="decimal" value="${has(h.qty)?h.qty:''}"></div>
-   <div class="field" id="hsValF"><label class="lbl" for="hsVal">יתרה נוכחית</label><div class="amountbox"><input class="num" id="hsVal" inputmode="decimal" value="${has(h.value)?h.value:''}"><span>₪</span></div></div>
+   <div class="field" id="hsValF"><label class="lbl" for="hsVal">יתרה לפי הדוח</label><span class="small muted">הפקדות שנרשמות אחרי היום הזה מתווספות לבד.</span><div class="amountbox"><input class="num" id="hsVal" inputmode="decimal" value="${has(h.value)?h.value:''}"><span>₪</span></div></div>
    <div class="field"><label class="lbl" for="hsCost">עלות כוללת (ריק = לא ידוע)</label><div class="amountbox"><input class="num" id="hsCost" inputmode="decimal" value="${has(h.cost)?h.cost:''}"><span>₪</span></div></div>
    <div class="actions"><button class="btn" id="hsSave">שמירה</button><button class="btn ghost" id="hsCancel">ביטול</button></div>
    ${isNew?'':'<button class="bare danger-link" id="hsDel">מחיקת החזקה</button>'}`);
@@ -3097,8 +3113,8 @@ function holdingSheet(h){
 }
 
 /* goals: numbers come from the sheets (2026, 2027) and from what the two of you told me in chat; nothing else */
-// the balance in the savings tab plus what is on its way in (the savings document: 1,000 + 1,800 in October)
-const holdVal=id=>{const h=S.holdings.find(x=>x.id===id);return h&&hValue(h)!==null?hValue(h)+(Number(h.pending)||0):0};
+// the balance in the savings tab (already counting the deposits made since the statement)
+const holdVal=id=>{const h=S.holdings.find(x=>x.id===id);return h&&hValue(h)!==null?hValue(h):0};
 const GOALS={
   cushion:{target:56400,basis:'3 חודשי הוצאות לפי תוכנית 2027 (244,398 ₪ ב־13 חודשים, כ־18,800 בחודש)'},
   equity:{get gemel(){return holdVal('gemel')},gemelMonthly:1000,get hishtalmut(){return holdVal('hishtalmut')},hishtalmutMonthly:1800,hishtalmutYear:2030,hishtalmutMonth:3,loan:100000,loanRepay:1000},
@@ -3176,7 +3192,7 @@ function renderGoals(){
       ${big?`<li><b>"הוצאות גדולות":</b> החודש ${ils(big.a)}. אם חלק מזה לא מנוצל, הוא יכול לעבור להון העצמי.</li>`:''}
       <li><b>מגורים או השקעה:</b> מאפריל 2027 השכירות ${ils(G.y2027.rentFromApr)} בחודש (${ils(G.y2027.rentFromApr*12)} בשנה). בית למגורים מחליף את השכירות הזו. בית להשקעה מכניס שכירות, אבל אתם ממשיכים לשלם את שלכם. ההחלטה שלכם. כדאי לבדוק אותה מול יועץ משכנתאות עם המספרים האלה.</li>
     </ul></details>
-    <div class="src">${gm?`קופת גמל רשומה החודש ${ils(gm.a)}${gm.star?'*':''}. `:''}יתרות הגמל וההשתלמות לפי מסך החיסכון (מסמך החסכונות), כולל ההפקדות שבתהליך. ההלוואה לפי מה שסיפרתם. החישוב לא כולל תשואה.</div>
+    <div class="src">${gm?`קופת גמל רשומה החודש ${ils(gm.a)}${gm.star?'*':''}. `:''}יתרות הגמל וההשתלמות לפי מסך החיסכון (מסמך החסכונות), כולל ההפקדות שנרשמו מאז הדוח. ההלוואה לפי מה שסיפרתם. החישוב לא כולל תשואה.</div>
   </div></article>
   <article class="ins goalc goal"><div class="body">
     <div class="gh"><span class="tag">3 · לילדה</span><span class="tgt num">${ils(G.girl.tradeMonthly+G.girl.parent)} בחודש מכם</span></div>
