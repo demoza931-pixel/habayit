@@ -707,6 +707,10 @@ body.noscroll{overflow:hidden}
 .mhq svg{width:22px;height:22px;fill:none;stroke:var(--qc);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .mhq.t-mint{background:var(--accent-soft);--qc:var(--accent)}.mhq.t-peach{background:var(--clay-soft);--qc:var(--clay)}.mhq.t-lil{background:color-mix(in srgb,var(--who-t) 18%,var(--surface));--qc:var(--who-t)}.mhq.t-sage{background:color-mix(in srgb,var(--seg-flow) 22%,var(--surface));--qc:var(--accent)}
 @media (prefers-reduced-motion:no-preference){.mhq{transition:transform .12s}.mhq:active{transform:scale(.96)}}
+.pcbox{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--r-card);background:var(--bg);border:1px solid var(--line);font-size:14px}
+.pchd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.pcoff{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--surface);color:var(--ink);text-decoration:none}
+.pcoff b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pcoff small{font-size:12px;color:var(--ink-2)}
 .mhsec{margin:6px 0 -2px;font-size:20px}#t-today .tdsec .sec{font-size:20px}
 .mhcard{display:flex;flex-direction:column;gap:12px;padding:16px;position:relative}.mhcard+.mhcard{margin-top:12px}
 .mhtop{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start}
@@ -1861,12 +1865,48 @@ const AGENT = (() => {
       primaryAction: { type: 'open_tab', tab: 'home', row: x.row, month: x.mk, label: 'לפירוט' },
     }, { urgency: 10, usefulness: 15, confidence: 35, timing: 5, annoyance: annoy('money_change'), duplication: 0 })));
 
-    // baby items waiting for a gift: someone should know who brings what (spec 14). gifts: [{id, name}]
-    const gifts = bb.gifts || [];
+    /* prices found on Zap for an item still to buy (scripts/agent_prices.py): a range when the item has no price yet,
+       or a hint when most offers are clearly under the price written. prices: [{id, name, price, low, median, high, count, loose}] */
+    (bb.prices || []).filter(p => !p.loose && p.count >= 3 && p.median).forEach(p => {
+      const under = p.price && p.median < p.price * 0.85;
+      if (p.price && !under) return;
+      out.push(make({
+        id: `baby_price:${p.id}:${Math.round(p.median)}`, type: 'baby_price', domain: 'baby', topic: 'baby:prices',
+        title: under ? `נראה ש"${p.name}" אפשר לקנות בפחות` : `כמה עולה "${p.name}"?`,
+        reason: `בזאפ ${p.count} תוצאות: רובן בין ${Math.round(p.low).toLocaleString('he-IL')} ל-${Math.round(p.high || p.median).toLocaleString('he-IL')} ₪, באמצע ${Math.round(p.median).toLocaleString('he-IL')} ₪${under ? `, וברשימה רשום ${Math.round(p.price).toLocaleString('he-IL')} ₪` : ''}. כדאי לבדוק שזה אותו מוצר.`,
+        sourceRefs: [`baby:${p.id}`, 'pricecheck:zap'], validUntil: null,
+        primaryAction: { type: 'baby_item', id: p.id, label: 'למחירים' },
+      }, { urgency: 10, usefulness: under ? 25 : 15, confidence: 20, timing: 5, annoyance: annoy('baby_price'), duplication: 0 }));
+    });
+
+    // the open shopping list priced at both chains by barcode. g.compare: {matched, items, rl, sh, store}
+    const gc = g.compare;
+    if (gc && gc.matched >= 5 && Math.abs(gc.rl - gc.sh) >= Math.max(20, 0.05 * Math.min(gc.rl, gc.sh))) {
+      const sh = gc.sh < gc.rl;
+      out.push(make({
+        id: `grocery_compare:${Math.round(gc.rl)}:${Math.round(gc.sh)}`, type: 'grocery_compare', domain: 'grocery', topic: 'grocery:compare',
+        title: `הסל השבוע זול יותר ב${sh ? 'שופרסל' : 'רמי לוי'}`,
+        reason: `${gc.matched} מתוך ${gc.items} המוצרים ברשימה נמצאו בשתי הרשתות: רמי לוי ${Math.round(gc.rl).toLocaleString('he-IL')} ₪, ${gc.store || 'שופרסל'} ${Math.round(gc.sh).toLocaleString('he-IL')} ₪ (הפרש ${Math.round(Math.abs(gc.rl - gc.sh)).toLocaleString('he-IL')} ₪). בקופה המחיר עשוי להשתנות.`,
+        sourceRefs: ['grocery', 'pricecheck:shufersal'], validUntil: null,
+        primaryAction: { type: 'open_tab', tab: 'shop', label: 'לרשימה' },
+      }, { urgency: 10, usefulness: 20, confidence: 25, timing: 5, annoyance: annoy('grocery_compare'), duplication: 0 }));
+    }
+
+    // a fixed row (a subscription, insurance, the phone) higher than last month (sheet rows). fixedUp: [{row, before, now}]
+    (m.fixedUp || []).filter(x => x.before > 0 && x.now > x.before + 0.5).forEach(x => out.push(make({
+      id: `sub_up:${m.month}:${x.row}:${x.now}`, type: 'sub_up', domain: 'money', topic: `sub:${x.row}`,
+      title: `"${x.row}" עלה`,
+      reason: `החודש ${x.now.toLocaleString('he-IL')} ₪, ובחודש שעבר ${x.before.toLocaleString('he-IL')} ₪ (יותר ב-${(Math.round((x.now - x.before) * 100) / 100).toLocaleString('he-IL')} ₪ בחודש). אם זה לא צפוי, אולי כדאי לבדוק את החיוב.`,
+      sourceRefs: [`months:${m.month}:${x.row}`], validUntil: null,
+      primaryAction: { type: 'open_tab', tab: 'home', label: 'לחודש' },
+    }, { urgency: 15, usefulness: 20, confidence: 35, timing: 5, annoyance: annoy('sub_up'), duplication: 0 })));
+
+    // baby items waiting for a gift and nobody written as bringing them (spec 14). gifts: [{id, name, giver}]
+    const gifts = (bb.gifts || []).filter(x => !x.giver);
     if (gifts.length) out.push(make({
       id: `baby_gift:${gifts.length}`, type: 'baby_gift', domain: 'baby', topic: 'baby:gift',
-      title: `${gifts.length === 1 ? 'פריט אחד מחכה' : `${gifts.length} פריטים מחכים`} למתנה`,
-      reason: `${gifts.slice(0, 3).map(g => g.name).join(', ')}${gifts.length > 3 ? ` ועוד ${gifts.length - 3}` : ''}. כדאי לוודא שמישהו באמת מביא אותם, כדי שלא יחסרו.`,
+      title: `${gifts.length === 1 ? 'פריט אחד מחכה' : `${gifts.length} פריטים מחכים`} למתנה, בלי שידוע מי מביא`,
+      reason: `${gifts.slice(0, 3).map(g => g.name).join(', ')}${gifts.length > 3 ? ` ועוד ${gifts.length - 3}` : ''}. אפשר לרשום ליד כל פריט מי מביא אותו, כדי שלא יחסר.`,
       sourceRefs: gifts.map(g => `baby:${g.id}`), validUntil: null,
       primaryAction: { type: 'baby_filter', status: 'לקבל', label: 'לרשימה' },
     }, { urgency: 10, usefulness: 15, confidence: 30, timing: 5, annoyance: annoy('baby_gift'), duplication: 0 }));
@@ -1952,7 +1992,7 @@ themeApply(themeGet());
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themeGet()==='auto')themeApply('auto')});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]');if(!b)return;const t=b.dataset.themeSet;
   try{t==='auto'?localStorage.removeItem('hb_theme'):localStorage.setItem('hb_theme',t)}catch(_){}themeApply(t);themeRow()});
-const S={savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -2102,7 +2142,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(navInd);
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
 // tasks and prefs (feedback on suggestions) are new and live in the app's data only; a missing file reads as empty
-const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist'];
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -2685,7 +2725,7 @@ function renderBaby(){
   const title={'לקנות':'הבאים בתור','לבדוק':'לבדוק ולהחליט','לקבל':'מחכים למתנה','נקנה':'נקנו','לא חובה':'לא חובה'}[S.bFilter];
   const row=b=>{const done=b.status==='נקנה',tk=bTask(b);
     return `<div class="brow${done?' done':''}${newCls('baby',b.id)}"><span class="bem" aria-hidden="true">${B_EMO[b.category]||'🎀'}</span>
-      <button class="bare bmain" data-edit-baby="${esc(b.id)}"><b>${esc(b.name)}</b><small>${esc([b.note,b.category].filter(Boolean)[0]||'')}${has(b.price)?`${b.note||b.category?' · ':''}<span class="num">${ils(b.price)}</span>`:''}</small></button>
+      <button class="bare bmain" data-edit-baby="${esc(b.id)}"><b>${esc(b.name)}</b><small>${esc([b.note,b.category].filter(Boolean)[0]||'')}${has(b.price)?`${b.note||b.category?' · ':''}<span class="num">${ils(b.price)}</span>`:''}${b.status==='לקבל'?` · ${b.giver?'מביא/ה: '+esc(b.giver):'עוד לא ידוע מי מביא'}`:''}${(()=>{const p=!done&&S.pricecheck.find(x=>x.id===b.id);return p&&p.count&&!p.loose&&p.median?` · <span class="num">בזאפ סביב ${ils(Math.round(p.median))}</span>`:''})()}</small></button>
       ${!done&&(b.status==='לקנות'||b.status==='לבדוק')?(tk?`<span class="bpill quiet">במשימות</span>`:`<button class="bare bpill" data-btask="${esc(b.id)}">למשימה</button>`):''}
       <button class="bare bck" data-bbuy="${esc(b.id)}" aria-pressed="${done}" aria-label="${done?'ביטול סימון נקנה':'סימון נקנה'}: ${esc(b.name)}">${I.check}</button></div>`};
   $('bNext').innerHTML=`<div class="dv-hd"><span class="dvic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></span><span class="col"><b>${title}</b><small class="muted num">${list.length} פריטים</small></span></div>`+
@@ -3458,6 +3498,13 @@ function babySheet(b){
   <div class="field"><label class="lbl" for="sbPrice">מחיר (ריק = אין מחיר)</label><div class="amountbox"><input class="num" id="sbPrice" inputmode="decimal" value="${has(b.price)?b.price:''}"><span>₪</span></div></div>
   <div class="field"><label class="lbl" for="sbCat">קטגוריה</label><select class="in" id="sbCat">${BABY_CATS.map(c=>`<option value="${esc(c)}" ${c===(b.category||'')?'selected':''}>${c?esc(c):'בלי קטגוריה'}</option>`).join('')}</select></div>
   <div class="field"><label class="lbl" for="sbNote">הערה</label><input class="in" id="sbNote" value="${esc(b.note)}"></div>
+  <div class="field"><label class="lbl" for="sbGiver">מי מביא (כשזו מתנה)</label><input class="in" id="sbGiver" value="${esc(b.giver||'')}" placeholder="למשל סבתא" autocomplete="off"></div>
+  ${(()=>{const p=!isNew&&S.pricecheck.find(x=>x.id===b.id);if(!p||!p.count)return isNew?'':'<div class="small muted">מחירים מזאפ יופיעו כאן אחרי הבדיקה היומית (לפריטים במצב "לקנות" או "לבדוק").</div>';
+    return `<div class="pcbox"><div class="pchd"><b>מחירים בזאפ</b><small class="muted">${new Date(p.at).toLocaleDateString('he-IL')} · ${p.count} תוצאות</small></div>
+      ${p.loose?'<small class="muted">התוצאות לא נראות בדיוק כמו הפריט. כדאי לבדוק בעצמכם.</small>':`<span class="num">רוב המחירים בין <b>${ils(p.low)}</b> ל־<b>${ils(p.high||p.median)}</b>, באמצע ${ils(p.median)}</span>`}
+      ${(p.offers||[]).map(o=>`<a class="pcoff" href="${esc(o.url)}" target="_blank" rel="noopener nofollow"><span class="col"><b>${esc(o.title)}</b><small>${esc(o.store||'זאפ')}</small></span><span class="num">${ils(o.price)}</span></a>`).join('')}
+      <a class="link small" href="${esc(p.searchUrl)}" target="_blank" rel="noopener nofollow">לכל התוצאות בזאפ</a></div>`})()}
+  ${isNew?'':`<div class="field"><label class="lbl" for="sbAlert">התראה כשהמחיר יורד מתחת ל־ (לא חובה)</label><div class="amountbox"><input class="num" id="sbAlert" inputmode="decimal" value="${has(b.alertBelow)?b.alertBelow:''}"><span>₪</span></div></div>`}
   ${has(b.min)||has(b.max)?`<div class="small muted num">מחיר מינימום ${has(b.min)?ils(b.min):'—'} · מחיר מקסימום ${has(b.max)?ils(b.max):'—'}</div>`:''}
   <div class="actions"><button class="btn" id="sbSave">שמירה</button><button class="btn ghost" id="sbCancel">ביטול</button></div>
   ${isNew?'':'<button class="bare danger-link" id="sbDel">מחיקת פריט</button>'}`);
@@ -3465,7 +3512,7 @@ function babySheet(b){
   $('sbStatus').onclick=e=>{const t=e.target.closest('[data-st]');if(!t)return;status=t.dataset.st;[...$('sbStatus').children].forEach(c=>c.setAttribute('aria-checked',c.dataset.st===status))};
   $('sbCancel').onclick=closeSheet;
   $('sbSave').onclick=()=>{const name=$('sbName').value.trim();if(!name){$('sbName').focus();return}
-    const data={name,status,price:parseAmt($('sbPrice').value),category:$('sbCat').value,note:$('sbNote').value.trim()};
+    const data={name,status,price:parseAmt($('sbPrice').value),category:$('sbCat').value,note:$('sbNote').value.trim(),giver:$('sbGiver').value.trim()||null};if($('sbAlert'))data.alertBelow=parseAmt($('sbAlert').value);
     closeSheet();isNew?store.add('baby',{...data,min:null,max:null,order:S.baby.length+1,createdAt:Date.now()}):store.update('baby',b.id,data);
     if(status==='נקנה'&&b.status!=='נקנה'){const left=S.baby.filter(x=>x.status!=='נקנה'&&x.id!==b.id).length;cheer(left?`נקנה! עוד ${left} פריטים ברשימה`:'כל הרשימה נקנתה!')}};
   if(!isNew){const d=$('sbDel');d.onclick=()=>{if(!d.classList.contains('arm')){d.classList.add('arm');d.textContent='ללחוץ שוב למחיקה';return}closeSheet();store.del('baby',b.id)}}
@@ -3678,7 +3725,8 @@ function flash(el){
 }
 function goTo(ref){
   const [col,id]=String(ref||'').split('/');
-  const tab={grocery:'shop',purchases:'shop',variable:'home',baby:'baby',months:'home',holdings:'sav',calreq:'cal',calendar:'cal'}[col];if(!tab)return;
+  const tab={grocery:'shop',purchases:'shop',variable:'home',baby:'baby',months:'home',holdings:'sav',deposits:'sav',calreq:'cal',calendar:'cal',today:'today',tasks:'today'}[col];if(!tab)return;
+  if(tab==='today'){if(!$('sheet').hidden)closeSheet();goTab('today');return}
   if(tab==='cal'){if(!$('sheet').hidden)closeSheet();goTab('cal');return}
   if(!$('sheet').hidden)closeSheet();
   goTab(tab);
@@ -3852,7 +3900,7 @@ function renderCal(){
 }
 function openCalAdd(text,o={}){
   S.calPlace='';$('calOcr').innerHTML='';S.calMove=o.move||null;$('calShT').textContent=S.calMove?'העברת אירוע':'אירוע חדש';
-  S.calTarget=o.target||'shared';
+  S.calTarget=o.target||learnTop('cal','shared');
   renderCal();$('calBg').hidden=false;$('calSheet').hidden=false;
   $('calText').value=text||'';$('calText').dispatchEvent(new Event('input'));
   setTimeout(()=>{$('calText').focus();const v=$('calText').value;$('calText').setSelectionRange(v.length,v.length)},60);
@@ -3922,7 +3970,7 @@ const calTargetName=()=>(S.calTarget||'shared')==='shared'?'ליומן המשו�
 $('calText').addEventListener('input',()=>{const v=$('calText').value.trim();if(!v){$('calPrev').textContent='';return}const p=parseEvent(v,S.calDay&&new Date(S.calDay+'T00:00'));
   $('calPrev').innerHTML=p.title?`ייכנס ${calTargetName()}: <b>${esc(p.title)}</b> · ${esc(whenText(p))}${S.calPlace?' · '+esc(S.calPlace):''}`:'כתבו מה ומתי'});
 $('calForm').onsubmit=e=>{e.preventDefault();const v=$('calText').value.trim();if(!v)return;const p=parseEvent(v,S.calDay&&new Date(S.calDay+'T00:00'));if(!p.title){toast('כתבו מה האירוע');return}
-  const data={op:'add',target:S.calTarget||'shared',title:p.title,start:p.start,end:p.end,allDay:p.allDay,status:'pending',createdAt:Date.now()};if(S.uid)data.by=S.uid;if(S.calPlace)data.place=S.calPlace;
+  const data={op:'add',target:S.calTarget||'shared',title:p.title,start:p.start,end:p.end,allDay:p.allDay,status:'pending',createdAt:Date.now()};learnNote('cal',data.target);if(S.uid)data.by=S.uid;if(S.calPlace)data.place=S.calPlace;
   const where=calTargetName(),mv=S.calMove;store.add('calreq',data);
   if(mv)store.add('calreq',{op:'delete',target:mv.w,eventId:mv.id,title:mv.title,status:'pending',createdAt:Date.now()});
   $('calText').value='';$('calPrev').textContent='';S.calDay=dkey(p.s);closeCalAdd();renderCal();buzz(10);toast(mv?'האירוע יועבר '+where.replace('ל','ב',1):'נשלח '+where)};
@@ -3978,12 +4026,15 @@ function agentSignals(now){
     freeEvenings:S.calendar?days.flatMap(d=>freeTogether(evs,d).map(([s,e])=>({s,e}))):[],
     patternsDue:((S.calendar&&S.calendar.patterns)||[]).filter(p=>new Date(p.next+'T00:00')<=soon&&!evs.some(e=>e.s>=t0&&nt(e.title)===nt(p.title))),
     busyDays:S.calendar?days.map(d=>({day:dkey(d),count:onDay(evs,d).filter(e=>!e.allDay).length})):[],
-    grocery:{open:openGrocery().length},
+    grocery:{open:openGrocery().length,compare:S.pricecheck.find(x=>x.id==='grocery-compare')||null},
     baby:(()=>{const g={};S.baby.forEach(b=>{const n=String(b.name||'').trim();(g[n]=g[n]||[]).push(b)});
       const st=babyStats();
       return {toBuy:S.baby.filter(b=>b.status==='לקנות').sort((a,b)=>bRank(a)-bRank(b)||(a.order||0)-(b.order||0)).map(b=>({id:b.id,name:b.name,price:b.price})),
         check:S.baby.filter(b=>b.status==='לבדוק').map(b=>({id:b.id,name:b.name})),
-        gifts:S.baby.filter(b=>b.status==='לקבל').map(b=>({id:b.id,name:b.name})),
+        gifts:S.baby.filter(b=>b.status==='לקבל').map(b=>({id:b.id,name:b.name,giver:b.giver||''})),
+        // Zap prices found by the daily job (data/pricecheck.json), for items still to buy or check
+        prices:S.baby.filter(b=>['לקנות','לבדוק'].includes(b.status)).map(b=>{const p=S.pricecheck.find(x=>x.id===b.id);
+          return p&&p.count?{id:b.id,name:b.name,price:has(b.price)?Number(b.price):null,low:p.low,median:p.median,high:p.high,count:p.count,loose:!!p.loose}:null}).filter(Boolean),
         dups:Object.entries(g).filter(([,bs])=>bs.length>1&&new Set(bs.map(b=>b.status)).size>1).map(([name,bs])=>({name,statuses:[...new Set(bs.map(b=>b.status))].slice(0,2),ids:bs.map(b=>b.id)})),
         budget:{left:st.fp?Math.round((st.fp.budget-st.fpSum)*100)/100:null,planned:Math.round(st.buySum*100)/100}}})(),
     money:c?{month:k,isCurrent:true,hasIncome:c.income!==null,over,
@@ -3992,6 +4043,9 @@ function agentSignals(now){
         // only the everyday lists (shop, food), and not when the row is just the sum of its list (a sheet formula, no frame to keep)
         return ['קניות/פארם',foodRow(k)].map(rn=>{const row=c.rows.find(r=>r.name===rn),rv=row&&has(row.amount)&&!row.star?Number(row.amount):null,spent=varSum(monthVar(k,rn));
           return rv&&Math.abs(rv-spent)>=1?{row:rn,spent,frame:rv,projected:spent/day*days,day,days}:null}).filter(Boolean)})(),
+      // fixed rows (subscriptions, insurance, phone) this month against last month
+      fixedUp:(()=>{const d=new Date(now),pk=monthKey(new Date(d.getFullYear(),d.getMonth()-1,1)),b=calc(pk);if(!b)return [];
+        return c.rows.filter(r=>r.group==='קבועות'&&!r.star&&has(r.amount)).map(r=>{const o=b.rows.find(x=>x.name===r.name);return o&&has(o.amount)?{row:r.name,before:Number(o.amount),now:Number(r.amount)}:null}).filter(Boolean)})(),
       // the month that ended against the one before it, row by row from the sheet (the lists' line items carry no reliable date)
       compare:(()=>{const d=new Date(now),p1=monthKey(new Date(d.getFullYear(),d.getMonth()-1,1)),p2=monthKey(new Date(d.getFullYear(),d.getMonth()-2,1)),a=calc(p1),b=calc(p2);
         if(!a||!b)return [];const amt=(cc,rn)=>{const r=cc.rows.find(x=>x.name===rn);return r&&has(r.amount)&&!r.star?Number(r.amount):0};
@@ -4176,7 +4230,7 @@ function runAction(c){
 }
 // a task: title, who, status, priority, minutes, date, waiting reason; written through the usual store (tasks)
 function taskSheet(t){
-  const isNew=!t;t=t||{title:'',owner:myWho()||'shared',status:'new',priority:2,estimatedMinutes:null,dueDate:'',waitingReason:''};
+  const isNew=!t;t=t||{title:'',owner:learnTop('owner',myWho()||'shared'),status:'new',priority:2,estimatedMinutes:null,dueDate:'',waitingReason:''};
   const chips=(name,map,cur)=>`<div class="chips" data-tsf="${name}" role="radiogroup">${Object.entries(map).map(([k,v])=>`<button type="button" class="chip" role="radio" data-v="${k}" aria-checked="${String(cur)===String(k)}">${v}</button>`).join('')}</div>`;
   openSheet(isNew?'משימה חדשה':'משימה',`
   <div class="field"><label class="lbl" for="tsTitle">מה צריך לעשות</label><input class="in" id="tsTitle" value="${esc(t.title)}" autocomplete="off"></div>
@@ -4197,6 +4251,7 @@ function taskSheet(t){
     if(data.status==='done'&&t.status!=='done')data.completedAt=Date.now();
     data.progressAt=Date.now();
     closeSheet();
+    if(isNew)learnNote('owner',data.owner);
     const ok=isNew?await store.add('tasks',{...data,linkedEntity:null,snoozedUntil:null,completedAt:null,createdAt:Date.now(),by:S.uid||null}):await store.update('tasks',t.id,data);
     if(ok)toast(isNew?'המשימה נוספה':'נשמר')};
   if(!isNew){const d=$('tsDel');d.onclick=()=>{if(!d.classList.contains('arm')){d.classList.add('arm');d.textContent='ללחוץ שוב למחיקה';return}closeSheet();store.del('tasks',t.id)}}
@@ -4316,8 +4371,15 @@ function voiceStart(){
     const v=fin.trim();if(v){inp.value=v;cmdStart(v)}else if(!inp.value.trim())inp.value=was};
   try{r.start()}catch(e){S.rec=null;mic.classList.remove('rec');toast('לא הצלחתי להתחיל הקלטה')}
 }
+/* ---------- learning from your own choices: which calendar events go to, who takes new tasks ----------
+   prefs doc "learn" (app only): a count per choice. A choice becomes the default after three times and clearly ahead
+   of the next one; it can be seen and reset in "מה האפליקציה למדה עלינו". */
+const learnDoc=()=>S.prefs.find(p=>p.id==='learn')||{kind:'learn',cal:{},owner:{}};
+const learnTop=(k,def)=>{const e=Object.entries(learnDoc()[k]||{}).sort((a,b)=>b[1]-a[1]);return e.length&&e[0][1]>=3&&(!e[1]||e[0][1]>=e[1][1]*1.5)?e[0][0]:def};
+function learnNote(k,v){if(!v)return;const d=learnDoc(),m={...(d[k]||{})};m[v]=(m[v]||0)+1;
+  const doc={kind:'learn',cal:{...(d.cal||{})},owner:{...(d.owner||{})},at:Date.now()};doc[k]=m;store.put('prefs','learn',doc)}
 /* ---------- what the app learned about us: every preference can be seen, changed, or deleted ---------- */
-const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה',task_overdue:'משימה שעבר המועד שלה',cal_conflict:'שני אירועים באותה שעה',money_pace:'קצב הוצאה לקראת חריגה',savings_stale:'יתרה שלא עודכנה',task_split:'חלוקת משימה גדולה',money_change:'השוואה לחודש שעבר',baby_gift:'פריטים שמחכים למתנה'};
+const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה',task_overdue:'משימה שעבר המועד שלה',cal_conflict:'שני אירועים באותה שעה',money_pace:'קצב הוצאה לקראת חריגה',savings_stale:'יתרה שלא עודכנה',task_split:'חלוקת משימה גדולה',money_change:'השוואה לחודש שעבר',baby_gift:'פריטים שמחכים למתנה',baby_price:'מחירים לפריטי תינוק',grocery_compare:'השוואת סל הסופר',sub_up:'קבוע שהתייקר'};
 function learnedSheet(){
   const keep=!$('sheet').hidden&&$('sheetBody').querySelector('.lrnsec')?$('sheet').scrollTop:0;
   const now=Date.now(),dt=t=>t?new Date(t).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
@@ -4328,6 +4390,9 @@ function learnedSheet(){
   openSheet('מה האפליקציה למדה עלינו',`
    <div class="lrnsec"><h3>כמה האפליקציה עושה לבד</h3><span class="cmdnote">להציע: מראה מה יקרה ומחכה לאישור. להכין: ממלא את הטופס ואתם שולחים. לבצע לבד: מבצע מיד, ואפשר לבטל.</span>
      ${AUTO_CAP.map(c=>`<div class="lrnrow"><span class="col"><b>${c.t}</b>${c.note?`<small>${c.note}</small>`:''}</span>${c.levels.length>1?`<div class="chips" data-lrnauto="${c.k}">${c.levels.map(l=>`<button type="button" class="chip" data-v="${l}" aria-checked="${autoLevel(c.k)===l}">${AUTO_HE[l]}</button>`).join('')}</div>`:''}</div>`).join('')}</div>
+   <div class="lrnsec"><h3>מה למדנו מהבחירות שלכם</h3>${(()=>{const d=learnDoc(),nm={shared:'משותף',yosef:'יוסף',tchiya:'תחיה'},row=(k,t)=>{const e=Object.entries(d[k]||{}).sort((a,b)=>b[1]-a[1]);
+       return `<div class="lrnrow"><span class="col">${t}<small>${e.length?e.map(([v,n])=>`${nm[v]||v} ${n}`).join(' · '):'עוד אין בחירות'}</small></span><b class="small">${learnTop(k,'')?'ברירת מחדל: '+(nm[learnTop(k,'')]||learnTop(k,'')):'אין עדיין'}</b></div>`};
+       return row('cal','לאיזה יומן נשלחים אירועים')+row('owner','מי לוקח משימות חדשות')+(S.prefs.some(p=>p.id==='learn')?'<button class="bare link" data-lrnreset>לאפס את מה שנלמד</button>':'')})()}</div>
    <div class="lrnsec"><h3>הצעות שהסתרתם</h3>${hid.length?hid.map(p=>`<div class="lrnrow"><span class="col">${esc(SG_TYPE_HE[p.type]||p.type)}<small>${p.state==='snoozed'?'נדחתה עד '+dt(p.until):'לא רלוונטי · '+dt(p.at)}${p.by&&(S.people||{})[p.by]?' · '+esc(S.people[p.by]):''}</small></span><button class="bare link" data-lrnback="${esc(p.id)}">להחזיר</button></div>`).join(''):'<span class="cmdnote">אין הצעות מוסתרות.</span>'}</div>
    <div class="lrnsec"><h3>סוגי הצעות</h3><span class="cmdnote">סוג כבוי לא יוצע בכלל.</span>${Object.entries(SG_TYPE_HE).map(([k,v])=>`<div class="lrnrow"><span class="col">${v}</span>${two('data-lrnmute',k,!muted.has(k),'פעיל','כבוי')}</div>`).join('')}</div>
    <div class="lrnsec"><h3>המוצרים שאתם בוחרים</h3><span class="cmdnote">כשמוסיפים לרשימה, נבחר המוצר שקניתם בפעם הקודמת. "לשכוח" מחזיר את הבחירה אליכם.</span>
@@ -4347,6 +4412,7 @@ document.addEventListener('click',async e=>{
   const lm=e.target.closest('[data-lrnmute] [data-v]');if(lm){const ty=lm.parentNode.dataset.lrnmute,off=lm.dataset.v==='off',cur=S.prefs.find(p=>p.kind==='mute'&&p.type===ty);if(off===!!cur)return;
     const ok=off?await store.put('prefs','mute:'+ty,{kind:'mute',type:ty,at:Date.now(),by:S.uid||null}):await store.del('prefs',cur.id);if(ok){learnedSheet();renderToday()}return}
   const lf=e.target.closest('[data-lrnforget]');if(lf){const n=lf.dataset.lrnforget;if(await store.put('prefs','forget:'+n,{kind:'prodforget',name:n,at:Date.now(),by:S.uid||null})){learnedSheet();toast(`"${n}" נשכח`)}return}
+  if(e.target.closest('[data-lrnreset]')){if(await store.del('prefs','learn')){learnedSheet();toast('מה שנלמד אופס')}return}
   const lu=e.target.closest('[data-lrnunforget]');if(lu){if(await store.del('prefs',lu.dataset.lrnunforget))learnedSheet();return}
 });
 document.addEventListener('click',e=>{
@@ -4415,7 +4481,7 @@ function findTimeSheet(t){
     if($('ftGo'))$('ftGo').onclick=async()=>{const x=ws[pick];closeSheet();
       const data={op:'add',target,title:t.title,start:new Date(x.s).toISOString(),end:new Date(x.e).toISOString(),allDay:false,status:'pending',createdAt:Date.now(),taskId:t.id};if(S.uid)data.by=S.uid;
       const ok=await store.add('calreq',data);
-      if(!ok)return;
+      if(!ok)return;learnNote('cal',target);
       if(t.id)await store.update('tasks',t.id,{status:'planned',dueDate:dkey(new Date(x.s)),progressAt:Date.now()});
       toast('נשלח ליומן · ממתין לסנכרון')};
   };
@@ -4458,7 +4524,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ---------- the look shared by every screen: who is here, and each screen's title line ---------- */
-const SG_ILL={task_split:'checklist',money_change:'coins',baby_gift:'crib',task_overdue:'checklist',cal_conflict:'together',money_pace:'coins',savings_stale:'piggy',savings_due:'piggy',savings_missed:'piggy',baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
+const SG_ILL={baby_price:'crib',grocery_compare:'basket',sub_up:'coins',task_split:'checklist',money_change:'coins',baby_gift:'crib',task_overdue:'checklist',cal_conflict:'together',money_pace:'coins',savings_stale:'piggy',savings_due:'piggy',savings_missed:'piggy',baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
 function renderHeads(){
   const ppl=S.people||{},who=Object.keys(ppl).filter(l=>l!=='updatedAt');
   const tone=n=>n==='יוסף'?'y':n==='תחיה'?'t':'s';
