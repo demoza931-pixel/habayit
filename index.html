@@ -2913,7 +2913,7 @@ function renderMirror(){
      ${row('הפקדות שאושרו',ils(s.confirmed),`${s.count} הפקדות`)}
      ${row('שווי בפועל',s.actual===null?'אין נתון':ils(s.actual),pl(s.actualPL))}
      ${m.ticker?row('תיק מראה',s.mirror===null?(s.count?(s.needsPrice?'ממתין למחיר':'ממתין למחירי ההפקדות'):'אין עדיין הפקדות'):ils(s.mirror),s.mirrorPL!==null?pl(s.mirrorPL)+(s.partial?` <span class="muted">על ${ils(s.pricedIn)} שכבר יש להם מחיר</span>`:''):''):''}
-     ${s.gap!==null?`<div class="small muted num">פער בין השווי בפועל לתיק המראה: ${signed(s.gap)}. אפשריים כמה הסברים (דמי ניהול, מסלול אחר, מועד ביצוע, מטבע), ובלי נתונים אי אפשר לקבוע מה מהם.</div>`:s.count&&s.actual!==null&&!s.hasOpening?'<div class="small muted">כדי להשוות לשווי בפועל, הזינו בהגדרות את היתרה ביום שממנו מתחילים.</div>':''}
+     ${s.gap!==null?`<div class="small muted num">פער בין השווי בפועל לתיק המראה: ${signed(s.gap)}. אפשריים כמה הסברים (דמי ניהול, מסלול אחר, מועד ביצוע, מטבע), ובלי נתונים אי אפשר לקבוע מה מהם.</div>`:s.count&&s.actual!==null&&!s.hasOpening&&m.ticker?'<div class="small muted">כדי להשוות לשווי בפועל, הזינו בהגדרות את היתרה ביום שממנו מתחילים.</div>':''}
      ${s.missing&&m.ticker?`<div class="small muted">${s.missing} ${s.missing===1?'הפקדה ממתינה':'הפקדות ממתינות'} למחיר המדד ביום ההפקדה. המחיר נמשך פעם ביום, ואפשר גם להזין אותו ידנית בהפקדה.</div>`:''}
      <div class="actions"><button class="btn" data-depadd="${esc(h.id)}">+ הפקדה</button>${deps.length?`<button class="btn ghost" data-mirlist="${esc(h.id)}" aria-expanded="${open}">${open?'הסתרת ההפקדות':`כל ההפקדות (${deps.length})`}</button>`:''}</div>
      ${open?`<div class="deplist">${deps.map(d=>{const u=SAV.units(d,cur);
@@ -3048,10 +3048,12 @@ function holdingSheet(h){
 }
 
 /* goals: numbers come from the sheets (2026, 2027) and from what the two of you told me in chat; nothing else */
+// the balance in the savings tab plus what is on its way in (the savings document: 1,000 + 1,800 in October)
+const holdVal=id=>{const h=S.holdings.find(x=>x.id===id);return h&&hValue(h)!==null?hValue(h)+(Number(h.pending)||0):0};
 const GOALS={
   cushion:{target:56400,basis:'3 חודשי הוצאות לפי תוכנית 2027 (244,398 ₪ ב־13 חודשים, כ־18,800 בחודש)'},
-  equity:{gemel:70000,gemelMonthly:1000,hishtalmut:58000,hishtalmutMonthly:1800,hishtalmutYear:2030,loan:100000,loanRepay:1000},
-  girl:{tradeStart:5000,firstFrom:['2026-08','2026-12'],tradeMonthly:500,state:58,parent:58,grants:[['מענק לידה',2103],['מענק הורים',2000]]},
+  equity:{get gemel(){return holdVal('gemel')},gemelMonthly:1000,get hishtalmut(){return holdVal('hishtalmut')},hishtalmutMonthly:1800,hishtalmutYear:2030,hishtalmutMonth:3,loan:100000,loanRepay:1000},
+  girl:{get tradeStart(){const h=S.holdings.find(x=>x.id==='girl-trade');return h&&has(h.firstDeposit)?Number(h.firstDeposit):null},firstFrom:['2026-08','2026-12'],tradeMonthly:500,state:58,parent:58,grants:[['מענק לידה',2103],['מענק הורים',2000]]},
   y2027:{flowTotal:57055,leftAfterUses:40063,taxRefund:14000,refunds:3100,rentFromApr:6000}
 };
 /* the cushion, from the 2027 tab: target = 3 months of the plan's expenses (all rows, Google to Chat included);
@@ -3110,7 +3112,7 @@ function renderGoals(){
     flow<=0?`החודש במינוס (${signed(flow)}), אז אין עודף להפריש. כדאי לבדוק מה אפשר להזיז לחודש הבא.`:
     `העודף של החודש הוא <b class="num">${signed(flow)}</b>. הצעה: <b class="num">${ils(toGirl)}</b> לתיק של הילדה, ו־<b class="num">${ils(toCushion)}</b> לכרית הביטחון.`;
   const em=rowAmt('קופת חירום'),inv=rowAmt('השקעות'),gm=rowAmt('קופת גמל'),big=rowAmt('הוצאות גדולות');
-  const toJan=monthsBetween(k,G.equity.hishtalmutYear,1); // deposits after this month, up to January of that year
+  const toJan=monthsBetween(k,G.equity.hishtalmutYear,G.equity.hishtalmutMonth); // deposits after this month, up to the study fund's liquidity date (31.03.2030, savings document)
   const gemelAt=G.equity.gemel+toJan*G.equity.gemelMonthly,hishAt=G.equity.hishtalmut+toJan*G.equity.hishtalmutMonthly;
   const grants=G.girl.grants.reduce((t,g)=>t+g[1],0);
   $('goals').innerHTML=`
@@ -3118,21 +3120,21 @@ function renderGoals(){
   <article class="ins goalc goal"><div class="body">
     <div class="gh"><span class="tag">2 · הון עצמי</span><span class="tgt">בית למגורים או להשקעה</span></div>
     <h3>כמה יכול להצטבר עד ${G.equity.hishtalmutYear}</h3>
-    <div class="now num">עד ינואר ${G.equity.hishtalmutYear}, בלי תשואה: קופת גמל <b>${ils(gemelAt)}</b> וקרן השתלמות <b>${ils(hishAt)}</b>. ביחד <b>${ils(gemelAt+hishAt)}</b>, ועם ההלוואה <b>${ils(gemelAt+hishAt+G.equity.loan)}</b>.</div>
+    <div class="now num">עד מרץ ${G.equity.hishtalmutYear} (מועד הנזילות של ההשתלמות), בלי תשואה: קופת גמל <b>${ils(gemelAt)}</b> וקרן השתלמות <b>${ils(hishAt)}</b>. ביחד <b>${ils(gemelAt+hishAt)}</b>, ועם ההלוואה <b>${ils(gemelAt+hishAt+G.equity.loan)}</b>.</div>
     <details class="more"><summary>עוד פרטים</summary><ul class="num">
       <li><b>ההלוואה מארגון נכי צה"ל:</b> ${ils(G.equity.loan)} בלי ריבית, וההחזר יורד מהקצבה (${ils(G.equity.loanRepay)} בחודש). כלומר ${Math.round(G.equity.loan/G.equity.loanRepay)} חודשים (כ־${Math.floor(G.equity.loan/G.equity.loanRepay/12)} שנים ו־${Math.round(G.equity.loan/G.equity.loanRepay%12)} חודשים). בתקופה הזו ההפקדה החודשית לקופת הגמל מהקצבה נעצרת. כדאי לקחת אותה רק ביום הקנייה, כדי שהגמל ימשיך לצבור עד אז.</li>
       ${inv?`<li><b>שורת "השקעות":</b> החודש ${ils(inv.a)}${inv.star?' (*)':''}. אם היא נמשכת עד ${G.equity.hishtalmutYear}, זה עוד כ־${ils(toJan*inv.a)}.</li>`:''}
       ${big?`<li><b>"הוצאות גדולות":</b> החודש ${ils(big.a)}. אם חלק מזה לא מנוצל, הוא יכול לעבור להון העצמי.</li>`:''}
       <li><b>מגורים או השקעה:</b> מאפריל 2027 השכירות ${ils(G.y2027.rentFromApr)} בחודש (${ils(G.y2027.rentFromApr*12)} בשנה). בית למגורים מחליף את השכירות הזו. בית להשקעה מכניס שכירות, אבל אתם ממשיכים לשלם את שלכם. ההחלטה שלכם. כדאי לבדוק אותה מול יועץ משכנתאות עם המספרים האלה.</li>
     </ul></details>
-    <div class="src">${gm?`קופת גמל רשומה החודש ${ils(gm.a)}${gm.star?'*':''}. `:''}יתרות הגמל, ההשתלמות וההלוואה לפי מה שסיפרתם. החישוב לא כולל תשואה.</div>
+    <div class="src">${gm?`קופת גמל רשומה החודש ${ils(gm.a)}${gm.star?'*':''}. `:''}יתרות הגמל וההשתלמות לפי מסך החיסכון (מסמך החסכונות), כולל ההפקדות שבתהליך. ההלוואה לפי מה שסיפרתם. החישוב לא כולל תשואה.</div>
   </div></article>
   <article class="ins goalc goal"><div class="body">
     <div class="gh"><span class="tag">3 · לילדה</span><span class="tgt num">${ils(G.girl.tradeMonthly+G.girl.parent)} בחודש מכם</span></div>
     <h3>תיק מסחר וחיסכון לכל ילד</h3>
-    <div class="now num">התוכנית שלכם: הפקדה ראשונה של <b>${ils(G.girl.tradeStart)}</b> לתיק מסחר, ואחר כך <b>${ils(G.girl.tradeMonthly)}</b> בחודש. בנוסף, בחיסכון לכל ילד המדינה מפקידה ${ils(G.girl.state)} בחודש, ואתם מוסיפים עוד ${ils(G.girl.parent)} שיורדים מקצבת הילדים: ${ils(G.girl.state+G.girl.parent)} בחודש למסלול בסיכון גבוה.</div>
+    <div class="now num">התוכנית שלכם: הפקדה ראשונה של <b>${G.girl.tradeStart===null?'(הסכום ייקבע בתיק של הבת)':ils(G.girl.tradeStart)}</b> לתיק מסחר, ואחר כך <b>${ils(G.girl.tradeMonthly)}</b> בחודש. בנוסף, בחיסכון לכל ילד המדינה מפקידה ${ils(G.girl.state)} בחודש, ואתם מוסיפים עוד ${ils(G.girl.parent)} שיורדים מקצבת הילדים: ${ils(G.girl.state+G.girl.parent)} בחודש למסלול בסיכון גבוה.</div>
     <details class="more"><summary>עוד פרטים</summary><ul class="num">
-      <li><b>ההפקדה הראשונה (${ils(G.girl.tradeStart)}):</b> מאוגוסט עד דצמבר 2026 שורת "השקעות" (1,000 ₪ בחודש) נחסכת להפקדה הזו, כרגע בתיק המסחר שלכם.${(()=>{const ks=Object.keys(S.months).filter(x=>x>=G.girl.firstFrom[0]&&x<=G.girl.firstFrom[1]).sort();const got=ks.map(x=>{const r=(S.months[x].rows||[]).find(y=>y.name==='השקעות');return r&&has(r.amount)&&!r.star?Number(r.amount):0});const sum=got.reduce((a,b)=>a+b,0);return ks.length?` לפי טבלת החודש: ${ks.map((x,n)=>`${esc(monthLabel(x))} ${ils(got[n])}`).join(', ')}, ביחד ${ils(sum)}${sum>=G.girl.tradeStart?', כלומר ההפקדה מכוסה':`, חסרים ${ils(G.girl.tradeStart-sum)}`}.`:''})()}</li>
+      <li><b>ההפקדה הראשונה${G.girl.tradeStart===null?'':` (${ils(G.girl.tradeStart)})`}:</b> מאוגוסט עד דצמבר 2026 שורת "השקעות" (1,000 ₪ בחודש) נחסכת להפקדה הזו, כרגע בתיק המסחר שלכם.${(()=>{const ks=Object.keys(S.months).filter(x=>x>=G.girl.firstFrom[0]&&x<=G.girl.firstFrom[1]).sort();const got=ks.map(x=>{const r=(S.months[x].rows||[]).find(y=>y.name==='השקעות');return r&&has(r.amount)&&!r.star?Number(r.amount):0});const sum=got.reduce((a,b)=>a+b,0);return ks.length?` לפי טבלת החודש: ${ks.map((x,n)=>`${esc(monthLabel(x))} ${ils(got[n])}`).join(', ')}, ביחד ${ils(sum)}${G.girl.tradeStart===null?'':sum>=G.girl.tradeStart?', כלומר ההפקדה מכוסה':`, חסרים ${ils(G.girl.tradeStart-sum)}`}.`:''})()}</li>
       <li><b>ה־500 בחודש:</b> ${flow>0?(flow>=G.girl.tradeMonthly?`העודף של ${monthLabel(k)} מכסה אותם.`:`העודף של ${monthLabel(k)} (${ils(flow)}) מכסה רק חלק.`):'בחודש בלי עודף, אפשר לקחת אותם מהחיסכון בקיצוץ המנויים (155 ₪ בחודש) ומהמסגרת שנשארה בקניות.'}</li>
       <li><b>הפקדה אוטומטית:</b> הוראת קבע ביום שאחרי המשכורת, כדי שה־500 ייצאו לפני שהחודש מתחיל.</li>
     </ul></details>
