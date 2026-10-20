@@ -742,9 +742,31 @@ body.noscroll{overflow:hidden}
 .svitems{border-top:1px solid var(--line);padding:0 8px}
 .svfore{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:16px;background:var(--accent-soft);border-color:transparent}
 .svfore .col{display:flex;flex-direction:column;gap:6px}.svfore .btn{align-self:flex-start;min-height:44px;margin-top:4px}.svbars{width:118px;height:80px}
-.fcout{display:flex;flex-direction:column;margin:6px 0}.fcbars{display:flex;align-items:flex-end;gap:4px;height:70px;margin-top:10px}.fcbars span{flex:1;background:var(--accent);opacity:.75;border-radius:4px 4px 0 0}
+.fcres{display:flex;flex-direction:column;gap:4px;padding:16px;border-radius:var(--r-card);background:var(--accent-soft)}
+.fcbig{font:900 34px/1.1 var(--font-display);color:var(--ink)}
+.fcsplit{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--ink-2)}.fcsplit b{color:var(--ink)}
+.fcbars{display:flex;align-items:flex-end;gap:4px;height:84px;margin-top:10px}.fcbars .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;min-width:0}
+.fcbars i{display:block;width:100%;background:var(--accent);opacity:.8;border-radius:4px 4px 0 0}.fcbars small{font-size:10px;color:var(--ink-2);height:12px;white-space:nowrap}
+.fcsec{font-weight:700;font-size:14px;margin:14px 0 6px}
+.fcaccs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.fcaccs .chip,.fcyears .chip{min-height:36px;font-size:13px;padding:0 12px;white-space:nowrap}
+.fcbox{border:1px solid var(--line);border-radius:var(--r-card);background:var(--bg);padding:0 12px}
+.fcrow{display:grid;grid-template-columns:minmax(0,1fr) 128px;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.fcrow:first-child{border-top:0}
+.fcrow b{display:block;font-size:15px}.fcrow small{display:block;font-size:12px;color:var(--ink-2)}
+.fcin{display:flex;align-items:center;gap:6px;height:44px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding:0 10px}.fcin:focus-within{border-color:var(--accent)}
+.fcin input{flex:1;min-width:0;width:100%;border:0;background:none;color:var(--ink);font-weight:700;font-size:17px;outline:none;text-align:start}.fcin i{font-style:normal;font-size:13px;color:var(--ink-2);white-space:nowrap}
+.fcyears{gap:6px;padding:0 0 10px}.fcnote{margin-top:10px}
 @media (max-width:370px){.svbig{font-size:32px}.svrow{font-size:12px;grid-template-columns:minmax(0,1fr) 56px 50px 46px 8px}.svic{display:none}}
 .mirc{display:flex;flex-direction:column;gap:10px;padding:16px}
+.lrowx{display:flex;align-items:center;gap:6px}.lrowx>.lrow{flex:1;min-width:0}
+.deptog{flex:none;display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 9px 0 7px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink-2);font-size:12px;font-weight:700}
+.deptog span{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--ink-2);display:grid;place-items:center}.deptog svg{width:10px;height:10px;opacity:0}
+.deptog.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}.deptog.on span{background:var(--accent);border-color:var(--accent)}.deptog.on svg{opacity:1;stroke:#fff}
+.deps{padding:14px 12px 6px}.deprow{border-top:1px solid var(--line)}.deprow:first-of-type{border-top:0}
+.depsum{display:grid;grid-template-columns:minmax(0,1fr) auto 14px;align-items:center;gap:8px;width:100%;padding:10px 4px;text-align:start}
+.depsum b{display:block;font-size:14px}.depsum small{display:block;font-size:12px;color:var(--ink-2)}
+.depsum .chev{display:inline-flex;color:var(--ink-2);transition:transform .2s}.depsum .chev svg{width:14px;height:14px}.deprow.open .depsum .chev{transform:rotate(-90deg)}
+.depst{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}.depst.ok{background:var(--accent-soft);color:var(--accent)}
+.deprow .mirc{padding:4px 4px 14px}.deprow .mhd>.col{display:none}.deprow .mhd{justify-content:flex-end}
 .mhd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.mhd small{display:block;color:var(--ink-2);font-size:13px}
 .mrow{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
 .mrow .k{font-size:14px;color:var(--ink-2)}.mrow .v{font-weight:700;font-size:17px}.mrow small{grid-column:1/-1;font-size:12px;text-align:end}
@@ -1325,7 +1347,8 @@ const SAV = (() => {
   // what the savings agent can point at: a month whose deposit day passed with nothing written, an old actual value
   function due(h, deposits, now) {
     const m = h.mirror || {}, out = [];
-    if (!(num(m.planned) > 0) || !(num(m.day) >= 1)) return out;
+    // a standing order (mirror.auto) is written by the daily job on its day: nothing to ask about
+    if (m.auto || !(num(m.planned) > 0) || !(num(m.day) >= 1)) return out;
     const d = new Date(now), month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const has = mo => deposits.some(x => x.holdingId === h.id && x.month === mo);
     if (d.getDate() >= Number(m.day) && !has(month)) out.push({ kind: 'due', month, planned: num(m.planned) });
@@ -2368,6 +2391,19 @@ const monthVar=(k,row)=>S.variable.filter(v=>v.month===k&&(v.row||VAR_ROW)===row
 /* ---------- render ---------- */
 function renderAll(){themeRow();$('mLabel').textContent=monthLabel(S.month);renderHome();renderBaby();renderShop();renderSav();renderIns();renderCal();renderToday();renderHeads();fillAvatars();runCounters();navInd();chrome()}
 const listNames=()=>[VAR_ROW,'קניות/פארם',foodRow()];
+/* a savings row deposited by hand (השקעות, פיקדון-לידה, הוצאות גדולות): a small ✓ marks this month's deposit as made.
+   The account it goes to is the holding whose mirror.row names the row (the savings document); the amount is the row's. */
+const depHold=name=>S.holdings.find(h=>h.mirror&&h.mirror.row===name);
+function depTog(r){if(r.group!=='חסכונות'||!has(r.amount)||!(Number(r.amount)>0))return '';const h=depHold(r.name);if(!h)return '';
+  const d=S.deposits.find(x=>x.id===SAV.depId(h.id,S.month)),on=!!d&&SAV.counted(d);
+  return `<button class="bare deptog${on?' on':''}" data-deprow="${esc(r.name)}" role="switch" aria-checked="${on}" aria-label="${esc(label(r.name))}: ${on?'הופקד':'סימון הפקדה'}"><span>${I.check}</span>${on?'הופקד':'הפקדה'}</button>`}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-deprow]');if(!b)return;
+  const row=b.dataset.deprow,h=depHold(row),r=((S.months[S.month]||{}).rows||[]).find(x=>x.name===row);if(!h||!r)return;
+  const prev=S.deposits.find(x=>x.id===SAV.depId(h.id,S.month)),on=!!prev&&SAV.counted(prev);buzz(10);
+  const date=S.month===monthKey(new Date())?today():`${S.month}-01`;
+  const ok=on?await depositSave(h,prev,{kind:'monthly',month:S.month,status:'reversed'})
+    :await depositSave(h,prev||null,{kind:'monthly',month:S.month,status:'confirmed',confirmedAmount:Number(r.amount),confirmedDate:prev&&prev.confirmedDate||date,source:'row'});
+  if(ok)toast(on?`ההפקדה ל"${label(row)}" בוטלה`:`נרשמה הפקדה של ${ils0(r.amount)} ל${h.account==='תיק מסחר'?'תיק המסחר':h.name}`)});
 function rowHtml(r,i){
   const amt=has(r.amount)?`<span class="amt num${r.star?' mute':''}">${ils(r.amount)}</span>`:`<span class="amt mute">${r.star?'*':'—'}</span>`;
   let det='';
@@ -2382,7 +2418,7 @@ function rowHtml(r,i){
     det=`<div class="detail"><div class="dl num"><span class="muted">פירוט: ${ils(sum)} ב־${vs.length} פריטים</span>${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל</span>`:''}</div>
       ${rv?`<span class="minibar${over?' over':''}" aria-hidden="true">${over?'':`<i style="width:${Math.min(100,sum/rv*100)}%"></i>`}</span>`:''}</div>`;
   }
-  return `<div class="rowwrap${isList?' haslist':''}"><button class="bare lrow" ${isList?`data-vopen="${esc(r.name)}" aria-expanded="${!!S.rowOpen[r.name]}" aria-label="${esc(label(r.name))}: פתיחת הפירוט"`:`data-row="${i}"`}>${ric(r.name,GROUP_TINT[r.group])}<span class="nm">${esc(label(r.name))}</span>${r.star?`<span class="tag-other">${I.out}חשבון אחר</span>`:''}${rowTrend(r)}<span class="leader" aria-hidden="true"></span>${amt}</button>${det}</div>`;
+  return `<div class="rowwrap${isList?' haslist':''}"><div class="lrowx"><button class="bare lrow" ${isList?`data-vopen="${esc(r.name)}" aria-expanded="${!!S.rowOpen[r.name]}" aria-label="${esc(label(r.name))}: פתיחת הפירוט"`:`data-row="${i}"`}>${ric(r.name,GROUP_TINT[r.group])}<span class="nm">${esc(label(r.name))}</span>${r.star?`<span class="tag-other">${I.out}חשבון אחר</span>`:''}${rowTrend(r)}<span class="leader" aria-hidden="true"></span>${amt}</button>${depTog(r)}</div>${det}</div>`;
 }
 const GROUPS=['קבועות','חסכונות','משתנות'];
 const GROUP_TITLE={'קבועות':'הוצאות קבועות','חסכונות':'חסכונות','משתנות':'הוצאות החודש'};
@@ -2855,30 +2891,38 @@ function forecastSheet(){
   const hs=S.holdings,F=S.svFore||(S.svFore={acc:'all'});
   const pick=()=>F.acc==='all'?hs:hs.filter(h=>(h.account||'ללא חשבון')===F.acc);
   const accs=[...new Set(hs.map(h=>h.account||'ללא חשבון'))];
+  // one row per assumption: the name on one side, a short field with its unit on the other
+  const fld=(id,lbl,unit,ph,hint)=>`<label class="fcrow" for="${id}"><span class="col"><b>${lbl}</b>${hint?`<small>${hint}</small>`:''}</span><span class="fcin"><input id="${id}" class="num" inputmode="decimal" placeholder="${ph||''}" autocomplete="off"><i>${unit}</i></span></label>`;
+  openSheet('תחזית ליעד',`
+   <div class="fcres" id="fcOut" aria-live="polite"></div>
+   <div class="fcsec">על אילו קופות</div>
+   <div class="chips fcaccs" role="radiogroup">${[['all','כל הקופות'],...accs.map(a=>[a,a])].map(([k,t])=>`<button type="button" class="chip" data-fcacc="${esc(k)}" aria-checked="${F.acc===k}">${esc(t)}</button>`).join('')}</div>
+   <div class="fcsec">ההנחות שלכם</div>
+   <div class="fcbox">
+     ${fld('fcStart','יתרה היום','₪','','מהקופות שבחרתם')}
+     ${fld('fcMonthly','הפקדה חודשית','₪','0','')}
+     ${fld('fcYears','כמה שנים','שנים','4','')}
+     <div class="chips fcyears">${[1,3,5,10].map(n=>`<button type="button" class="chip" data-fcy="${n}">${n} ${n===1?'שנה':'שנים'}</button>`).join('')}</div>
+     ${fld('fcRet','תשואה שנתית','%','?','המספר שלכם. אין תשואה מובטחת')}
+     ${fld('fcFee','דמי ניהול מהחיסכון','%','0','')}
+     ${fld('fcInf','אינפלציה','%','לא חובה','לחישוב בכוח הקנייה של היום')}
+   </div>
+   <p class="small muted fcnote">זו סימולציה ולא הבטחה, ולא ייעוץ השקעות. החישוב מניח תשואה קבועה כל שנה.</p>`);
   const fill=()=>{const p=pick();$('fcStart').value=Math.round(p.reduce((t,h)=>t+(hValue(h)||0),0));
     const pl=p.reduce((t,h)=>t+(h.mirror&&has(h.mirror.planned)?Number(h.mirror.planned):0),0);$('fcMonthly').value=pl||'';
     const fs=p.filter(h=>has(h.feeSavings));$('fcFee').value=p.length===1&&fs.length===1?fs[0].feeSavings:''};
-  openSheet('תחזית ליעד',`
-   <div class="field"><label class="lbl" for="fcAcc">על אילו קופות</label><select class="in" id="fcAcc"><option value="all">כל הקופות</option>${accs.map(a=>`<option ${F.acc===a?'selected':''}>${esc(a)}</option>`).join('')}</select></div>
-   <div class="tsrow"><div class="field"><label class="lbl" for="fcStart">יתרה היום</label><div class="amountbox"><input class="num" id="fcStart" inputmode="decimal"><span>₪</span></div></div>
-     <div class="field"><label class="lbl" for="fcMonthly">הפקדה חודשית</label><div class="amountbox"><input class="num" id="fcMonthly" inputmode="decimal"><span>₪</span></div></div></div>
-   <div class="tsrow"><div class="field"><label class="lbl" for="fcYears">כמה שנים</label><input class="in num" id="fcYears" inputmode="decimal" value="${esc(F.years||'')}" placeholder="למשל 4"></div>
-     <div class="field"><label class="lbl" for="fcRet">תשואה שנתית שאתם מניחים</label><div class="amountbox"><input class="num" id="fcRet" inputmode="decimal" value="${esc(F.annual??'')}" placeholder="אתם בוחרים"><span>%</span></div></div></div>
-   <div class="tsrow"><div class="field"><label class="lbl" for="fcFee">דמי ניהול מהחיסכון</label><div class="amountbox"><input class="num" id="fcFee" inputmode="decimal"><span>%</span></div></div>
-     <div class="field"><label class="lbl" for="fcInf">אינפלציה (לא חובה)</label><div class="amountbox"><input class="num" id="fcInf" inputmode="decimal" value="${esc(F.inflation??'')}"><span>%</span></div></div></div>
-   <div id="fcOut" class="fcout" aria-live="polite"></div>
-   <p class="small muted">זו סימולציה ולא הבטחה. התשואה בעתיד לא ידועה, והחישוב מניח תשואה קבועה שאתם בחרתם. זה לא ייעוץ השקעות.</p>`);
-  fill();
+  fill();$('fcYears').value=F.years||'';$('fcRet').value=F.annual??'';$('fcInf').value=F.inflation??'';
   const calc=()=>{F.years=$('fcYears').value;F.annual=$('fcRet').value;F.inflation=$('fcInf').value;
-    const r=SAV.forecast({start:parseAmt($('fcStart').value),monthly:parseAmt($('fcMonthly').value),years:parseAmt($('fcYears').value),annual:parseAmt($('fcRet').value),fee:parseAmt($('fcFee').value),inflation:parseAmt($('fcInf').value)});
-    if(!r){$('fcOut').innerHTML='<div class="emptyline">כתבו כמה שנים ואיזו תשואה שנתית להניח, ונחשב.</div>';return}
-    const mx=Math.max(...r.path.map(p=>p.value),1);
-    $('fcOut').innerHTML=`<div class="mrow"><span class="k">בעוד ${fmt(parseAmt($('fcYears').value))} שנים</span><span class="v num">${ils0(r.nominal)}</span></div>
-      <div class="mrow"><span class="k">מתוך זה הפקדות ויתרה היום</span><span class="v num">${ils0(r.deposited)}</span></div>
-      <div class="mrow"><span class="k">רווח לפי ההנחה</span><span class="v num"><span class="pl ${r.gain<0?'dn':'up'}">${signed(Math.round(r.gain))}</span></span></div>
-      ${r.real!==null?`<div class="mrow"><span class="k">בכוח הקנייה של היום</span><span class="v num">${ils0(r.real)}</span></div>`:''}
-      <div class="fcbars" aria-hidden="true">${r.path.map(p=>`<span style="height:${Math.max(4,p.value/mx*100)}%" title="${ils0(p.value)}"></span>`).join('')}</div>`};
-  $('fcAcc').onchange=()=>{F.acc=$('fcAcc').value;fill();calc()};
+    document.querySelectorAll('[data-fcy]').forEach(b=>b.setAttribute('aria-checked',b.dataset.fcy===String(parseAmt(F.years))));
+    const yrs=parseAmt($('fcYears').value);
+    const r=SAV.forecast({start:parseAmt($('fcStart').value),monthly:parseAmt($('fcMonthly').value),years:yrs,annual:parseAmt($('fcRet').value),fee:parseAmt($('fcFee').value),inflation:parseAmt($('fcInf').value)});
+    if(!r){$('fcOut').innerHTML=`<b class="fcbig muted">?</b><span class="small muted">${yrs>0?'כתבו איזו תשואה שנתית להניח':'בחרו כמה שנים, וכתבו איזו תשואה שנתית להניח'}, והתוצאה תופיע כאן.</span>`;return}
+    const mx=Math.max(...r.path.map(p=>p.value),1),step=r.path.length>11?Math.ceil(r.path.length/6):1;
+    $('fcOut').innerHTML=`<span class="small muted">בעוד ${fmt(yrs)} ${yrs===1?'שנה':'שנים'} יכול להיות</span><b class="fcbig num">${ils0(r.nominal)}</b>
+      <div class="fcsplit num"><span>הפקדות ויתרה <b>${ils0(r.deposited)}</b></span><span>רווח <b class="pl ${r.gain<0?'dn':'up'}">${signed(Math.round(r.gain))}</b></span>${r.real!==null?`<span>בכוח הקנייה של היום <b>${ils0(r.real)}</b></span>`:''}</div>
+      <div class="fcbars" aria-hidden="true">${r.path.map((p,n)=>`<span class="col"><i style="height:${Math.max(4,p.value/mx*100)}%"></i><small>${n%step===0||n===r.path.length-1?(p.year===0?'היום':fmt(Math.round(p.year*10)/10)):''}</small></span>`).join('')}</div>`};
+  document.querySelector('.fcaccs').onclick=e=>{const b=e.target.closest('[data-fcacc]');if(!b)return;F.acc=b.dataset.fcacc;document.querySelectorAll('[data-fcacc]').forEach(x=>x.setAttribute('aria-checked',x===b));fill();calc()};
+  document.querySelector('.fcyears').onclick=e=>{const b=e.target.closest('[data-fcy]');if(!b)return;$('fcYears').value=b.dataset.fcy;calc()};
   ['fcStart','fcMonthly','fcYears','fcRet','fcFee','fcInf'].forEach(id=>$(id).addEventListener('input',calc));calc();
 }
 document.addEventListener('click',async e=>{
@@ -2904,22 +2948,27 @@ function renderMirror(){
   const el=$('svMirror');if(!el)return;S.mirOpen=S.mirOpen||{};
   const ms=S.holdings.filter(h=>h.mirror);
   if(!ms.length){el.innerHTML=S.holdings.length?`<section class="card mirc"><b>תיק מראה</b><span class="small muted">מה היה קורה אם כל הפקדה הייתה נכנסת למדד שתבחרו, ביום ההפקדה. בוחרים חשבון ומגדירים מדד מעקב, ואת ההפקדות מזינים כאן.</span><div class="actions"><button class="btn ghost" data-mirset>להגדרת תיק מראה</button></div></section>`:'';return}
-  el.innerHTML=ms.map(h=>{const m=h.mirror,s=SAV.summary(h,S.deposits,hValue(h)),cur=h.mirrorCur||m.cur||'ILS',open=!!S.mirOpen[h.id];
+  el.innerHTML=`<section class="card deps"><div class="svth"><h2 class="sec">ההפקדות</h2></div>${ms.map(h=>{const m=h.mirror,s=SAV.summary(h,S.deposits,hValue(h)),cur=h.mirrorCur||m.cur||'ILS',open=!!S.mirOpen[h.id];
     const deps=S.deposits.filter(d=>d.holdingId===h.id).sort((a,b)=>(b.kind==='opening')-(a.kind==='opening')||String(b.month).localeCompare(String(a.month)));
     const row=(k,v,sub,cls)=>`<div class="mrow"><span class="k">${k}</span><span class="v num">${v}</span>${sub?`<small class="num ${cls||''}">${sub}</small>`:''}</div>`;
     const pl=n=>n===null?'':`<span class="pl ${n<0?'dn':'up'}">${signed(n)}</span>`;
-    return `<section class="card mirc">
+    return `<div class="deprow${open?' open':''}"><button class="bare depsum" data-mirlist="${esc(h.id)}" aria-expanded="${open}">${depSummary(h)}</button>${open?`<div class="mirc">
      <div class="mhd"><span class="col"><b>${m.ticker?'תיק מראה · ':'הפקדות · '}${esc(h.name)}</b><small class="num">${m.ticker?`עוקב אחרי ${esc(m.label||m.ticker)}${cur==='USD'?' בדולרים':''}`:'הפקדות בלי מדד מעקב'}${has(m.planned)?` · ${ils(m.planned)} בחודש`:''}${has(m.day)?` · ב־${m.day} לחודש`:''}</small></span><button class="bare link" data-mirset="${esc(h.id)}">הגדרות</button></div>
      ${row('הפקדות שאושרו',ils(s.confirmed),`${s.count} הפקדות`)}
      ${row('שווי בפועל',s.actual===null?'אין נתון':ils(s.actual),pl(s.actualPL))}
      ${m.ticker?row('תיק מראה',s.mirror===null?(s.count?(s.needsPrice?'ממתין למחיר':'ממתין למחירי ההפקדות'):'אין עדיין הפקדות'):ils(s.mirror),s.mirrorPL!==null?pl(s.mirrorPL)+(s.partial?` <span class="muted">על ${ils(s.pricedIn)} שכבר יש להם מחיר</span>`:''):''):''}
      ${s.gap!==null?`<div class="small muted num">פער בין השווי בפועל לתיק המראה: ${signed(s.gap)}. אפשריים כמה הסברים (דמי ניהול, מסלול אחר, מועד ביצוע, מטבע), ובלי נתונים אי אפשר לקבוע מה מהם.</div>`:s.count&&s.actual!==null&&!s.hasOpening&&m.ticker?'<div class="small muted">כדי להשוות לשווי בפועל, הזינו בהגדרות את היתרה ביום שממנו מתחילים.</div>':''}
      ${s.missing&&m.ticker?`<div class="small muted">${s.missing} ${s.missing===1?'הפקדה ממתינה':'הפקדות ממתינות'} למחיר המדד ביום ההפקדה. המחיר נמשך פעם ביום, ואפשר גם להזין אותו ידנית בהפקדה.</div>`:''}
-     <div class="actions"><button class="btn" data-depadd="${esc(h.id)}">+ הפקדה</button>${deps.length?`<button class="btn ghost" data-mirlist="${esc(h.id)}" aria-expanded="${open}">${open?'הסתרת ההפקדות':`כל ההפקדות (${deps.length})`}</button>`:''}</div>
-     ${open?`<div class="deplist">${deps.map(d=>{const u=SAV.units(d,cur);
+     <div class="actions"><button class="btn" data-depadd="${esc(h.id)}">+ הפקדה</button></div>
+     ${deps.length?`<div class="deplist">${deps.map(d=>{const u=SAV.units(d,cur);
        return `<button class="bare hrow" data-dep="${esc(d.id)}"><span class="col"><b>${d.kind==='opening'?'יתרת פתיחה':esc(monthLabel(d.month))}</b><small class="num">${esc(SAV.STATUS_HE[d.status]||d.status)}${d.confirmedDate?' · '+dmy(d.confirmedDate):''}${u!==null?` · ${u.toLocaleString('he-IL',{maximumFractionDigits:4})} יח' במחיר ${fmt(d.assetPrice)} ${curSign(d.assetCurrency||cur)}${d.assetPriceDate&&d.assetPriceDate!==d.confirmedDate?' ('+dmy(d.assetPriceDate)+')':''}`:SAV.counted(d)&&m.ticker?' · ממתין למחיר':''}</small></span><span class="side"><span class="num">${has(d.confirmedAmount)?ils(d.confirmedAmount):'—'}</span></span></button>`}).join('')}</div>`:''}
-    </section>`}).join('');
+    </div>`:''}</div>`}).join('')}</section>`;
 }
+// one line per account: automatic or by hand, and this month's deposit
+function depSummary(h){const m=h.mirror||{},mk=monthKey(new Date()),d=S.deposits.find(x=>x.id===SAV.depId(h.id,mk));
+  const how=m.auto?`מופקד אוטומטית${has(m.planned)?` · ${ils0(m.planned)}`:''}${has(m.day)?` ב־${m.day} לחודש`:''}`:m.row?'ידני · מסמנים ✓ במסך הכסף':`ידני${has(m.planned)?` · ${ils0(m.planned)} בחודש`:''}`;
+  const st=d&&SAV.counted(d)?`<span class="depst ok">✓ ${ils0(d.confirmedAmount)}</span>`:d&&d.status==='skipped'?'<span class="depst">לא החודש</span>':m.auto?'<span class="depst">יירשם לבד</span>':'<span class="depst">עוד לא</span>';
+  return `<span class="col"><b>${esc(m.row||h.name)}</b><small>${how}${m.row?` · אל ${esc(h.account==='תיק מסחר'?'תיק המסחר':h.name)}`:''}</small></span>${st}<span class="chev" aria-hidden="true">${I.chevL}</span>`}
 // the account's mirror settings: what it tracks, the plan, and where it starts from
 function mirrorSheet(h){
   const pick=!h,opts=S.holdings;h=h||opts[0];if(!h)return;
