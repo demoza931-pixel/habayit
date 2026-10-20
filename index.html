@@ -614,6 +614,30 @@ header.top.nomonth .month{position:absolute;inset-inline-start:0;visibility:hidd
 .smfoot{padding:10px 0 calc(env(safe-area-inset-bottom,0px) + 12px);border-top:1px solid var(--line)}.smfoot .btn{min-height:58px;font-size:18px}
 body.noscroll{overflow:hidden}
 @media (prefers-reduced-motion:no-preference){.smrow{transition:transform .15s,opacity .2s}.smrow:active{transform:scale(.98)}.shopmode:not([hidden]) .smin{animation:smup .25s ease-out}@keyframes smup{from{transform:translateY(24px)}}}
+/* the classic list */
+.glcard{padding:2px 14px 6px}
+.glhead{display:flex;justify-content:flex-end;padding:8px 0 0}.glhead:empty{display:none}.glhead .link{font-size:13px}
+.gsh{font-size:12px;font-weight:700;color:var(--ink-2);padding:12px 0 2px}
+.grow{display:flex;align-items:center;gap:10px;min-height:50px;border-bottom:1px solid var(--line)}
+.glist .grow:last-child{border-bottom:0}
+.gck{flex:none;width:44px;height:44px;margin-inline-start:-10px;display:grid;place-items:center}
+.gck span{width:22px;height:22px;border-radius:999px;border:2px solid var(--leader);display:grid;place-items:center;color:transparent;transition:background-color .15s,border-color .15s}
+.gck span svg{width:13px;height:13px}
+.gck[aria-pressed="true"] span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.gnm{flex:1;min-width:0;display:flex;align-items:center;gap:6px;text-align:start;min-height:44px;padding:0}.gnm span{font-size:16px;overflow-wrap:anywhere}.gnm small{color:var(--ink-2);font-size:13px}
+.gp{flex:none;font-size:13px}.gp.muted{color:var(--ink-2);font-size:12px}
+.gtag{flex:none;padding:4px 10px;border-radius:999px;background:var(--warn-soft);color:var(--warn);font-weight:700;font-size:12px;min-height:30px}
+.grow.done .gnm span{text-decoration:line-through;color:var(--ink-2)}
+.gdonerow{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;border-top:1px solid var(--line);color:var(--ink-2);text-align:start}
+.gdonerow svg{width:16px;height:16px}.gdonerow span:not(.chev){font-weight:700;font-size:14px}.gdonerow small{flex:1;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gdonerow .chev svg{width:14px;height:14px}
+.gclear{font-size:13px;padding:8px 0}
+.gpastrow{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:0 6px;color:var(--ink-2);text-align:start}
+.gpastrow b{font-size:15px;color:var(--ink)}.gpastrow small{flex:1}.gpastrow .chev::before{content:"‹";font-size:20px}
+.gnote{text-align:center}
+.picks{display:flex;flex-direction:column;gap:8px}
+.pickrow{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:56px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);text-align:start}
+.pedit{display:flex;justify-content:space-between}
 .tdhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px}
 .tdhead .col{display:flex;flex-direction:column;gap:2px}.tdhead b{font-size:28px}.tdhead small{font-size:14px}
 .tdwho{display:flex}.tdwho .who{width:34px;height:34px;border-radius:999px;border:2px solid var(--bg);background:var(--accent-soft);object-fit:cover}.tdwho .who+.who{margin-inline-start:-10px}
@@ -1026,9 +1050,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   <!-- GROCERY -->
   <section class="tab" id="t-shop" hidden>
     <button class="bare backlink" data-back="home"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>חזרה לכסף</button>
-    <div class="phead"><div class="col"><h1 class="ptitle">הקניות שלנו</h1><small class="psub" id="phShop"></small></div><img class="ill phill" src="img/basket.png" alt="" aria-hidden="true"></div>
-    <div class="gtot" id="gTotal"></div>
-    <div id="gAgain" hidden></div>
+    <div class="phead"><div class="col"><h1 class="ptitle">הקניות שלנו</h1><small class="psub" id="phShop"></small></div></div>
     <div class="gadd">
       <form class="addline" id="gForm">
         <input class="in" id="gName" placeholder="מה חסר בבית? אפשר כמה: חלב 2, ביצים, לחם" autocomplete="off" aria-label="מוצרים חדשים, אפשר כמה מופרדים בפסיק" aria-describedby="gPrev">
@@ -1037,17 +1059,17 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
       <div class="gsug" id="gSug" role="listbox" aria-label="השלמות"></div>
       <div class="small muted gprev" id="gPrev" aria-live="polite"></div>
     </div>
-    <div class="glhead" id="gHead"></div>
-    <div class="glist" id="gOpen" aria-label="רשימת קניות"></div>
-    <div class="glist" id="gDone"></div>
+    <section class="card glcard" id="gList" aria-label="רשימת קניות">
+      <div class="glhead" id="gHead"></div>
+      <div class="glist" id="gOpen"></div>
+      <div id="gDone"></div>
+    </section>
+    <button class="bare gpastrow" data-gpast><span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></span><b>קניות קודמות</b><small class="num" id="gPastN"></small><span class="chev" aria-hidden="true"></span></button>
+    <div class="gtot" id="gTotal" hidden></div>
+    <div id="gAgain" hidden></div>
+    <div class="finishbar" id="gFinish" hidden><button id="gFinishBtn"></button><button id="gClear"></button></div>
     <button class="btn block gstart" id="gStart" hidden>מתחילים קנייה</button>
-    <div class="finishbar" id="gFinish" hidden>
-      <button class="btn block" id="gFinishBtn"></button>
-      <button class="btn ghost block" id="gClear">ניקוי פריטים שסומנו</button>
-    </div>
-    <div class="small muted">המחירים מקובץ שקיפות המחירים של רמי לוי, סניף אונליין. פריט חדש מקבל הצעות מחיר בתוך כמה דקות; בוחרים מוצר בלחיצה, ומאז המחיר מתעדכן לבד. גוררים פריט מהידית כדי לשנות את הסדר.</div>
-    <h2 class="sec" style="margin-top:8px">קניות קודמות</h2>
-    <section class="card past" id="gPast" style="overflow:hidden"></section>
+    <div class="small muted gnote">המחירים מרמי לוי אונליין, ומתעדכנים לבד. בקופה המחיר עשוי להשתנות.</div>
   </section>
 
   <!-- SAVINGS / INVESTMENTS -->
@@ -2138,7 +2160,8 @@ const gKey=i=>has(i.order)?Number(i.order):(i.createdAt||0);
 const openGrocery=()=>S.grocery.filter(i=>!i.done).sort((a,b)=>gKey(a)-gKey(b));
 const GRIP='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
 const gPrice=i=>has(i.price)?Number(i.price):i.product?Number(i.product.price):null;
-const gQty=i=>Math.max(1,Math.round(Number(i.qty)||1));
+// how many times the price counts: a weight or volume multiplies (prices are per ק"ג / ליטר); "12 יח'" or "500 גרם" only describes the package
+const gQty=i=>i.unit?(i.unit==='ק"ג'||i.unit==='ליטר'?(Number(i.qty)||1):1):Math.max(1,Math.round(Number(i.qty)||1));
 const gLine=i=>gPrice(i)===null?null:Math.round(gPrice(i)*gQty(i)*100)/100;
 const qtyTag=i=>i.unit?`<span class="qty num">${Number(i.qty)||1} ${esc(i.unit)}</span>`:gQty(i)>1?`<span class="qty num">×${gQty(i)}</span>`:'';
 function gItemHtml(i){
@@ -2206,37 +2229,43 @@ function renderShop(){
   const open=openGrocery(),done=S.grocery.filter(i=>i.done).sort((a,b)=>gKey(a)-gKey(b));
   // by store section (the order you walk the store), or in your own order (drag)
   const grouped=!S.gManual;
-  $('gHead').innerHTML=open.length?`<b>${grouped?'לפי מחלקות':'לפי הסדר שלנו'}</b><button class="bare link" data-gorder>${grouped?'לסדר שלנו':'לפי מחלקות'}</button>`:'';
+  $('gList').hidden=!open.length&&!done.length;
+  $('gHead').innerHTML=open.length>2?`<button class="bare link" data-gorder>${grouped?'לסדר שלנו (גרירה)':'לפי מחלקות'}</button>`:'';
   $('gOpen').classList.toggle('grouped',grouped);
-  $('gOpen').innerHTML=!open.length?(done.length?'':`<div class="card"><div class="emptyline" style="border-top:0">הרשימה ריקה. כתבו למעלה מה חסר, אפשר כמה מוצרים בשורה אחת.</div></div>`)
-    :grouped?SHOP.ORDER.map(sec=>{const its=open.filter(i=>gSec(i)===sec);return its.length?`<section class="gsec card"><div class="gsech"><span class="gsecic" aria-hidden="true">${SEC_IC[sec]||'•'}</span><b>${sec}</b><small class="num">${its.length}</small></div>${its.map(gItemHtml).join('')}</section>`:''}).join('')
+  $('gOpen').innerHTML=!open.length?(done.length?'':'')
+    :grouped?SHOP.ORDER.map(sec=>{const its=open.filter(i=>gSec(i)===sec);return its.length?`<div class="gsh">${sec}</div>${its.map(gRow).join('')}`:''}).join('')
     :open.map(gItemHtml).join('');
-  $('gDone').innerHTML=done.map(gItemHtml).join('');
+  // what is in the cart: one folded line, opened on a tap
+  $('gDone').innerHTML=done.length?`<button class="bare gdonerow" data-gdone aria-expanded="${!!S.gDoneOpen}">${I.check}<span>בעגלה · ${done.length}</span><small>${esc(done.slice(0,3).map(i=>i.name).join(', '))}${done.length>3?'…':''}</small><span class="chev" aria-hidden="true">${S.gDoneOpen?I.chevD:I.chevL}</span></button>
+    ${S.gDoneOpen?done.map(gRow).join('')+`<button class="bare link gclear" data-gclear>${S.gClearArm?'ללחוץ שוב: לנקות בלי לשמור קנייה':'ניקוי מהרשימה בלי לשמור קנייה'}</button>`:''}`:'';
+  if(!open.length&&!done.length)$('gList').hidden=true;
+  const empty=$('gEmpty');if(!open.length&&!done.length&&!empty){$('gList').insertAdjacentHTML('beforebegin','<div class="card gempty" id="gEmpty"><div class="emptyline" style="border-top:0">הרשימה ריקה. כתבו למעלה מה חסר, אפשר כמה מוצרים בשורה אחת.</div></div>')}else if((open.length||done.length)&&empty)empty.remove();
   // what you buy most and is not on the list (each one, or all at once), with the product you picked last time
-  const reg=SHOP.regulars(S.purchases,S.grocery.map(g=>g.name),6);S.gReg=reg;
-  $('gAgain').hidden=!reg.length;
+  const reg=[];S.gReg=reg;
+  $('gAgain').hidden=true;
   $('gAgain').innerHTML=reg.length?`<div class="regcard"><div class="regbody"><span class="sgtag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>לפי הקניות הקודמות</span><b class="sgt">להוסיף את הקבועים שלכם?</b>
     <div class="chips">${reg.map((r,i)=>`<button type="button" class="chip" data-reg="${i}">+ ${esc(r.name)}</button>`).join('')}</div>
     ${reg.length>1?`<button class="btn regall" data-regall>להוסיף את כולם (${reg.length})</button>`:''}</div><img class="ill sgill" src="img/bag.png" alt="" aria-hidden="true"></div>`:'';
   const priced=open.filter(i=>gPrice(i)!==null),sum=priced.reduce((t,i)=>t+gLine(i),0);
-  $('gTotal').hidden=!open.length;
-  $('gTotal').innerHTML=open.length?`<div class="gcost"><span class="col"><small>עלות משוערת</small><b class="num">${ils(Math.round(sum*100)/100)}</b><small>לפי המוצרים שנבחרו · המחיר בקופה עשוי להשתנות${priced.length<open.length?` · ${open.length-priced.length} עוד בלי מחיר`:''}</small></span></div>`:'';
-  $('gStart').hidden=!open.length;$('gStart').textContent=`מתחילים קנייה · ${open.length} מוצרים`;
+  S.gEst=open.length?{sum:Math.round(sum*100)/100,missing:open.length-priced.length}:null;$('gPastN').textContent=S.purchases.length;
+  $('gTotal').hidden=true;
+  $('gTotal').innerHTML=false?`<div class="gcost"><span class="col"><small>עלות משוערת</small><b class="num">${ils(Math.round(sum*100)/100)}</b><small>לפי המוצרים שנבחרו · המחיר בקופה עשוי להשתנות${priced.length<open.length?` · ${open.length-priced.length} עוד בלי מחיר`:''}</small></span></div>`:'';
+  // one button at the bottom: start shopping, or finish when things are in the cart
+  $('gStart').hidden=!open.length&&!done.length;$('gStart').textContent=done.length?`סיום קנייה (${done.length})`:`מתחילים קנייה · ${open.length} מוצרים`;$('gStart').dataset.finish=done.length?'1':'';
   if(S.shopMode)renderShopMode();
-  $('gFinish').hidden=!done.length;
-  $('gFinishBtn').innerHTML=`${I.check}סיים קנייה · ${done.length} פריטים`;
-  $('gClear').classList.remove('arm');$('gClear').textContent=`ניקוי ${done.length} פריטים בלי לשמור קנייה`;
+  $('gFinish').hidden=true;
   renderPast();
 }
 const pastPrice=it=>{const u=has(it.price)?Number(it.price):it.product?Number(it.product.price):null;return u===null?null:Math.round(u*gQty(it)*100)/100};
 function renderPast(){
+  if(!$('gPast'))return;
   const ps=[...S.purchases].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   $('gPast').innerHTML=ps.length?ps.map(p=>{const open=!!S.openPurchase[p.id],items=p.items||[];
     const d=p.date?new Date(p.date+'T12:00').toLocaleDateString('he-IL',{day:'numeric',month:'numeric',year:'numeric'}):'';
     return `<button class="bare ph-row" data-purchase="${esc(p.id)}" aria-expanded="${open}"><span class="col"><b>${esc(p.name||'קנייה')}</b><small class="num">${d} · ${items.length} פריטים</small></span><span class="sum num">${ils(p.total)}</span><span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></button>
       ${open?`<div class="pd">${items.map(it=>`<div class="lrow"><span class="nm">${esc(it.name)}${qtyTag(it)}${it.product?`<small>${esc(it.product.name)}</small>`:''}</span><span class="leader" aria-hidden="true"></span><span class="amt num${pastPrice(it)===null?' mute':''}">${pastPrice(it)===null?'בלי מחיר':ils(pastPrice(it))}</span></div>`).join('')}
         <div class="foot num"><span>לפי המחירים ברשימה: ${ils(p.rlTotal||0)}</span><span>שולם: ${ils(p.total)}</span></div>
-        <div class="pedit"><button class="bare link" data-pedit="${esc(p.id)}">${I.pencil} עריכת הסכום ששולם</button></div></div>`:''}`}).join('')
+        <div class="pedit"><button class="bare link" data-rebuy="${esc(p.id)}">לקנות שוב</button><button class="bare link" data-pedit="${esc(p.id)}">${I.pencil} עריכת הסכום ששולם</button></div></div>`:''}`}).join('')
     :'<div class="emptyline" style="border-top:0">עוד אין קניות שמורות. מסמנים פריטים בווי ולוחצים "סיים קנייה".</div>';
 }
 
@@ -2724,7 +2753,30 @@ function renderShopMode(){
 }
 const openShopMode=()=>{S.shopMode=true;renderShopMode();$('shopMode').hidden=false;document.body.classList.add('noscroll')};
 const closeShopMode=()=>{S.shopMode=false;$('shopMode').hidden=true;document.body.classList.remove('noscroll')};
-$('gStart').onclick=openShopMode;
+$('gStart').onclick=()=>{if($('gStart').dataset.finish)finishSheet();else openShopMode()};
+// a plain row: the circle, the name (tap to edit), the amount in grey, the price small; a product to pick opens a sheet
+function gRow(i){
+  const pr=gPrice(i),q=i.unit?`${Number(i.qty)||1} ${esc(i.unit)}`:gQty(i)>1?`×${gQty(i)}`:'';
+  const side=pr!==null?`<span class="gp num">${ils(gLine(i))}</span>`:(i.candidates||[]).length&&i.priceStatus==='choose'&&!has(i.price)?`<button class="bare gtag" data-gpick="${esc(i.id)}">לבחור מוצר</button>`:i.priceStatus==='notfound'?'<span class="gp muted">בלי מחיר</span>':'<span class="gp muted">מחפש מחיר…</span>';
+  return `<div class="grow${i.done?' done':''}${newCls('grocery',i.id)}" data-gid="${esc(i.id)}"><button class="bare gck" data-toggle="${esc(i.id)}" aria-pressed="${!!i.done}" aria-label="${i.done?'ביטול סימון':'סימון'} ${esc(i.name)}"><span>${I.check}</span></button>
+    <button class="bare gnm" data-gedit="${esc(i.id)}"><span>${esc(i.name)}</span>${q?`<small class="num">${q}</small>`:''}</button>${side}</div>`;
+}
+function pickSheet(it){
+  if(!it)return;
+  openSheet('לבחור מוצר',`<div class="small muted">ההצעות מרמי לוי ל"${esc(it.name)}". המחיר יתעדכן לבד מעכשיו.</div><div class="picks">${(it.candidates||[]).map((p,k)=>`<button class="bare pickrow" data-pickc="${k}"><span>${esc(p.name)}</span><b class="num">${ils(p.price)}</b></button>`).join('')}</div>`);
+  document.querySelectorAll('[data-pickc]').forEach(b=>b.onclick=()=>{const p=it.candidates[Number(b.dataset.pickc)];closeSheet();store.update('grocery',it.id,{product:p,priceStatus:'matched'})});
+}
+function pastSheet(){openSheet('קניות קודמות','<section class="card past" id="gPast" style="overflow:hidden"></section>');renderPast()}
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-gpast]')){pastSheet();return}
+  if(e.target.closest('[data-gdone]')){S.gDoneOpen=!S.gDoneOpen;S.gClearArm=false;renderShop();return}
+  if(e.target.closest('[data-gclear]')){if(!S.gClearArm){S.gClearArm=true;renderShop();return}S.gClearArm=false;S.grocery.filter(g=>g.done).forEach(g=>store.del('grocery',g.id));return}
+  const pk=e.target.closest('[data-gpick]');if(pk){pickSheet(S.grocery.find(g=>g.id===pk.dataset.gpick));return}
+  const rb=e.target.closest('[data-rebuy]');if(rb){const p=S.purchases.find(x=>x.id===rb.dataset.rebuy);if(!p)return;
+    const on=new Set(S.grocery.filter(g=>!g.done).map(g=>g.name)),its=(p.items||[]).filter(it=>!on.has(it.name));
+    if(!its.length){toast('הכול כבר ברשימה');return}closeSheet();
+    store.addMany('grocery',its.map((it,k)=>gNew({name:it.name,qty:it.qty||1},k,it.product||null))).then(ok=>{if(ok)toast(`נוספו ${its.length} מוצרים לרשימה`)});return}
+});
 document.addEventListener('click',e=>{
   const gs=e.target.closest('[data-gsug]');if(gs){const h=(S.gSugList||[])[Number(gs.dataset.gsug)];if(!h)return;
     const v=$('gName').value,parts=v.split(/([,،;\n])/),last=parts.pop(),q=(last.match(/^\s*(\d+\s+)?/)||[''])[0];
@@ -3304,7 +3356,7 @@ function renderHeads(){
   const set=(id,t)=>{const el=$(id);if(el)el.textContent=t};
   set('phHome',`לפי הגיליון · ${monthLabel(S.month)}`);
   set('phBaby','עוד קצת, והבית מוכן');
-  const n=openGrocery().length;set('phShop',`רשימה משותפת · ${n?n+' פריטים':'ריקה'}`);
+  const n=openGrocery().length,est=S.gEst;set('phShop',n?`${n} מוצרים${est&&est.sum?` · כ־${fmt(est.sum)} ₪${est.missing?` (${est.missing} בלי מחיר)`:''}`:''}`:'הרשימה ריקה');
   set('phSav','חסכונות, השקעות ויעדים');
   const d=new Date((S.calDay||dkey(new Date()))+'T00:00'),w0=startOfWeek(d),w6=new Date(w0);w6.setDate(w6.getDate()+6);
   set('phCal',w0.getMonth()===w6.getMonth()?`${w0.getDate()}–${w6.getDate()} ב${w0.toLocaleDateString('he-IL',{month:'long'})}`:`${w0.getDate()}/${w0.getMonth()+1} – ${w6.getDate()}/${w6.getMonth()+1}`);
