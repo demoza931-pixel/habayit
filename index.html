@@ -1842,6 +1842,35 @@ const AGENT = (() => {
       primaryAction: { type: 'open_tab', tab: 'home', row: p.row, label: 'לפירוט' },
     }, { urgency: 15, usefulness: 20, confidence: Math.round(10 + 25 * Math.min(1, p.day / p.days)), timing: 5, annoyance: annoy('money_pace'), duplication: 0 })));
 
+    // a big task (two hours or more) that has not moved for a few days: smaller steps are easier to fit (spec 11)
+    T.filter(t => ['new', 'planned'].includes(t.status) && t.minutes >= 120 && t.idleDays >= 3 && !t.scheduled && !t.hasSteps).forEach(t => out.push(make({
+      id: `task_split:${t.id}`, type: 'task_split', domain: 'tasks', topic: `task:${t.id}`,
+      title: `לחלק את "${t.title}" לצעדים?`,
+      reason: `היא לוקחת בערך ${t.minutes} דקות. צעדים של חצי שעה קל יותר לשבץ בין הדברים.`,
+      sourceRefs: [`tasks:${t.id}`], validUntil: null, taskId: t.id,
+      primaryAction: { type: 'split_task', taskId: t.id, label: 'לחלק לצעדים' },
+    }, { urgency: 10, usefulness: 20, confidence: 25, timing: 5, annoyance: annoy('task_split'), duplication: 0 })));
+
+    /* the month that just ended against the one before it, by the sheet's rows (spec 12: explain a change), in the first
+       ten days of a month. compare: [{row, now, before, month, prev, day}] — month/prev are the two month names */
+    (m.compare || []).filter(x => x.day <= 10 && x.before > 0 && x.now - x.before >= 300 && x.now >= x.before * 1.3).forEach(x => out.push(make({
+      id: `money_change:${x.month}:${x.row}`, type: 'money_change', domain: 'money', topic: 'money',
+      title: `ב"${x.row}" יצא ב${x.month} יותר מב${x.prev}`,
+      reason: `${Math.round(x.now).toLocaleString('he-IL')} ₪ לעומת ${Math.round(x.before).toLocaleString('he-IL')} ₪ (יותר ב-${Math.round(x.now - x.before).toLocaleString('he-IL')} ₪), לפי השורות בגיליון. הפירוט של ${x.month} יראה מה השתנה.`,
+      sourceRefs: [`months:${x.month}:${x.row}`], validUntil: null,
+      primaryAction: { type: 'open_tab', tab: 'home', row: x.row, month: x.mk, label: 'לפירוט' },
+    }, { urgency: 10, usefulness: 15, confidence: 35, timing: 5, annoyance: annoy('money_change'), duplication: 0 })));
+
+    // baby items waiting for a gift: someone should know who brings what (spec 14). gifts: [{id, name}]
+    const gifts = bb.gifts || [];
+    if (gifts.length) out.push(make({
+      id: `baby_gift:${gifts.length}`, type: 'baby_gift', domain: 'baby', topic: 'baby:gift',
+      title: `${gifts.length === 1 ? 'פריט אחד מחכה' : `${gifts.length} פריטים מחכים`} למתנה`,
+      reason: `${gifts.slice(0, 3).map(g => g.name).join(', ')}${gifts.length > 3 ? ` ועוד ${gifts.length - 3}` : ''}. כדאי לוודא שמישהו באמת מביא אותם, כדי שלא יחסרו.`,
+      sourceRefs: gifts.map(g => `baby:${g.id}`), validUntil: null,
+      primaryAction: { type: 'baby_filter', status: 'לקבל', label: 'לרשימה' },
+    }, { urgency: 10, usefulness: 15, confidence: 30, timing: 5, annoyance: annoy('baby_gift'), duplication: 0 }));
+
     // a balance typed in from a statement and not updated for a long time (spec 15.10). stale: [{hid, name, days}]
     (sig.stale || []).filter(s => s.days >= 45).forEach(s => out.push(make({
       id: `savings_stale:${s.hid}:${Math.floor(s.days / 30)}`, type: 'savings_stale', domain: 'savings', topic: `savings:${s.hid}`,
@@ -3954,6 +3983,7 @@ function agentSignals(now){
       const st=babyStats();
       return {toBuy:S.baby.filter(b=>b.status==='לקנות').sort((a,b)=>bRank(a)-bRank(b)||(a.order||0)-(b.order||0)).map(b=>({id:b.id,name:b.name,price:b.price})),
         check:S.baby.filter(b=>b.status==='לבדוק').map(b=>({id:b.id,name:b.name})),
+        gifts:S.baby.filter(b=>b.status==='לקבל').map(b=>({id:b.id,name:b.name})),
         dups:Object.entries(g).filter(([,bs])=>bs.length>1&&new Set(bs.map(b=>b.status)).size>1).map(([name,bs])=>({name,statuses:[...new Set(bs.map(b=>b.status))].slice(0,2),ids:bs.map(b=>b.id)})),
         budget:{left:st.fp?Math.round((st.fp.budget-st.fpSum)*100)/100:null,planned:Math.round(st.buySum*100)/100}}})(),
     money:c?{month:k,isCurrent:true,hasIncome:c.income!==null,over,
@@ -3961,7 +3991,11 @@ function agentSignals(now){
       pace:(()=>{const d=new Date(now),day=d.getDate(),days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
         // only the everyday lists (shop, food), and not when the row is just the sum of its list (a sheet formula, no frame to keep)
         return ['קניות/פארם',foodRow(k)].map(rn=>{const row=c.rows.find(r=>r.name===rn),rv=row&&has(row.amount)&&!row.star?Number(row.amount):null,spent=varSum(monthVar(k,rn));
-          return rv&&Math.abs(rv-spent)>=1?{row:rn,spent,frame:rv,projected:spent/day*days,day,days}:null}).filter(Boolean)})()}:{},
+          return rv&&Math.abs(rv-spent)>=1?{row:rn,spent,frame:rv,projected:spent/day*days,day,days}:null}).filter(Boolean)})(),
+      // the month that ended against the one before it, row by row from the sheet (the lists' line items carry no reliable date)
+      compare:(()=>{const d=new Date(now),p1=monthKey(new Date(d.getFullYear(),d.getMonth()-1,1)),p2=monthKey(new Date(d.getFullYear(),d.getMonth()-2,1)),a=calc(p1),b=calc(p2);
+        if(!a||!b)return [];const amt=(cc,rn)=>{const r=cc.rows.find(x=>x.name===rn);return r&&has(r.amount)&&!r.star?Number(r.amount):0};
+        return a.rows.filter(r=>!r.star&&r.group!=='חסכונות'&&has(r.amount)).map(r=>({row:r.name,now:Number(r.amount),before:amt(b,r.name===foodRow(p1)?foodRow(p2):r.name),month:monthLabel(p1).split(' ')[0],prev:monthLabel(p2).split(' ')[0],mk:p1,day:d.getDate()}))})()}:{},
     // two timed events that overlap for the same person (a shared one counts for both), next 7 days
     conflicts:S.calendar?(()=>{const out=[],seen=new Set(),ev=evs.filter(e=>!e.allDay&&e.e>now&&e.s<soon).sort((a,b)=>a.s-b.s);
       for(let i=0;i<ev.length;i++)for(let j=i+1;j<ev.length&&ev[j].s<ev[i].e;j++){const a=ev[i],b=ev[j];
@@ -3974,7 +4008,7 @@ function agentSignals(now){
     history:{dismissedByType},
     tasks:S.tasks.filter(t=>['new','planned','waiting'].includes(t.status)&&!(t.snoozedUntil>now)).map(t=>{const st=taskSync(t);
       return {id:t.id,title:t.title,status:t.status,minutes:Number(t.estimatedMinutes)||null,idleDays:Math.floor((now-(t.progressAt||t.createdAt||now))/864e5),
-        postponed:t.postponeCount||0,waiting:t.waitingReason||'',scheduled:!!st&&st.state!=='failed',due:t.dueDate||null}})};
+        postponed:t.postponeCount||0,waiting:t.waitingReason||'',scheduled:!!st&&st.state!=='failed',due:t.dueDate||null,hasSteps:S.tasks.some(x=>x.linkedEntity==='task/'+t.id)}})};
 }
 function agentPrefs(){const sugg={},mutedTypes={};S.prefs.forEach(p=>{if(p.kind==='sugg')sugg[p.sid]={state:p.state,until:p.until};if(p.kind==='mute')mutedTypes[p.type]=true});return {sugg,mutedTypes}}
 // fixed suggestions for looking at the screen without real data (#flags=demo)
@@ -4130,10 +4164,12 @@ function runAction(c){
   if(a.type==='ask_blocker'){blockerSheet(S.tasks.find(t=>t.id===a.taskId));return}
   if(a.type==='baby_review'){babyReviewSheet();return}
   if(a.type==='baby_item'){babySheet(S.baby.find(b=>b.id===a.id));return}
+  if(a.type==='split_task'){splitSheet(S.tasks.find(t=>t.id===a.taskId));return}
+  if(a.type==='baby_filter'){S.bFilter=a.status;showTab('baby');renderBaby();return}
   if(a.type==='holding'){const h=S.holdings.find(x=>x.id===a.hid);if(h){showTab('sav');holdingSheet(h)}return}
   if(a.type==='deposit'){const h=S.holdings.find(x=>x.id===a.hid);if(h){showTab('sav');depositSheet(h,null,a.month)}return}
   if(a.type==='open_tab'){
-    if(a.tab==='home'){S.month=monthKey(new Date());S.openGroups['משתנות']=true;if(a.row)S.rowOpen[a.row]=true}
+    if(a.tab==='home'){S.month=a.month||monthKey(new Date());S.openGroups['משתנות']=true;if(a.row)S.rowOpen[a.row]=true}
     if(a.tab==='cal'&&a.day)S.calDay=a.day;
     showTab(a.tab);renderAll();
   }
@@ -4281,7 +4317,7 @@ function voiceStart(){
   try{r.start()}catch(e){S.rec=null;mic.classList.remove('rec');toast('לא הצלחתי להתחיל הקלטה')}
 }
 /* ---------- what the app learned about us: every preference can be seen, changed, or deleted ---------- */
-const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה',task_overdue:'משימה שעבר המועד שלה',cal_conflict:'שני אירועים באותה שעה',money_pace:'קצב הוצאה לקראת חריגה',savings_stale:'יתרה שלא עודכנה'};
+const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה',task_overdue:'משימה שעבר המועד שלה',cal_conflict:'שני אירועים באותה שעה',money_pace:'קצב הוצאה לקראת חריגה',savings_stale:'יתרה שלא עודכנה',task_split:'חלוקת משימה גדולה',money_change:'השוואה לחודש שעבר',baby_gift:'פריטים שמחכים למתנה'};
 function learnedSheet(){
   const keep=!$('sheet').hidden&&$('sheetBody').querySelector('.lrnsec')?$('sheet').scrollTop:0;
   const now=Date.now(),dt=t=>t?new Date(t).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
@@ -4386,6 +4422,19 @@ function findTimeSheet(t){
   openSheet('מציאת זמן',`<div class="ftwrap"><div class="ftt"><b>${esc(t.title)}</b><small class="muted">${TD_OWN[who]} · כ-${mins} דקות</small></div><div id="ftBody"></div></div>`);
   draw();
 }
+// a big task in small steps: each step a task of its own, linked to the big one (task/<id>), which stays as it is
+function splitSheet(t){
+  if(!t)return;
+  openSheet(`לחלק את "${esc(t.title)}"`,`<p class="cmdnote" style="font-size:14px">כתבו צעד בכל שורה. כל צעד יהיה משימה קטנה משלו, וכשכולם יסתיימו אפשר לסמן גם את הגדולה.</p>
+    <div class="fcbox">${[1,2,3,4].map(n=>`<label class="fcrow" for="spS${n}"><span class="col"><b>צעד ${n}</b></span><span class="fcin" style="width:100%"><input id="spS${n}" autocomplete="off" placeholder="${n===1?'למשל למדוד את הארון':''}"></span></label>`).join('')}</div>
+    <div class="tsrow" style="margin-top:12px"><div class="field"><label class="lbl" for="spMin">כמה זמן כל צעד</label><input class="in num" id="spMin" inputmode="numeric" value="30"></div></div>
+    <div class="actions"><button class="btn" id="spGo">יצירת הצעדים</button><button class="btn ghost" id="spNo">ביטול</button></div>`);
+  $('spNo').onclick=closeSheet;$('spS1').focus();
+  $('spGo').onclick=async()=>{const steps=[1,2,3,4].map(n=>$('spS'+n).value.trim()).filter(Boolean);if(!steps.length){$('spS1').focus();toast('כתבו לפחות צעד אחד');return}
+    const mins=parseAmt($('spMin').value)||30,now=Date.now();closeSheet();
+    const docs=steps.map((title,i)=>({title,owner:t.owner||'shared',status:'new',priority:t.priority||2,estimatedMinutes:mins,dueDate:t.dueDate||null,waitingReason:null,linkedEntity:'task/'+t.id,snoozedUntil:null,completedAt:null,createdAt:now+i,progressAt:now,by:S.uid||null}));
+    if(await store.addMany('tasks',docs)){await store.update('tasks',t.id,{progressAt:now});toast(`נוצרו ${docs.length} צעדים`)}};
+}
 // after repeated "later": what is in the way
 function blockerSheet(t){
   if(!t)return;
@@ -4409,7 +4458,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ---------- the look shared by every screen: who is here, and each screen's title line ---------- */
-const SG_ILL={task_overdue:'checklist',cal_conflict:'together',money_pace:'coins',savings_stale:'piggy',savings_due:'piggy',savings_missed:'piggy',baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
+const SG_ILL={task_split:'checklist',money_change:'coins',baby_gift:'crib',task_overdue:'checklist',cal_conflict:'together',money_pace:'coins',savings_stale:'piggy',savings_due:'piggy',savings_missed:'piggy',baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
 function renderHeads(){
   const ppl=S.people||{},who=Object.keys(ppl).filter(l=>l!=='updatedAt');
   const tone=n=>n==='יוסף'?'y':n==='תחיה'?'t':'s';
