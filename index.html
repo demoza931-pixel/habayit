@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' https://api.github.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://avatars.githubusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2C6B5E">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -964,7 +965,146 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   </form>
 </div>
 
-<script>
+<script>/* ---------- "מנהל הבית": suggestions from what the data already shows ----------
+   Pure functions, no DOM and no writes: the app hands in signals (facts it derived with its own
+   functions: free evenings, patterns due, open lists, the month's numbers) and gets back at most a
+   few ranked suggestions. Deterministic rules only, no language model.
+
+   Each suggestion has a stable id built from what it is about (type + the thing + the date it
+   concerns), so a dismissed or snoozed suggestion stays away until that id changes, i.e. until the
+   circumstances change. The score is the sum of named parts, each kept on the suggestion:
+     score = urgency + usefulness + confidence + timing - annoyance - duplication
+   Every action is "suggest" or "prepare" (a draft the user confirms). Nothing here runs by itself. */
+const AGENT = (() => {
+  const DAY = 864e5;
+  const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const daysBetween = (a, b) => Math.round((new Date(dayKey(b) + 'T00:00') - new Date(dayKey(a) + 'T00:00')) / DAY);
+  const HDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  const hm = t => { const d = new Date(t); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  const when = (now, t) => { const n = daysBetween(now, t); return n === 0 ? 'היום' : n === 1 ? 'מחר' : `ב${HDAYS[new Date(t).getDay()]}`; };
+
+  const make = (c, parts) => ({
+    secondaryActions: ['snooze', 'dismiss', 'explain'], status: 'active', ...c, parts,
+    score: parts.urgency + parts.usefulness + parts.confidence + parts.timing - parts.annoyance - parts.duplication,
+  });
+
+  /* signals (all optional; a missing one just means no suggestion of that kind):
+     now                 ms
+     freeEvenings        [{s, e}]   windows both are free (from the app's freeTogether), next days
+     patternsDue         [{who, title, next 'YYYY-MM-DD', time 'HH:MM', every, count, last}] nothing booked for them
+     busyDays            [{day 'YYYY-MM-DD', count}]
+     grocery             {open, total}           unchecked items and their known price
+     baby                {toBuy:[{id, name, price}], gifts, check}
+     money               {month, isCurrent, hasIncome, over:[{row, over}]}
+     history             {dismissedByType: {type: count in the last 30 days}} */
+  function candidates(sig) {
+    const now = sig.now, out = [], hour = new Date(now).getHours();
+    const annoy = type => 5 + 10 * (((sig.history || {}).dismissedByType || {})[type] || 0);
+    const soon = (sig.freeEvenings || []).filter(w => w.e > now && daysBetween(now, w.s) <= 3).sort((a, b) => a.s - b.s);
+    const g = sig.grocery || {};
+
+    // a long open shopping list and an evening free for both in the next two days
+    const gw = soon.find(w => daysBetween(now, w.s) <= 2);
+    if (g.open >= 5 && gw) out.push(make({
+      id: `grocery_run:${dayKey(gw.s)}`, type: 'grocery_run', domain: 'grocery', topic: `evening:${dayKey(gw.s)}`,
+      title: `נסגור קניות ${when(now, gw.s)}?`,
+      reason: `ברשימה ${g.open} מוצרים, ויש לכם ערב פנוי משותף מ-${hm(gw.s)}.`,
+      sourceRefs: ['grocery', `calendar:${dayKey(gw.s)}`], validUntil: gw.e,
+      primaryAction: { type: 'open_tab', tab: 'shop', label: 'לרשימה' },
+    }, { urgency: 15, usefulness: 25, confidence: 25, timing: hour < 18 ? 10 : 0, annoyance: annoy('grocery_run'), duplication: 0 }));
+
+    // an evening free for both: offer to keep it
+    const fw = soon[0];
+    if (fw) out.push(make({
+      id: `free_evening:${dayKey(fw.s)}`, type: 'free_evening', domain: 'calendar', topic: `evening:${dayKey(fw.s)}`,
+      title: `${when(now, fw.s)} יש לכם ערב פנוי. לשמור זמן משותף?`,
+      reason: `אין לאף אחד מכם אירוע מ-${hm(fw.s)} עד ${hm(fw.e)}.`,
+      sourceRefs: [`calendar:${dayKey(fw.s)}`], validUntil: fw.e,
+      primaryAction: { type: 'prepare_event', text: `ערב ביחד ${new Date(fw.s).getDate()}/${new Date(fw.s).getMonth() + 1} ${hm(fw.s)}`, target: 'shared', label: 'להכין אירוע' },
+    }, { urgency: daysBetween(now, fw.s) === 0 ? 20 : daysBetween(now, fw.s) === 1 ? 15 : 10, usefulness: 15, confidence: 30, timing: hour < 18 ? 10 : 0, annoyance: annoy('free_evening'), duplication: 0 }));
+
+    // something that repeats (a haircut every ~2 weeks) is due and nothing is booked
+    (sig.patternsDue || []).forEach(p => {
+      const due = new Date(p.next + 'T00:00').getTime(), late = daysBetween(due, now);
+      const d = late > 0 ? now : due;
+      out.push(make({
+        id: `pattern_due:${p.who}:${p.title}:${p.next}`, type: 'pattern_due', domain: 'calendar', topic: `pattern:${p.who}:${p.title}`,
+        title: `${p.title}: הגיע הזמן לקבוע?`,
+        reason: `בשנה האחרונה בערך כל ${p.every} ימים (${p.count} פעמים)${late > 0 ? `, ועבר כבר ${late} ימים מהמועד הרגיל` : ''}.`,
+        sourceRefs: [`pattern:${p.who}:${p.title}`], validUntil: null,
+        primaryAction: { type: 'prepare_event', text: `${p.title} ${new Date(d).getDate()}/${new Date(d).getMonth() + 1} ${p.time}`, target: p.who, label: 'להכין אירוע' },
+      }, { urgency: late > 0 ? 25 : 15, usefulness: 20, confidence: Math.min(30, (p.count || 0) * 3), timing: 5, annoyance: annoy('pattern_due'), duplication: 0 }));
+    });
+
+    // a crowded day ahead
+    (sig.busyDays || []).filter(b => b.count >= 4 && daysBetween(now, b.day + 'T12:00') >= 0 && daysBetween(now, b.day + 'T12:00') <= 3).forEach(b => out.push(make({
+      id: `busy_day:${b.day}`, type: 'busy_day', domain: 'calendar', topic: `day:${b.day}`,
+      title: `${when(now, new Date(b.day + 'T12:00').getTime())} עמוס: ${b.count} אירועים`,
+      reason: 'כדאי לבדוק אם משהו יכול לעבור ליום אחר.',
+      sourceRefs: [`calendar:${b.day}`], validUntil: new Date(b.day + 'T23:59').getTime(),
+      primaryAction: { type: 'open_tab', tab: 'cal', day: b.day, label: 'ללו"ז של היום' },
+    }, { urgency: 20, usefulness: 15, confidence: 30, timing: 5, annoyance: annoy('busy_day'), duplication: 0 })));
+
+    // baby things still to buy
+    const bb = sig.baby || {};
+    if ((bb.toBuy || []).length) {
+      const n = bb.toBuy.length, first = bb.toBuy.slice(0, 2).map(b => b.name).join(', ');
+      out.push(make({
+        id: `baby_buy:${n}`, type: 'baby_buy', domain: 'baby', topic: 'baby',
+        title: `נשארו ${n} פריטים לקנות לתינוק`,
+        reason: `למשל ${first}${n > 2 ? ` ועוד ${n - 2}` : ''}.`,
+        sourceRefs: bb.toBuy.map(b => `baby:${b.id}`), validUntil: null,
+        primaryAction: { type: 'open_tab', tab: 'baby', label: 'לרשימה' },
+      }, { urgency: 10, usefulness: 20, confidence: 30, timing: 5, annoyance: annoy('baby_buy'), duplication: 0 }));
+    }
+
+    // money: a list over its frame, or no income so the month cannot be computed
+    const m = sig.money || {};
+    if (m.isCurrent && !m.hasIncome) out.push(make({
+      id: `money_no_income:${m.month}`, type: 'money_no_income', domain: 'money', topic: 'money',
+      title: 'אין הכנסה רשומה לחודש הזה',
+      reason: 'בלי הכנסה אי אפשר לחשב את התזרים. אפשר להוסיף אותה בגיליון או באפליקציה.',
+      sourceRefs: [`months:${m.month}`], validUntil: null,
+      primaryAction: { type: 'open_tab', tab: 'home', label: 'לתזרים' },
+    }, { urgency: 15, usefulness: 15, confidence: 35, timing: 5, annoyance: annoy('money_no_income'), duplication: 0 }));
+    (m.over || []).forEach(o => out.push(make({
+      id: `money_over:${m.month}:${o.row}`, type: 'money_over', domain: 'money', topic: 'money',
+      title: `"${o.row}" עברה את המסגרת`,
+      reason: `לפי הפירוט שנרשם, ${o.over.toLocaleString('he-IL')} ₪ מעל הסכום בשורה.`,
+      sourceRefs: [`months:${m.month}`, `variable:${m.month}:${o.row}`], validUntil: null,
+      primaryAction: { type: 'open_tab', tab: 'home', row: o.row, label: 'לפירוט' },
+    }, { urgency: 20, usefulness: 20, confidence: 30, timing: 5, annoyance: annoy('money_over'), duplication: 0 })));
+
+    return out;
+  }
+
+  /* prefs = {sugg: {id: {state: 'dismissed'|'snoozed'|'done', until?}}, mutedTypes: {type: true}} */
+  function rank(cands, prefs, now, limit = 2) {
+    const sugg = (prefs && prefs.sugg) || {}, muted = (prefs && prefs.mutedTypes) || {};
+    const live = cands.filter(c => {
+      if (muted[c.type]) return false;
+      if (c.validUntil && c.validUntil < now) return false;
+      const p = sugg[c.id];
+      if (!p) return true;
+      if (p.state === 'snoozed') return !(p.until > now);
+      return false; // dismissed or done: gone until the id changes
+    });
+    // one suggestion per topic: the best one stays, the others are counted on it
+    const byTopic = new Map();
+    live.forEach(c => {
+      const best = byTopic.get(c.topic);
+      if (!best || c.score > best.score || (c.score === best.score && c.id < best.id)) byTopic.set(c.topic, { ...c, merged: (best ? [best.id, ...(best.merged || [])] : []) });
+      else best.merged = [...(best.merged || []), c.id];
+    });
+    return [...byTopic.values()].sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : 1)).slice(0, limit);
+  }
+
+  const suggest = (sig, prefs, limit = 2) => rank(candidates(sig), prefs, sig.now, limit);
+  return { candidates, rank, suggest, dayKey, daysBetween };
+})();
+if (typeof module !== 'undefined') module.exports = AGENT;
+
+
 const VAR_ROW='הוצאות משתנות';
 // Display names only; the stored name stays as written in the sheet so the sheet comparison keeps matching
 const DISPLAY_NAMES={};
@@ -972,7 +1112,7 @@ const label=n=>DISPLAY_NAMES[n]||n;
 const STATUSES=[{k:'לקנות',c:'st-buy',m:'●'},{k:'נקנה',c:'st-done',m:'✓'},{k:'לקבל',c:'st-gift',m:'◆'},{k:'לבדוק',c:'st-check',m:'?'},{k:'לא חובה',c:'st-opt',m:'○'}];
 const BABY_CATS=['','שינה וריהוט','עגלה ורכב','האכלה','הנקה','טיפול והחתלה','בגדים וטקסטיל','כביסה ומתכלים','משחק והתפתחות'];
 
-const S={bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -1111,7 +1251,8 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(navInd);
    Reads poll the branch head (cheap, conditional) and reload files only when it changed.
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
-const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq'];
+// tasks and prefs (feedback on suggestions) are new and live in the app's data only; a missing file reads as empty
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -1211,6 +1352,7 @@ function noteFor(op,col,id,data){
     if(d.op==='delete')return `נמחק אירוע ${where.replace('ל','מה',1)}: ${d.title||'אירוע'}`;
     const s=new Date(d.start);return `נוסף ${where}: ${d.title} · ${['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'][s.getDay()]} ${s.getDate()}/${s.getMonth()+1}${d.allDay?'':' '+s.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}`}
   if(col==='holdings')return `עודכן בחיסכון: ${d.name||(prev&&prev.name)||''}`;
+  // tasks and prefs: no push for now (a suggestion or a dismissal is not news; section 3.2 of the spec)
   return null;
 }
 function monthNote(k,next){
@@ -1497,6 +1639,7 @@ $('lgForm').onsubmit=async e=>{e.preventDefault();const t=$('lgToken').value.tri
 $('logoutBtn').onclick=()=>logout('התנתקתם. כדי להיכנס שוב, הדביקו את המפתח.');
 
 /* ---------- calculations ---------- */
+// @rules:begin - the money rules (rows marked * and cash are not counted); tests/rules.test.js loads this region
 function calc(k){
   const m=S.months[k];if(!m)return null;
   const rows=m.rows||[];
@@ -1513,6 +1656,7 @@ const foodRow=k=>{const rs=((S.months||{})[k||S.month]||{}).rows||[];return rs.s
 const listRows=()=>[VAR_ROW,'קניות/פארם',foodRow(),CASH];
 const varSum=vs=>vs.filter(x=>!x.star).reduce((t,x)=>t+(Number(x.amount)||0),0);
 const monthVar=(k,row)=>S.variable.filter(v=>v.month===k&&(v.row||VAR_ROW)===row).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+// @rules:end
 
 /* ---------- render ---------- */
 function renderAll(){$('mLabel').textContent=monthLabel(S.month);renderHome();renderBaby();renderShop();renderSav();renderIns();renderCal();fillAvatars();runCounters();navInd();chrome()}
@@ -1606,11 +1750,13 @@ function rowTrend(r){
   const pm=S.months[shiftMonth(S.month,-1)],pr=pm&&(pm.rows||[]).find(x=>x.name===r.name);
   return pr&&!pr.star?trendChip(Number(r.amount),has(pr.amount)?Number(pr.amount):null,r.group==='חסכונות'):'';
 }
+// @rules:begin
 function listInfo(rn,c){
   const vs=monthVar(S.month,rn),sum=varSum(vs),starSum=vs.filter(x=>x.star).reduce((t,x)=>t+(Number(x.amount)||0),0);
   const row=c&&c.rows.find(r=>r.name===rn),rv=row&&has(row.amount)?Number(row.amount):null;
   return {vs,sum,starSum,rv,over:rv!==null&&sum>rv};
 }
+// @rules:end
 // the month tab is where the lists live now; the handlers that changed a list re-draw it through here
 function renderExp(){renderHome()}
 function cashHtml(){
@@ -2305,6 +2451,7 @@ function calEvents(){
   const gone=new Set((S.calreq||[]).filter(r=>r.op==='delete').map(r=>r.eventId));
   return ev.filter(e=>!gone.has(e.id)).sort((a,b)=>a.s-b.s);
 }
+// @cal:begin - who is busy when, evenings free for both; tests/rules.test.js loads this region
 function onDay(evs,day){const a=new Date(day);a.setHours(0,0,0,0);const b=new Date(a);b.setDate(b.getDate()+1);return evs.filter(e=>e.s<b&&e.e>a)}
 // busy minutes of one person that day between 07:00 and 23:00 (all-day events such as birthdays do not count)
 function busy(evs,who,day){
@@ -2318,6 +2465,7 @@ function freeTogether(evs,day,from=18,to=23,min=90){
   if(+b-t>=min*6e4)out.push([t,+b]);
   return out.filter(([s,e])=>e-s>=min*6e4&&s>=+a);
 }
+// @cal:end
 // the assistant: plain rules over the week, each card says what it found and what to do
 function assistant(evs,w0){
   const cards=[],days=[...Array(7)].map((_,i)=>{const d=new Date(w0);d.setDate(d.getDate()+i);return d});
