@@ -5,6 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' https://api.github.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://avatars.githubusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2C6B5E">
+<script>try{var t=localStorage.getItem('hb_theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="הבית שלנו">
@@ -457,6 +458,7 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 .who-y{background:#2C6B5E}.who-t{background:#9B5BA5}.who-s{background:#D9774B}
 :root{--who-y:#2C6B5E;--who-t:#9B5BA5;--who-s:#D9774B}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--who-y:#72C2AC;--who-t:#C997D1;--who-s:#E39A64}}
+:root[data-theme="dark"]{--who-y:#72C2AC;--who-t:#C997D1;--who-s:#E39A64}
 .qadd{display:flex;gap:8px}.qadd .in{height:50px;border-radius:var(--r-btn);background:var(--surface);font-size:15px}
 .qprev{min-height:1.2em;color:var(--ink-2);padding:0 4px}.qprev b{color:var(--accent)}
 .dayview{padding:12px}
@@ -511,6 +513,9 @@ nav.tabs button[data-tab="baby"][aria-current="page"] .pillwrap{background:var(-
 /* the shared look (from the design): soft cards, big titles, letters for the two of you, illustrations */
 .card{border-radius:20px;box-shadow:0 1px 2px rgba(30,41,37,.04),0 6px 18px rgba(30,41,37,.05)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .card{box-shadow:none}}
+:root[data-theme="dark"] .card{box-shadow:none}
+.themerow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:8px;padding:12px 14px;border-radius:var(--r-card);background:var(--surface);border:1px solid var(--line)}
+.themerow .col{display:flex;flex-direction:column;gap:2px}.themerow .chips{flex-wrap:nowrap}.themerow .chip{min-height:38px;padding:0 12px;font-size:14px}
 .hwho{display:flex;align-items:center}
 header.top:not(.nomonth) .hwho{display:none}
 /* where there is no month picker it takes no room, so the letters fit next to the bell */
@@ -1173,6 +1178,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
     <h2 class="sec" style="margin-top:8px">ההעדפות שלכם</h2>
     <button class="bare card lrncard" data-learned><b>מה האפליקציה למדה עלינו</b><span class="small muted">הצעות שהסתרתם, סוגי הצעות, מוצרים קבועים, וכמה האפליקציה עושה לבד. אפשר לשנות ולמחוק כל דבר.</span></button>
     <div class="pinrow" id="pinRow"></div>
+    <div class="themerow" id="themeRow"></div>
     <form class="field" id="nickForm" style="margin-top:8px"><label class="lbl" for="nickIn">השם שלי בהתראות</label><div class="addline"><input class="in" id="nickIn" maxlength="20" autocomplete="off" placeholder="השם שבן/בת הזוג יראו"><button class="btn" type="submit">שמירה</button></div></form>
     <h2 class="sec" style="margin-top:8px">סנכרון עם הגיליון</h2>
     <section class="card synclog" id="syncLog"></section>
@@ -1735,6 +1741,17 @@ const label=n=>DISPLAY_NAMES[n]||n;
 const STATUSES=[{k:'לקנות',c:'st-buy',m:'●'},{k:'נקנה',c:'st-done',m:'✓'},{k:'לקבל',c:'st-gift',m:'◆'},{k:'לבדוק',c:'st-check',m:'?'},{k:'לא חובה',c:'st-opt',m:'○'}];
 const BABY_CATS=['','שינה וריהוט','עגלה ורכב','האכלה','הנקה','טיפול והחתלה','בגדים וטקסטיל','כביסה ומתכלים','משחק והתפתחות'];
 
+/* day / night: automatic follows the phone; a choice is kept on this phone only (hb_theme) */
+const THEME_HE={auto:'אוטומטי',light:'יום',dark:'לילה'};
+const themeGet=()=>{try{const t=localStorage.getItem('hb_theme');return t==='light'||t==='dark'?t:'auto'}catch(e){return 'auto'}};
+function themeApply(t){const r=document.documentElement;if(t==='auto')delete r.dataset.theme;else r.dataset.theme=t;
+  const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches),m=document.querySelector('meta[name="theme-color"]');if(m)m.content=dark?'#111715':'#2C6B5E'}
+function themeRow(){const el=document.getElementById('themeRow');if(!el)return;const t=themeGet();
+  el.innerHTML=`<span class="col"><span class="lbl">מצב תצוגה</span><span class="small muted">${t==='auto'?'לפי הגדרת הטלפון':'נשמר בטלפון הזה'}</span></span><div class="chips" role="radiogroup" aria-label="מצב תצוגה">${Object.entries(THEME_HE).map(([k,v])=>`<button type="button" class="chip" role="radio" data-theme-set="${k}" aria-checked="${t===k}">${v}</button>`).join('')}</div>`}
+themeApply(themeGet());
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themeGet()==='auto')themeApply('auto')});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]');if(!b)return;const t=b.dataset.themeSet;
+  try{t==='auto'?localStorage.removeItem('hb_theme'):localStorage.setItem('hb_theme',t)}catch(_){}themeApply(t);themeRow()});
 const S={deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -2298,7 +2315,7 @@ const monthVar=(k,row)=>S.variable.filter(v=>v.month===k&&(v.row||VAR_ROW)===row
 // @rules:end
 
 /* ---------- render ---------- */
-function renderAll(){$('mLabel').textContent=monthLabel(S.month);renderHome();renderBaby();renderShop();renderSav();renderIns();renderCal();renderToday();renderHeads();fillAvatars();runCounters();navInd();chrome()}
+function renderAll(){themeRow();$('mLabel').textContent=monthLabel(S.month);renderHome();renderBaby();renderShop();renderSav();renderIns();renderCal();renderToday();renderHeads();fillAvatars();runCounters();navInd();chrome()}
 const listNames=()=>[VAR_ROW,'קניות/פארם',foodRow()];
 function rowHtml(r,i){
   const amt=has(r.amount)?`<span class="amt num${r.star?' mute':''}">${ils(r.amount)}</span>`:`<span class="amt mute">${r.star?'*':'—'}</span>`;
