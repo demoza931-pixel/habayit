@@ -679,6 +679,10 @@ body.noscroll{overflow:hidden}
 .sgcard{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-hero);background:var(--accent-soft);border:1px solid transparent}
 .sgcard.second{background:var(--surface);border-color:var(--line);padding:12px 14px;gap:6px}.sgcard.second .sgt{font-size:15px}
 .sgcard.calm{background:var(--surface);border-color:var(--line)}
+.sgwrap{display:flex;flex-direction:column;gap:10px}
+.sgfold{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 14px;border-radius:var(--r-card);background:var(--accent-soft)}
+.sgfold .sgtag{font-size:14px;padding:4px 12px}.sgfold .chev{display:inline-flex;color:var(--accent)}.sgfold .chev svg{width:18px;height:18px}
+.sgcards{display:flex;flex-direction:column;gap:10px}.sgcards .sgcard .sgtag{display:none}
 .sgtag{align-self:flex-start;font-weight:700;font-size:12px;color:var(--accent);background:var(--surface);border-radius:999px;padding:3px 10px}
 .sgt{font-size:18px;line-height:1.3}.sgr{font-size:14px;color:var(--ink-2)}
 .sgacts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}.sgacts .btn{min-height:44px}
@@ -2344,7 +2348,7 @@ function renderBaby(){
   if(!total){['bSugg','bChips','bBudget'].forEach(id=>$(id).innerHTML='');$('bNext').innerHTML='<div class="emptyline" style="border-top:0">הרשימה ריקה. הוסיפו את הפריט הראשון.</div><button class="bare badd" data-badd>+ פריט</button>';return}
   // one suggestion about the baby list
   const sg=suggestions(12).find(c=>c.domain==='baby');
-  $('bSugg').innerHTML=sg?sgCard(sg,true):'';
+  $('bSugg').innerHTML=sgFold('baby',sg?[sg]:[]);
   // counts per status, a tap shows that status below
   if(!S.bFilter)S.bFilter='לקנות';
   $('bChips').innerHTML=B_CHIP.map(c=>{const n=by(c.k).length;return `<button class="bare bchip${c.quiet?' quiet':''} ${c.k==='לקנות'?'g':c.k==='לבדוק'?'y':c.k==='לקבל'?'p':''}" role="tab" data-bfilter="${c.k}" aria-selected="${S.bFilter===c.k}">${c.ic?`<svg viewBox="0 0 24 24" aria-hidden="true">${B_IC[c.ic]}</svg>`:''}<span>${c.t}</span><b class="num">${n}</b></button>`}).join('');
@@ -3227,7 +3231,7 @@ function renderCal(){
       :`<button class="bare aitem empty" data-caladd><span class="col"><b>אין כלום ביום הזה</b><small>נגיעה כדי להוסיף אירוע</small></span></button>`);
   // the best suggestion about time (calendar or a task), and the tasks that still need a time
   const cs=suggestions(8).find(c=>c.domain==='calendar'||c.domain==='tasks');
-  $('calSuggest').innerHTML=cs?sgCard(cs,true):'';
+  $('calSuggest').innerHTML=sgFold('cal',cs?[cs]:[]);
   const plan=S.tasks.filter(t=>['new','planned','waiting'].includes(t.status)&&!(t.snoozedUntil>Date.now())).sort((a,b)=>(a.priority||2)-(b.priority||2)||(a.createdAt||0)-(b.createdAt||0)).slice(0,4);
   $('calPlan').hidden=!plan.length;
   $('calPlan').innerHTML=plan.length?`<div class="dv-hd"><span class="dvic" aria-hidden="true">${evIcon('bulb')}</span><span class="col"><b>כדאי לשבץ</b><small class="muted">משימות שעוד אין להן זמן ביומן</small></span></div>`+
@@ -3405,6 +3409,14 @@ function agentPrefs(){const sugg={},mutedTypes={};S.prefs.forEach(p=>{if(p.kind=
 const DEMO_SIG=now=>({now,freeEvenings:[{s:now+8*36e5,e:now+12*36e5}],grocery:{open:9},baby:{toBuy:[{id:'d1',name:'מנשא'},{id:'d2',name:'מוניטור'},{id:'d3',name:'שידה'}]},money:{}});
 function suggestions(limit=2){const now=Date.now();return AGENT.suggest(FLAGS.demo?DEMO_SIG(now):agentSignals(now),agentPrefs(),limit).filter(c=>!S.sgHide[c.id])}
 const PART_HE={urgency:'דחיפות',usefulness:'תועלת',confidence:'ביטחון בנתונים',timing:'תזמון',annoyance:'הפרעה',duplication:'כפילות'};
+// suggestions start folded into one line ("הצעה בשבילכם"); a tap opens them (per screen, until the app is closed)
+function sgFold(key,list){
+  if(!list.length)return '';const open=!!(S.sgOpen||{})[key];
+  return `<div class="sgwrap${open?' open':''}"><button class="bare sgfold" data-sgfold="${key}" aria-expanded="${open}"><span class="sgtag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>${list.length>1?list.length+' הצעות בשבילכם':'הצעה בשבילכם'}</span><span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></button>
+    ${open?`<div class="sgcards">${list.map((c,i)=>sgCard(c,i===0)).join('')}</div>`:''}</div>`;
+}
+document.addEventListener('click',e=>{const f=e.target.closest('[data-sgfold]');if(!f)return;const k=f.dataset.sgfold;S.sgOpen=S.sgOpen||{};S.sgOpen[k]=!S.sgOpen[k];
+  ({today:renderToday,baby:renderBaby,cal:renderCal})[k]();const w=document.querySelector(`[data-sgfold="${k}"]`);if(S.sgOpen[k]&&w)popIn(w.parentNode.querySelectorAll('.sgcard'))});
 function sgCard(c,main){
   const why=S.sgWhy===c.id;
   const ill=main&&SG_ILL[c.type];
@@ -3425,7 +3437,7 @@ function renderToday(){
   // the suggestion (at most one big, one small)
   const sg=suggestions();
   const undo=S.sgUndo?`<div class="sgundo" role="status"><span>${esc(S.sgUndo.text)}</span><button class="bare link" data-sgundo>ביטול</button></div>`:'';
-  $('tdSugg').innerHTML=undo+(sg.length?sgCard(sg[0],true)+(sg[1]?sgCard(sg[1],false):''):(undo?'':`<div class="sgcard calm"><b class="sgt">אין כרגע מה לקדם</b><span class="sgr">כשיהיה משהו שכדאי לטפל בו, הוא יופיע כאן.</span></div>`));
+  $('tdSugg').innerHTML=undo+sgFold('today',sg);
   // events: today (and tomorrow morning) or the week, at most three; a suggested event shows dashed
   document.querySelectorAll('[data-tdrange]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tdrange===S.tdRange));
   $('tdEvTitle').textContent=S.tdRange==='week'?'השבוע שלכם':'היום שלכם';
