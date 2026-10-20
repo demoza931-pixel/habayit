@@ -695,6 +695,43 @@ body.noscroll{overflow:hidden}
 .sgwhy{align-self:flex-start;font-size:13px;min-height:32px}
 .sgwhybox{display:flex;flex-direction:column;gap:6px;font-size:13px;padding:10px 12px;border-radius:12px;background:var(--surface)}
 .sgparts{display:flex;flex-wrap:wrap;gap:6px}.sgparts i{font-style:normal;padding:2px 8px;border-radius:999px;background:var(--surface-2);font-size:12px}
+.mhhead{align-items:flex-end}.mhgreet{font-size:13px;color:var(--ink-2);font-weight:600}.mhill{width:150px;height:auto;max-height:96px;object-fit:contain;flex:none}
+@media (max-width:370px){.mhill{width:116px}}
+.mhcmd{padding:8px;border-radius:22px;min-height:64px;box-shadow:0 1px 2px rgba(30,41,37,.04),0 6px 18px rgba(30,41,37,.05)}
+.mhcmd input{font-size:16px;padding:10px 4px}
+.mhcmd .mhgo{width:32px;height:32px;background:none}.mhcmd .mhgo svg{stroke:var(--ink-2)}
+.cmdbar.mhcmd .cmdmic{width:52px;height:52px;background:var(--accent)}.cmdbar.mhcmd .cmdmic svg{width:22px;height:22px;stroke:#fff}.cmdbar.mhcmd .cmdmic.rec{background:var(--neg,#c0392b)}
+.mhquick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.mhq{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:84px;padding:10px 4px;border-radius:18px;font-size:13px;font-weight:700;color:var(--ink);text-align:center;line-height:1.2}
+.mhq span{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.55)}
+.mhq svg{width:22px;height:22px;fill:none;stroke:var(--qc);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mhq.t-mint{background:var(--accent-soft);--qc:var(--accent)}.mhq.t-peach{background:var(--clay-soft);--qc:var(--clay)}.mhq.t-lil{background:color-mix(in srgb,var(--who-t) 18%,var(--surface));--qc:var(--who-t)}.mhq.t-sage{background:color-mix(in srgb,var(--seg-flow) 22%,var(--surface));--qc:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.mhq{transition:transform .12s}.mhq:active{transform:scale(.96)}}
+.mhsec{margin:6px 0 -2px;font-size:20px}#t-today .tdsec .sec{font-size:20px}
+.mhcard{display:flex;flex-direction:column;gap:12px;padding:16px;position:relative}.mhcard+.mhcard{margin-top:12px}
+.mhtop{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start}
+.mhcill{width:84px;height:84px;object-fit:contain}
+.mhtop .col{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mhtag{align-self:flex-start;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.mhtag.t-sav,.mhtag.t-money{background:var(--neg-soft);color:var(--neg-ink,var(--neg))}.mhtag.t-baby{background:color-mix(in srgb,var(--who-t) 18%,var(--surface));color:var(--who-t)}.mhtag.t-shop{background:var(--clay-soft);color:var(--clay)}
+.mht{font:800 18px/1.3 var(--font-display)}.mhmeta{display:flex;align-items:flex-start;gap:6px;font-size:13px;color:var(--ink-2)}
+.mhi{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
+.mhkebab{width:32px;height:32px;display:grid;place-items:center;color:var(--ink-2);border-radius:50%}.mhkebab .mhi{fill:currentColor;stroke:none;width:18px;height:18px;margin:0}
+.mhmenu{position:absolute;top:48px;inset-inline-end:14px;z-index:3;display:flex;flex-direction:column;min-width:200px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--lift);overflow:hidden}
+.mhmenu button{padding:12px 14px;text-align:start;font-size:14px;border-top:1px solid var(--line)}.mhmenu button:first-child{border-top:0}
+.mhacts{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center}.mhacts .btn{min-height:46px;font-size:15px;padding:0 10px}.mhwhy{font-size:13px;white-space:nowrap}
+.mhcard.calm{background:var(--surface)}
+.mhlist{display:flex;flex-direction:column;gap:10px}
+.mhrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:12px;width:100%;padding:12px 14px;text-align:start}
+div.mhrow{grid-template-columns:auto minmax(0,1fr)}
+.mhrow .col{min-width:0}.mhrow b{display:block;font-size:15px}.mhrow small{display:block;font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mhric{width:42px;height:42px;border-radius:50%;display:grid;place-items:center}.mhric .mhi{width:20px;height:20px;margin:0}
+.mhric.t-lil{background:color-mix(in srgb,var(--who-t) 16%,var(--surface));color:var(--who-t)}.mhric.t-mint{background:var(--accent-soft);color:var(--accent)}
+.mhchip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}.mhchip i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.mhchip.t-lil{background:color-mix(in srgb,var(--who-t) 14%,var(--surface));color:var(--who-t)}.mhchip.t-mint{background:var(--accent-soft);color:var(--accent)}
+.mhrow .chev{display:inline-flex;color:var(--ink-2)}.mhrow .chev svg{width:14px;height:14px}
+.mhlearn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:8px;font-size:14px;color:var(--ink-2)}.mhlearn svg{width:16px;height:16px;fill:#E9B949}
+@media (max-width:370px){.mhq{font-size:12px;min-height:76px}.mhcill{width:64px;height:64px}.mht{font-size:16px}.mhacts{grid-template-columns:1fr 1fr}.mhwhy{grid-column:1/-1;justify-self:start}}
 .cmdbar{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 6px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .cmdbar>svg{width:20px;height:20px;flex:none;fill:var(--accent);margin-inline-start:6px}
 .cmdbar input{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:15px;color:var(--ink);padding:8px 0;outline:none}
@@ -1118,17 +1155,25 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   <!-- MONTH -->
   <!-- TODAY: "היום שלנו" -->
   <section class="tab" id="t-today" hidden>
-    <div class="tdhead"><div class="col"><b id="tdGreet" class="ptitle"></b><small id="tdDate" class="muted"></small></div></div>
-    <form class="cmdbar" id="cmdForm" autocomplete="off"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>
-      <input id="cmdText" enterkeyhint="send" placeholder="מה לעשות? למשל: קנינו שידה ב-1,400" aria-label="מה לעשות"><button type="button" class="bare cmdmic" id="cmdMic" aria-label="אמירה בקול" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button><button class="bare" id="cmdGo" aria-label="המשך"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button></form>
+    <div class="phead mhhead"><div class="col"><small id="tdGreet" class="mhgreet"></small><h1 class="ptitle">מנהל הבית</h1><small class="psub">מה אפשר להוריד לכם מהראש?</small><small id="tdDate" hidden></small></div><img class="ill mhill" src="img/house.png" alt="" aria-hidden="true"></div>
+    <form class="cmdbar mhcmd" id="cmdForm" autocomplete="off"><button class="bare mhgo" id="cmdGo" aria-label="המשך"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <input id="cmdText" enterkeyhint="send" placeholder="כתבו או אמרו מה צריך לעשות…" aria-label="מה צריך לעשות"><button type="button" class="bare cmdmic" id="cmdMic" aria-label="אמירה בקול" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></form>
     <div id="cmdUndo"></div>
+    <div class="mhquick">
+      <button class="bare mhq t-mint" data-mhq="shop"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1.6 9H5.6zM8 10l4-6 4 6M9 14v2M12 14v2M15 14v2"/></svg></span>הכינו קניות</button>
+      <button class="bare mhq t-peach" data-mhq="buy"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg></span>בדקו רכישה</button>
+      <button class="bare mhq t-lil" data-mhq="time"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>מצאו זמן</button>
+      <button class="bare mhq t-sage" data-mhq="week"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg></span>סדרו את השבוע</button>
+    </div>
+    <h2 class="sec mhsec">עכשיו</h2>
     <div id="tdSugg"></div>
+    <div id="tdWaitWrap" hidden><h2 class="sec mhsec">מחכה לתשובה</h2><div id="tdWait" class="mhlist"></div></div>
     <div class="tdsec"><h2 class="sec" id="tdEvTitle">היום שלכם</h2><div class="tdrange" role="group" aria-label="טווח"><button class="bare" data-tdrange="day">היום</button><button class="bare" data-tdrange="week">השבוע</button></div></div>
     <section class="card tdlist" id="tdEvents"></section>
     <div class="tdsec"><h2 class="sec">מקדמים יחד</h2><button class="bare link" data-tdtask="new">+ משימה</button></div>
     <section class="card tdlist" id="tdTasks"></section>
-    <div class="tdstatus" id="tdStatus"></div>
-    <button class="bare link tdlearn" data-learned>מה האפליקציה למדה עלינו</button>
+    <div id="tdDoneWrap" hidden><h2 class="sec mhsec">בוצע לאחרונה</h2><div id="tdDone" class="mhlist"></div></div>
+    <button class="bare mhlearn" data-learned><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>מה האפליקציה למדה עלינו<span aria-hidden="true">‹</span></button>
   </section>
 
   <section class="tab" id="t-home">
@@ -1971,7 +2016,7 @@ const FAB_PLUS='<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M
 const FAB_CART='<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>';
 function chrome(){
   const f=$('fab');
-  if(f){f.classList.toggle('away',S.tab==='shop');
+  if(f){f.classList.toggle('away',S.tab==='shop'||S.tab==='today'); // the home screen has its own line and quick actions
     // on כסף the round button opens the shopping list (with how many items are on it)
     const cart=S.tab==='home',n=cart?openGrocery().length:0;
     if(f.dataset.mode!==(cart?'cart':'plus')){f.dataset.mode=cart?'cart':'plus';f.innerHTML=(cart?FAB_CART:FAB_PLUS)+'<span class="fabn num" hidden></span>';f.classList.toggle('cart',cart)}
@@ -3904,6 +3949,90 @@ function sgCard(c,main){
       <span class="sgparts num">${Object.entries(c.parts).map(([k,v])=>`<i>${PART_HE[k]} ${k==='annoyance'||k==='duplication'?'−':''}${v}</i>`).join('')}<i><b>ציון ${c.score}</b></i></span></div>`:''}
   </article>`;
 }
+/* ---------- "מנהל הבית": the home screen's cards, what is waiting for an answer, what was done lately, quick actions ---------- */
+const MH_DOM={calendar:['לו"ז','cal'],tasks:['משימות','task'],baby:['תינוק','baby'],money:['כסף','money'],savings:['חיסכון','sav'],grocery:['קניות','shop']};
+const MH_IC={cal:'<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',coin:'<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1.1 1.6 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6.5v11"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',truck:'<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+  check:'<path d="m5 12 5 5 9-10"/>',basket:'<path d="M4 10h16l-1.6 9H5.6zM8 10l4-6 4 6M9 14v2M12 14v2M15 14v2"/>',cart:'<path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>',
+  list:'<path d="M5 7h14M5 12h14M5 17h9"/>',dots:'<circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>'};
+const mhI=(k,cls='')=>`<svg class="mhi ${cls}" viewBox="0 0 24 24" aria-hidden="true">${MH_IC[k]}</svg>`;
+const agoHe=t=>{const m=Math.floor((Date.now()-t)/6e4);return m<2?'עכשיו':m<60?`לפני ${m} דקות`:m<120?'לפני שעה':m<1440?`לפני ${Math.floor(m/60)} שעות`:m<2880?'אתמול':`לפני ${Math.floor(m/1440)} ימים`};
+function mhCard(c){
+  const [tag,tone]=MH_DOM[c.domain]||['הצעה','task'],ill=SG_ILL[c.type],why=S.sgWhy===c.id,menu=S.sgMenu===c.id,dep=c.primaryAction.type==='deposit';
+  const icon=['savings','money','baby'].includes(c.domain)?'coin':'cal';
+  const acts=dep?`<button class="btn" data-svok="${esc(c.primaryAction.hid)}|${esc(c.primaryAction.month)}">אישור</button><button class="btn ghost" data-svedit="${esc(c.primaryAction.hid)}|${esc(c.primaryAction.month)}">עריכה</button>`
+    :`<button class="btn" data-sgdo="${esc(c.id)}">${esc(c.primaryAction.label||'בואו נעשה את זה')}</button><button class="btn ghost" data-sglater="${esc(c.id)}">אחר כך</button>`;
+  return `<article class="card mhcard" data-sid="${esc(c.id)}">
+    <div class="mhtop">${ill?`<img class="ill mhcill" src="img/${ill}.png" alt="" aria-hidden="true">`:''}
+      <div class="col"><span class="mhtag t-${tone}">${tag}</span><b class="mht">${esc(c.title)}</b><span class="mhmeta">${mhI(icon)}<span>${esc(c.reason)}</span></span></div>
+      <button class="bare mhkebab" data-sgmenu="${esc(c.id)}" aria-label="עוד אפשרויות" aria-expanded="${menu}">${mhI('dots')}</button></div>
+    ${menu?`<div class="mhmenu" role="menu"><button class="bare" role="menuitem" data-sgno="${esc(c.id)}">לא רלוונטי</button><button class="bare" role="menuitem" data-sgmute="${esc(c.type)}">לא להציע דברים כאלה</button><button class="bare" role="menuitem" data-learned>מה האפליקציה למדה עלינו</button></div>`:''}
+    <div class="mhacts">${acts}<button class="bare link mhwhy" data-sgwhy="${esc(c.id)}" aria-expanded="${why}">למה הצעתם?</button></div>
+    ${why?`<div class="sgwhybox"><span>ההצעה מבוססת על: ${esc(c.reason)}</span><span class="muted">מקורות: ${c.sourceRefs.map(esc).join(' · ')}</span>
+      <span class="sgparts num">${Object.entries(c.parts).map(([k,v])=>`<i>${PART_HE[k]} ${k==='annoyance'||k==='duplication'?'−':''}${v}</i>`).join('')}<i><b>ציון ${c.score}</b></i></span></div>`:''}
+  </article>`;
+}
+// waiting for an answer: tasks marked "waiting", and calendar requests not yet in the calendar
+function mhWaiting(){
+  const ts=S.tasks.filter(t=>t.status==='waiting').map(t=>({k:'task',id:t.id,ic:'chat',tone:'lil',t:t.title,s:t.waitingReason||'מחכה לתשובה',chip:t.owner&&t.owner!=='shared'?`ממתין ל${TD_OWN[t.owner]}`:'ממתין לכם'}));
+  const cr=S.calreq.filter(r=>r.op==='add'&&r.status==='pending'&&Date.now()-(r.createdAt||0)>20*6e4).map(r=>({k:'cal',id:r.id,ic:'truck',tone:'mint',t:r.title||'אירוע',s:'נשלח ליומן, מחכה לסנכרון',chip:'ממתין ליומן'}));
+  return [...ts,...cr].slice(0,4);
+}
+// done lately (three days): tasks, deposits, shopping finished, events that reached the calendar
+function mhDone(){
+  const since=Date.now()-3*864e5,out=[];
+  S.tasks.filter(t=>t.status==='done'&&(t.completedAt||0)>since).forEach(t=>out.push({at:t.completedAt,t:t.title}));
+  S.deposits.filter(d=>SAV.counted(d)&&(d.createdAt||0)>since).forEach(d=>{const h=S.holdings.find(x=>x.id===d.holdingId);out.push({at:d.createdAt,t:`הפקדה של ${ils0(d.confirmedAmount)} ל${h?h.name:'חיסכון'}${d.source==='auto'?' (אוטומטית)':''}`})});
+  S.purchases.filter(p=>(p.createdAt||0)>since).forEach(p=>out.push({at:p.createdAt,t:`קנייה הסתיימה${has(p.total)?' · '+ils(p.total):''}`}));
+  S.calreq.filter(r=>r.op==='add'&&r.status==='done'&&(r.updatedAt||r.createdAt||0)>since).forEach(r=>out.push({at:r.updatedAt||r.createdAt,t:`נכנס ליומן: ${r.title||'אירוע'}`}));
+  return out.sort((a,b)=>b.at-a.at).slice(0,3);
+}
+function renderMh(){
+  const w=mhWaiting(),d=mhDone();
+  $('tdWaitWrap').hidden=!w.length;$('tdDoneWrap').hidden=!d.length;
+  $('tdWait').innerHTML=w.map(x=>`<button class="bare card mhrow" ${x.k==='task'?`data-tdtask="${esc(x.id)}"`:`data-tdcal="${dkey(new Date())}"`}><span class="mhric t-${x.tone}">${mhI(x.ic)}</span><span class="col"><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span><span class="mhchip t-${x.tone}"><i></i>${esc(x.chip)}</span><span class="chev" aria-hidden="true">${I.chevL}</span></button>`).join('');
+  $('tdDone').innerHTML=d.map(x=>`<div class="card mhrow"><span class="mhric t-mint">${mhI('check')}</span><span class="col"><b>${esc(x.t)}</b><small>${agoHe(x.at)}</small></span></div>`).join('');
+}
+// quick actions: "בדקו רכישה" shows what a purchase does to this month before anything is written (spec 16.4)
+function buySheet(){
+  openSheet('בדיקת רכישה',`
+   <div class="fcbox"><label class="fcrow" for="byName"><span class="col"><b>מה רוצים לקנות</b></span><span class="fcin"><input id="byName" autocomplete="off" placeholder="למשל עגלה"></span></label>
+     <label class="fcrow" for="byAmt"><span class="col"><b>כמה זה עולה</b></span><span class="fcin"><input id="byAmt" class="num" inputmode="decimal"><i>₪</i></span></label></div>
+   <div id="byOut" class="fcres" aria-live="polite" style="margin-top:12px"></div>
+   <div class="actions" id="byActs" hidden><button class="btn" id="byTask">למשימה</button><button class="btn ghost" id="byExp">לרשום כהוצאה</button></div>
+   <p class="small muted">הבדיקה לא משנה שום נתון. רק "לרשום כהוצאה" או "למשימה" כותבים, ורק אחרי אישור.</p>`);
+  const calcBuy=()=>{const name=$('byName').value.trim(),amt=parseAmt($('byAmt').value),k=monthKey(new Date()),c=calc(k);
+    if(!(amt>0)){$('byOut').innerHTML='<span class="small muted">כתבו מה ובכמה, ונראה איך זה משפיע על החודש.</span>';$('byActs').hidden=true;return}
+    const dup=name?CMD.babyMatches(name,S.baby):[];
+    const flow=c&&c.flow!==null?c.flow:null;
+    $('byOut').innerHTML=`${flow===null?`<span class="small muted">ל${esc(monthLabel(k))} אין הכנסה רשומה, אז אי אפשר לחשב את ההשפעה.</span>`:`<span class="small muted">העודף של ${esc(monthLabel(k))}</span><b class="fcbig num">${signed(Math.round(flow))} ← ${signed(Math.round(flow-amt))}</b><span class="small ${flow-amt<0?'neg':'muted'}">${flow-amt<0?'הרכישה תכניס את החודש למינוס.':flow-amt<1000?'נשאר מרווח קטן החודש.':'החודש יכול לשאת את זה.'}</span>`}
+      ${dup.length?`<span class="small">ברשימת התינוק כבר יש: ${dup.map(b=>`<b>${esc(b.name)}</b> (${esc(b.status)})`).join(', ')}</span>`:''}`;
+    $('byActs').hidden=false};
+  ['byName','byAmt'].forEach(id=>$(id).addEventListener('input',calcBuy));calcBuy();$('byName').focus();
+  $('byTask').onclick=async()=>{const name=$('byName').value.trim()||'רכישה';closeSheet();
+    if(await store.add('tasks',{title:'לקנות: '+name,owner:myWho()||'shared',status:'new',priority:2,estimatedMinutes:null,dueDate:null,waitingReason:null,linkedEntity:null,snoozedUntil:null,completedAt:null,createdAt:Date.now(),progressAt:Date.now(),by:S.uid||null}))toast('נוספה משימה')};
+  $('byExp').onclick=()=>{const name=$('byName').value.trim(),amt=parseAmt($('byAmt').value);closeSheet();
+    cmdSheet(`קנינו ${name} ב-${amt}`,{kind:'expense',actions:[{type:'expense',name,amount:amt,row:'var'}],missing:name?[]:['name'],choices:null,note:''})};
+}
+// "מצאו זמן": what and how long, then the same free windows as for a task
+function findSheet(){
+  let own=myWho()||'shared';
+  openSheet('מציאת זמן',`<div class="fcbox"><label class="fcrow" for="fsT"><span class="col"><b>למה צריך זמן</b></span><span class="fcin"><input id="fsT" autocomplete="off" placeholder="למשל לבחור מזרן"></span></label>
+    <label class="fcrow" for="fsM"><span class="col"><b>כמה זמן</b></span><span class="fcin"><input id="fsM" class="num" inputmode="numeric" value="45"><i>דקות</i></span></label></div>
+    <div class="field" style="margin-top:12px"><span class="lbl">בשביל מי</span><div class="chips" id="fsW">${Object.entries(TD_OWN).map(([k,v])=>`<button type="button" class="chip" data-v="${k}" aria-checked="${k===own}">${v}</button>`).join('')}</div></div>
+    <div class="actions"><button class="btn" id="fsGo">חיפוש זמן פנוי</button></div>`);
+  $('fsW').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;own=b.dataset.v;[...$('fsW').children].forEach(x=>x.setAttribute('aria-checked',x===b))};
+  $('fsGo').onclick=()=>{const title=$('fsT').value.trim();if(!title){$('fsT').focus();toast('כתבו למה צריך זמן');return}
+    findTimeSheet({id:null,title,owner:own,estimatedMinutes:parseAmt($('fsM').value)||45})};
+  $('fsT').focus();
+}
+document.addEventListener('click',e=>{
+  const q=e.target.closest('[data-mhq]');if(q){const k=q.dataset.mhq;
+    if(k==='shop')showTab('shop');else if(k==='buy')buySheet();else if(k==='time')findSheet();else if(k==='week'){S.calView='week';S.calDay=dkey(new Date());showTab('cal');renderCal()}return}
+  const mm=e.target.closest('[data-sgmenu]');if(mm){S.sgMenu=S.sgMenu===mm.dataset.sgmenu?null:mm.dataset.sgmenu;renderToday();return}
+  const mu=e.target.closest('[data-sgmute]');if(mu){S.sgMenu=null;const ty=mu.dataset.sgmute;store.put('prefs','mute:'+ty,{kind:'mute',type:ty,at:Date.now(),by:S.uid||null}).then(ok=>{if(ok){renderToday();toast('לא נציע יותר דברים כאלה. אפשר להחזיר ב"מה האפליקציה למדה עלינו"')}});return}
+  if(S.sgMenu&&!e.target.closest('.mhmenu')){S.sgMenu=null;renderToday()}
+});
 function renderToday(){
   if(!$('t-today'))return;
   const now=new Date(),h=now.getHours(),me=(S.people||{})[S.uid];
@@ -3912,7 +4041,7 @@ function renderToday(){
   // the suggestion (at most one big, one small)
   const sg=suggestions();
   const undo=S.sgUndo?`<div class="sgundo" role="status"><span>${esc(S.sgUndo.text)}</span><button class="bare link" data-sgundo>ביטול</button></div>`:'';
-  $('tdSugg').innerHTML=undo+sgFold('today',sg);
+  $('tdSugg').innerHTML=undo+(sg.length?sg.map(mhCard).join(''):(undo?'':`<div class="card mhcard calm"><b class="mht">אין כרגע מה לקדם</b><span class="mhmeta"><span>כשיהיה משהו שכדאי לטפל בו, הוא יופיע כאן.</span></span></div>`));
   // events: today (and tomorrow morning) or the week, at most three; a suggested event shows dashed
   document.querySelectorAll('[data-tdrange]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tdrange===S.tdRange));
   $('tdEvTitle').textContent=S.tdRange==='week'?'השבוע שלכם':'היום שלכם';
@@ -3930,12 +4059,7 @@ function renderToday(){
       <button class="bare col" data-tdtask="${esc(t.id)}"><b>${esc(t.title)}</b><small>${[TD_OWN[t.owner]||'משותף',TD_STATUS[t.status]||'חדש',t.dueDate?'עד '+esc(t.dueDate.slice(8,10)+'/'+t.dueDate.slice(5,7)):'',t.estimatedMinutes?t.estimatedMinutes+' דק׳':'',(taskSync(t)||{}).text||''].filter(Boolean).join(' · ')}</small></button></div>`).join('')+
       (openTasks().length>3?`<div class="small muted tdmore">ועוד ${openTasks().length-3} משימות פתוחות</div>`:'')
     :'<button class="bare emptyline tdempty" data-tdtask="new">אין משימות פתוחות. + משימה חדשה</button>';
-  // the house at a glance: one line each, a tap opens the place
-  const k=monthKey(now),c=calc(k),bs=babyStats(),gn=openGrocery().length;
-  const money=!c?'אין עדיין נתונים לחודש':c.flow===null?'אין הכנסה רשומה, אי אפשר לחשב':`${c.flow<0?'במינוס':'בפלוס'} ${signed(c.flow)}`;
-  $('tdStatus').innerHTML=`<button class="bare tdst" data-tdgo="home"><small>${esc(monthLabel(k))}</small><b>${money}</b></button>
-    <button class="bare tdst" data-tdgo="shop"><small>קניות</small><b class="num">${gn?gn+' ברשימה':'הרשימה ריקה'}</b></button>
-    <button class="bare tdst" data-tdgo="baby"><small>תינוק</small><b class="num">${bs.total?`${bs.bp}% מוכן`:'אין רשימה'}</b></button>`;
+  renderMh();
 }
 // feedback on a suggestion: kept in data/prefs.json (app only), shown as gone at once with an undo
 async function sgFeedback(id,state,text){
@@ -4203,7 +4327,7 @@ function findTimeSheet(t){
       const data={op:'add',target,title:t.title,start:new Date(x.s).toISOString(),end:new Date(x.e).toISOString(),allDay:false,status:'pending',createdAt:Date.now(),taskId:t.id};if(S.uid)data.by=S.uid;
       const ok=await store.add('calreq',data);
       if(!ok)return;
-      await store.update('tasks',t.id,{status:'planned',dueDate:dkey(new Date(x.s)),progressAt:Date.now()});
+      if(t.id)await store.update('tasks',t.id,{status:'planned',dueDate:dkey(new Date(x.s)),progressAt:Date.now()});
       toast('נשלח ליומן · ממתין לסנכרון')};
   };
   openSheet('מציאת זמן',`<div class="ftwrap"><div class="ftt"><b>${esc(t.title)}</b><small class="muted">${TD_OWN[who]} · כ-${mins} דקות</small></div><div id="ftBody"></div></div>`);
