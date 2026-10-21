@@ -736,7 +736,7 @@ body.noscroll{overflow:hidden}
 @media (prefers-reduced-motion:no-preference){.arikmsg{animation:popin .25s ease-out}.arikmsg.typing i{animation:evpulse 1.2s ease-in-out infinite}.arikmsg.typing i:nth-child(2){animation-delay:.2s}.arikmsg.typing i:nth-child(3){animation-delay:.4s}}
 .arikacts{display:flex;flex-wrap:wrap;gap:8px}.arikacts:empty{display:none}.arikacts .btn{min-height:42px;font-size:14px;padding:0 14px}
 .arikchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.arikchips .chip{min-height:34px;font-size:13px;padding:0 12px;white-space:nowrap}
-.arikform{margin-top:2px}.arikvoice{display:flex;align-items:center;gap:6px}
+.arikform{margin-top:2px}.baglist{display:flex;flex-direction:column;gap:6px}.bagrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.bagrow span{flex:1}.bagrow input{width:20px;height:20px;accent-color:var(--accent)}.bagrow .link svg{width:16px;height:16px}.arikvoice{display:flex;align-items:center;gap:6px}
 .mhsec{margin:6px 0 -2px;font-size:20px}#t-today .tdsec .sec{font-size:20px}
 .mhcard{display:flex;flex-direction:column;gap:12px;padding:16px;position:relative}.mhcard+.mhcard{margin-top:12px}
 .mhtop{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start}
@@ -1376,8 +1376,19 @@ const ARIK = (() => {
   const strip = s => clean(String(s || '').replace(/^(היי|הי|אהלן|יו)\s+/, '').replace(/^אריק[,!:.]?\s*/, '').replace(/[,\s]*בבקשה[.!?]?\s*$/, '').replace(/^בבקשה\s+/, ''));
 
   const RULES = [
+    ['due_date', /(תאריך (ה)?לידה|הלידה (צפויה|משוערת|תהיה|היא))\D{0,20}\d{1,2}[./]\d{1,2}|\d{1,2}[./]\d{1,2}.{0,15}(תאריך (ה)?לידה|לידה משוער)/],
     ['remember', /^(תזכור|תזכרי|תרשום לך|שים לב)\s+(ש|את|כי)/],
     ['remind', /^(תזכיר|תזכירי|להזכיר|הזכר|תעשה לי תזכורת|תזכורת)/],
+    ['move_event', /^(תעביר|להעביר|תזיז|להזיז|תדחה|לדחות)\s+/],
+    ['cancel_event', /^(תבטל|לבטל|תמחק|למחוק|תוריד|להוריד)\s+(?!.*(משימה|מהרשימה|מהקניות))/],
+    ['price', /^(כמה עולה|כמה עולים|מה המחיר של|תבדוק (לי )?(את ה)?מחיר|תחפש (לי )?מחיר|תבדוק כמה עולה)/],
+    ['month_report', /((דוח|סיכום|דו"ח) (ה)?(חודש|חודשי)|איך היה (ה)?חודש|מה היה החודש)/],
+    ['goals', /(יעד|יעדים|כרית (ה)?ביטחון|הון עצמי|מתי נגיע|כמה חסר ל(כרית|יעד|הון))/],
+    ['bag', /(תיק (ל)?לידה|תיק לבית (ה)?חולים|מה (לשים|להכניס) בתיק)/],
+    ['birth_plan', /((לוח|תוכנית) (ה)?זמנים|מה (צריך )?לסגור עד|מה לעשות עד|כמה זמן נשאר).{0,25}(לידה)/],
+    ['birthdays', /(ימי (ה)?הולדת|יום (ה)?הולדת|יומולדת|למי יש|מתנות? (ל|קרוב))/],
+    ['appointments', /^(מתי|מה|אילו|יש|איזה)\s.{0,20}(תור|תורים|בדיקה|בדיקות|ביקור|ביקורים|רופא)/],
+    ['receipt', /(קבלה|חשבונית)/],
     ['today', /(מה (יש|מחכה|קורה)( לי| לנו)? היום|מה (הכי )?דחוף|מה התוכנית (של |ל)?היום|מה היום שלי|איך נראה היום)/],
     ['week_tasks', /((תעשה|לעשות|תסדר|לסדר|סדר)( לי| לנו)? (סדר )?(ב|את ה)?משימות|משימות (של )?השבוע|מה (יש|צריך) לעשות השבוע)/],
     ['find_time', /((תמצא|למצוא|מצא|תחפש)( לי| לנו)? (זמן|חלון|מקום ביומן)|מתי (אפשר|יש לי זמן|נוכל))/],
@@ -1438,6 +1449,65 @@ const ARIK = (() => {
     return s;
   };
 
+  /* a reminder that comes back: "כל ראשון בערב", "כל יום ב-8", "כל 1 לחודש", "כל חודש ב-10", "כל שבוע"
+     → {kind: 'daily'|'weekly'|'monthly', dow, day, hour, min, text, first (ms)} or null */
+  function repeat(text, now) {
+    let t = ' ' + clean(String(text || '').replace(/[.!?,;]+/g, ' ')) + ' ', m, r = null;
+    const cut = re => { const x = t.match(re); if (x) t = t.replace(x[0], ' '); return x; };
+    if ((m = cut(/\sכל\s+(?:יום\s+)?(ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)\s/))) r = { kind: 'weekly', dow: DAYW[m[1]] };
+    else if ((m = cut(/\sכל\s+(\d{1,2})\s+(?:ב|ל)חודש\s/))) r = { kind: 'monthly', day: Number(m[1]) };
+    else if ((m = cut(/\sכל\s+חודש(?:\s+ב-?(\d{1,2})\s+(?:ב|ל)חודש)?\s/))) r = { kind: 'monthly', day: m[1] ? Number(m[1]) : new Date(now).getDate() };
+    else if (cut(/\sכל\s+שבוע\s/)) r = { kind: 'weekly', dow: new Date(now).getDay() };
+    else if (cut(/\sכל\s+(יום|בוקר|ערב)\s/)) r = { kind: 'daily' };
+    if (!r) return null;
+    let hour = /כל\s+ערב/.test(text) ? 20 : /כל\s+בוקר/.test(text) ? 8 : null, min = 0;
+    if ((m = cut(/\s(?:בשעה|ב-?)\s*(\d{1,2})(?::(\d{2}))?\s/))) { hour = Number(m[1]); min = Number(m[2] || 0); }
+    for (const [w, h] of Object.entries(PART)) if (cut(new RegExp('\\s' + w + '\\s'))) { if (hour === null) hour = h; else if (h >= 13 && hour < 12) hour += 12; }
+    r.hour = hour === null ? 9 : hour; r.min = min; r.text = clean(t);
+    r.first = nextAt(r, now);
+    return r;
+  }
+  // the next time a repeating reminder is due, after `after`
+  function nextAt(r, after) {
+    const d = new Date(after); d.setSeconds(0, 0); d.setHours(r.hour, r.min);
+    const step = () => {
+      if (r.kind === 'daily') d.setDate(d.getDate() + 1);
+      else if (r.kind === 'weekly') d.setDate(d.getDate() + 7);
+      else d.setMonth(d.getMonth() + 1, Math.min(r.day, 28));
+    };
+    if (r.kind === 'weekly') d.setDate(d.getDate() + ((r.dow - d.getDay() + 7) % 7));
+    if (r.kind === 'monthly') d.setDate(Math.min(r.day, 28));
+    while (d.getTime() <= after) step();
+    return d.getTime();
+  }
+  const REPEAT_HE = r => r.kind === 'daily' ? `כל יום ב-${pad(r.hour)}:${pad(r.min)}` : r.kind === 'weekly' ? `כל יום ${HDAY[r.dow]} ב-${pad(r.hour)}:${pad(r.min)}` : `כל ${r.day} בחודש ב-${pad(r.hour)}:${pad(r.min)}`;
+
+  // a date written "15.12" / "15/12/2026" / "15 בדצמבר" → 'YYYY-MM-DD' (the next one from now), or null
+  const HMON = { 'ינואר': 1, 'פברואר': 2, 'מרץ': 3, 'מרס': 3, 'אפריל': 4, 'מאי': 5, 'יוני': 6, 'יולי': 7, 'אוגוסט': 8, 'ספטמבר': 9, 'אוקטובר': 10, 'נובמבר': 11, 'דצמבר': 12 };
+  function dateOf(text, now) {
+    const s = String(text || ''); let d, mo, y = null, m;
+    if ((m = s.match(/(\d{1,2})[./](\d{1,2})(?:[./](\d{2,4}))?/))) { d = +m[1]; mo = +m[2]; if (m[3]) y = +m[3] < 100 ? 2000 + +m[3] : +m[3]; }
+    else if ((m = s.match(/(\d{1,2})\s+ב?(ינואר|פברואר|מרץ|מרס|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)/))) { d = +m[1]; mo = HMON[m[2]]; }
+    else return null;
+    if (!(mo >= 1 && mo <= 12 && d >= 1 && d <= 31)) return null;
+    const n = new Date(now);
+    if (y === null) { y = n.getFullYear(); if (new Date(y, mo - 1, d) < new Date(n.getFullYear(), n.getMonth(), n.getDate())) y += 1; }
+    return `${y}-${pad(mo)}-${pad(d)}`;
+  }
+
+  // the event a sentence talks about: most shared words with its title (ה/ו/ב/ל/מ at the start ignored), upcoming first
+  const base = w => w.length > 2 && /^[הובלמש]/.test(w) ? w.slice(1) : w;
+  // small words and the words of the request itself say nothing about which event
+  const STOP = new Set(['את', 'של', 'עם', 'על', 'אל', 'זה', 'הזה', 'הזאת', 'לי', 'לנו', 'אריק', 'מחר', 'היום', 'יום', 'בבקשה', 'תבטל', 'לבטל', 'תמחק', 'למחוק', 'תעביר', 'להעביר', 'תזיז', 'להזיז', 'תדחה', 'לדחות', 'תוריד', 'להוריד']);
+  const wordsOf = s => clean(s).split(/[\s,.;:!?"'()\-–]+/).filter(w => w.length > 1 && !/^\d/.test(w) && !STOP.has(w)).map(base).filter(w => w.length > 1 && !STOP.has(w));
+  function findEvent(sentence, events, now) {
+    const want = new Set(wordsOf(sentence));
+    const scored = (events || []).filter(e => +e.e > now).map(e => ({ e, hit: wordsOf(e.title).filter(w => want.has(w)).length })).filter(x => x.hit > 0);
+    if (!scored.length) return [];
+    const best = Math.max(...scored.map(x => x.hit));
+    return scored.filter(x => x.hit === best).sort((a, b) => a.e.s - b.e.s).map(x => x.e);
+  }
+
   // small changing lines, so he does not sound like a form (light humour, never about money troubles)
   const LINES = {
     hello: ['כאן, מקשיב.', 'אני פה. מה צריך?', 'ערוך ומוכן, כמו מגבת חמה.'],
@@ -1448,7 +1518,7 @@ const ARIK = (() => {
   };
   const say = (kind, n = Date.now()) => { const l = LINES[kind] || ['']; return l[Math.floor(n / 1000) % l.length]; };
 
-  return { intent, strip, when, reminderText, say };
+  return { intent, strip, when, reminderText, say, repeat, nextAt, REPEAT_HE, dateOf, findEvent };
 })();
 if (typeof module !== 'undefined') module.exports = ARIK;
 
@@ -2027,6 +2097,29 @@ const AGENT = (() => {
       sourceRefs: gifts.map(g => `baby:${g.id}`), validUntil: null,
       primaryAction: { type: 'baby_filter', status: 'לקבל', label: 'לרשימה' },
     }, { urgency: 10, usefulness: 15, confidence: 30, timing: 5, annoyance: annoy('baby_gift'), duplication: 0 }));
+
+    // a birthday in the calendars within a week: time for a gift. birthdays: [{title, day 'YYYY-MM-DD'}]
+    (sig.birthdays || []).forEach(b => {
+      const n = daysBetween(now, new Date(b.day + 'T12:00').getTime());
+      if (n < 0 || n > 7) return;
+      out.push(make({
+        id: `birthday:${b.day}:${b.title}`, type: 'birthday', domain: 'calendar', topic: `birthday:${b.title}`,
+        title: `${n === 0 ? 'היום' : n === 1 ? 'מחר' : `בעוד ${n} ימים`}: ${b.title}`,
+        reason: 'אם צריך מתנה, עכשיו זה הזמן לסגור אותה.',
+        sourceRefs: [`calendar:${b.day}`], validUntil: new Date(b.day + 'T23:59').getTime(),
+        primaryAction: { type: 'gift_task', title: b.title, label: 'למשימת מתנה' },
+      }, { urgency: n <= 2 ? 30 : 18, usefulness: 20, confidence: 30, timing: 5, annoyance: annoy('birthday'), duplication: 0 }));
+    });
+
+    // a step before the birth whose date passed and is not closed (the timeline from the due date). birthSteps: [{t, date, left}]
+    const late = (sig.birthSteps || []).filter(s => s.left > 0 && daysBetween(new Date(s.date + 'T12:00').getTime(), now) >= 0);
+    if (late.length) out.push(make({
+      id: `birth_step:${late[0].date}:${late[0].left}`, type: 'birth_step', domain: 'baby', topic: 'baby:timeline',
+      title: `לקראת הלידה: ${late[0].t}`,
+      reason: `לפי לוח הזמנים זה היה אמור להיסגר עד ${late[0].date.slice(8, 10)}/${late[0].date.slice(5, 7)}, ונשארו ${late[0].left}.`,
+      sourceRefs: ['baby', 'prefs:birth'], validUntil: null,
+      primaryAction: { type: 'arik', text: 'מה צריך לסגור עד הלידה?', label: 'ללוח הזמנים' },
+    }, { urgency: 25, usefulness: 25, confidence: 30, timing: 5, annoyance: annoy('birth_step'), duplication: 0 }));
 
     // a balance typed in from a statement and not updated for a long time (spec 15.10). stale: [{hid, name, days}]
     (sig.stale || []).filter(s => s.days >= 45).forEach(s => out.push(make({
@@ -4201,6 +4294,8 @@ function agentSignals(now){
     stale:S.holdings.filter(h=>h.source==='manual'&&has(h.value)&&h.opened!==false).map(h=>{const iso=SAV.isoOf(h.valueDate);return iso?{hid:h.id,name:h.name,days:Math.floor((now-new Date(iso+'T12:00'))/864e5)}:null}).filter(Boolean),
     savings:S.holdings.filter(h=>h.mirror).flatMap(h=>SAV.due(h,S.deposits,now).map(x=>({...x,hid:h.id,name:h.name}))),
     history:{dismissedByType},
+    birthdays:S.calendar?evs.filter(e=>e.allDay&&/יום הולדת|יומולדת/.test(e.title)&&+e.s>=+t0&&+e.s<+t0+8*864e5).map(e=>({title:e.title,day:dkey(e.s)})):[],
+    birthSteps:birthDue()?birthPlan(birthDue()).map(x=>({t:x.t,date:dkey(x.date),left:x.left||0})):[],
     tasks:S.tasks.filter(t=>['new','planned','waiting'].includes(t.status)&&!(t.snoozedUntil>now)).map(t=>{const st=taskSync(t);
       return {id:t.id,title:t.title,status:t.status,minutes:Number(t.estimatedMinutes)||null,idleDays:Math.floor((now-(t.progressAt||t.createdAt||now))/864e5),
         postponed:t.postponeCount||0,waiting:t.waitingReason||'',scheduled:!!st&&st.state!=='failed',due:t.dueDate||null,hasSteps:S.tasks.some(x=>x.linkedEntity==='task/'+t.id)}})};
@@ -4359,6 +4454,8 @@ function runAction(c){
   if(a.type==='ask_blocker'){blockerSheet(S.tasks.find(t=>t.id===a.taskId));return}
   if(a.type==='baby_review'){babyReviewSheet();return}
   if(a.type==='baby_item'){babySheet(S.baby.find(b=>b.id===a.id));return}
+  if(a.type==='gift_task'){cmdStart('משימה: לקנות מתנה - '+a.title,true);return}
+  if(a.type==='arik'){arikOpen(a.text);return}
   if(a.type==='split_task'){splitSheet(S.tasks.find(t=>t.id===a.taskId));return}
   if(a.type==='baby_filter'){S.bFilter=a.status;showTab('baby');renderBaby();return}
   if(a.type==='holding'){const h=S.holdings.find(x=>x.id===a.hid);if(h){showTab('sav');holdingSheet(h)}return}
@@ -4588,17 +4685,128 @@ function arikLocal(intent,rest){
   }
   return null;
 }
+/* ---------- אריק, more: events by talking, prices, the month, goals, the birth (bag, timeline), birthdays, appointments, receipts ---------- */
+const birthDue=()=>{const p=S.prefs.find(x=>x.id==='birth');return p&&p.due||null};
+const BAG_DEFAULT=['תעודות זהות ומסמכים','כרטיס קופת חולים והפניות','מטען לטלפון וכבל ארוך','בגדים נוחים ופיג׳מה','חזיית הנקה','תחתונים חד־פעמיים','גרביים ונעלי בית','מוצרי טיפוח ומברשת שיניים','מגבת','חטיפים ובקבוק מים','בגד גוף ואוברול לתינוקת','כובע וגרביים לתינוקת','שמיכה דקה לתינוקת','חיתולים ומגבונים','כיסא בטיחות מותקן ברכב'];
+const bagDoc=()=>S.prefs.find(x=>x.id==='bag')||{kind:'bag',items:BAG_DEFAULT.map(t=>({t,done:false}))};
+// what to close before the birth, counted back from the due date; each step looks at the real lists where it can
+function birthPlan(due){
+  const d0=new Date(due+'T12:00'),at=w=>{const d=new Date(d0);d.setDate(d.getDate()-w*7);return d};
+  const st=babyStats(),big=S.baby.filter(b=>['שינה וריהוט','עגלה ורכב'].includes(b.category)&&!['נקנה','לא חובה'].includes(b.status));
+  const gifts=S.baby.filter(b=>b.status==='לקבל'&&!b.giver),bag=bagDoc().items,bagLeft=bag.filter(x=>!x.done).length;
+  return [
+    {w:10,t:'לסגור את הציוד הגדול (שינה, עגלה, רכב)',left:big.length,what:big.slice(0,3).map(b=>b.name).join(', ')},
+    {w:8,t:'להזמין את מה שנשאר ברשימת התינוק',left:st.by('לקנות').length},
+    {w:6,t:'לכבס את בגדי התינוקת ולסדר את הפינה שלה',left:null},
+    {w:5,t:'לארוז תיק ללידה',left:bagLeft},
+    {w:4,t:'להתקין את כיסא הבטיחות ברכב',left:null},
+    {w:3,t:'לוודא מי מביא כל מתנה',left:gifts.length},
+    {w:2,t:'לסדר מסמכים ולהכין אוכל למקפיא',left:null},
+  ].map(x=>({...x,date:at(x.w)}));
+}
+function bagSheet(){
+  const draw=()=>{const d=bagDoc();openSheet('תיק ללידה',`<p class="cmdnote">רשימה כללית. אפשר להוסיף ולמחוק פריטים. מה שמסומן נשמר לשניכם.</p>
+    <div class="baglist">${d.items.map((x,i)=>`<label class="bagrow"><input type="checkbox" data-bagi="${i}" ${x.done?'checked':''}><span>${esc(x.t)}</span><button type="button" class="bare link" data-bagdel="${i}" aria-label="מחיקה: ${esc(x.t)}">${I.trash}</button></label>`).join('')}</div>
+    <form class="addline" id="bagAdd" style="margin-top:10px"><input class="in" id="bagNew" placeholder="להוסיף לתיק…" autocomplete="off"><button class="btn">הוספה</button></form>
+    <p class="small muted num">${d.items.filter(x=>x.done).length} מתוך ${d.items.length} בתיק</p>`);
+    const save=items=>{const doc={kind:'bag',items,at:Date.now()};S.prefs=S.prefs.filter(x=>x.id!=='bag').concat([{id:'bag',...doc}]);store.put('prefs','bag',doc);draw()};
+    $('sheetBody').querySelectorAll('[data-bagi]').forEach(c=>c.onchange=()=>{const it=bagDoc().items.map(x=>({...x}));it[+c.dataset.bagi].done=c.checked;save(it)});
+    $('sheetBody').querySelectorAll('[data-bagdel]').forEach(b=>b.onclick=e=>{e.preventDefault();const it=bagDoc().items.filter((_,i)=>i!==+b.dataset.bagdel);save(it)});
+    $('bagAdd').onsubmit=e=>{e.preventDefault();const t=$('bagNew').value.trim();if(t)save(bagDoc().items.concat([{t,done:false}]))}};
+  draw();
+}
+// events whose title says what they are
+const evsAhead=(days,re)=>{const now=Date.now(),end=now+days*864e5;return calEvents().filter(e=>+e.e>now&&+e.s<end&&re.test(e.title))};
+const dmShort=d=>`${HDAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+function arikMore(intent,rest){
+  const now=Date.now(),acts=[];
+  if(intent==='due_date'){const due=ARIK.dateOf(rest,now);if(!due)return {text:'לא הצלחתי לקרוא את התאריך. אפשר לכתוב למשל "תאריך הלידה המשוער 15.12".',acts};
+    const doc={kind:'birth',due,at:now,by:S.uid||null};S.prefs=S.prefs.filter(x=>x.id!=='birth').concat([{id:'birth',...doc}]);store.put('prefs','birth',doc);
+    const w=Math.round((new Date(due+'T12:00')-now)/(7*864e5));return {text:`רשמתי: הלידה המשוערת ב-${due.split('-').reverse().join('/')}, בעוד כ-${w} שבועות. מעכשיו אבנה לפי זה את לוח הזמנים.`,acts:[{label:'ללוח הזמנים',run:()=>arikHear('מה צריך לסגור עד הלידה?')}]}}
+  if(intent==='birth_plan'){const due=birthDue();if(!due)return {text:'כדי לבנות לוח זמנים אני צריך את תאריך הלידה המשוער. כתבו לי למשל "תאריך הלידה המשוער 15.12".',acts};
+    const p=birthPlan(due);return {text:`לוח הזמנים עד הלידה (${due.split('-').reverse().join('/')}):\n${p.map(x=>`${x.date<new Date()?'⚠ ':''}עד ${dmShort(x.date)}: ${x.t}${x.left===null?'':x.left?` (נשארו ${x.left}${x.what?': '+x.what:''})`:' ✓'}`).join('\n')}`,acts:[{label:'לתיק ללידה',run:()=>bagSheet()},{label:'לרשימת התינוק',run:()=>{closeSheet();showTab('baby')}}]}}
+  if(intent==='bag'){const d=bagDoc(),left=d.items.filter(x=>!x.done);return {text:left.length?`בתיק חסרים עוד ${left.length}: ${left.slice(0,5).map(x=>x.t).join(', ')}${left.length>5?' ועוד':''}.`:'התיק מוכן. כל הכבוד, זה יותר ממה שרוב האנשים יכולים להגיד.',acts:[{label:'לרשימת התיק',run:()=>bagSheet()}]}}
+  if(intent==='birthdays'){const es=evsAhead(60,/יום הולדת|יומולדת|יום נישואין|יום השנה/);
+    return es.length?{text:`בחודשיים הקרובים:\n${es.slice(0,6).map(e=>`${dmShort(e.s)}: ${e.title}`).join('\n')}`,acts:es.slice(0,2).map(e=>({label:`מתנה: ${e.title}`.slice(0,40),run:()=>{closeSheet();cmdStart('משימה: לקנות מתנה ל'+e.title.replace(/יום הולדת|יומולדת/,'').trim(),true)}}))}
+      :{text:'לא מצאתי ימי הולדת ביומנים בחודשיים הקרובים. אם תוסיפו אותם ליומן (אירוע של יום שלם עם "יום הולדת" בשם), אזכיר מראש.',acts}}
+  if(intent==='appointments'){const es=evsAhead(60,/תור|בדיק|רופא|אולטרסאונד|מעקב|ביקור|קופת חולים|מרפאה|טיפת חלב/);const ts=openTasks().filter(t=>/תור|בדיק|רופא|ביקור/.test(t.title));
+    return {text:(es.length?`התורים הקרובים:\n${es.slice(0,5).map(e=>`${dmShort(e.s)}${e.allDay?'':' '+hm(e.s)}: ${e.title}`).join('\n')}`:'אין תורים ביומנים בחודשיים הקרובים.')+(ts.length?`\nצריך לקבוע: ${ts.map(t=>t.title).join(', ')}`:''),acts:ts.slice(0,2).map(t=>({label:`זמן ל"${t.title}"`.slice(0,40),run:()=>{closeSheet();findTimeSheet(t)}}))}}
+  if(intent==='month_report'){const d=new Date(),mk=d.getDate()<=5?monthKey(new Date(d.getFullYear(),d.getMonth()-1,1)):monthKey(d),c=calc(mk);if(!c)return {text:'לחודש הזה אין עדיין נתונים בגיליון.',acts};
+    const pk=monthKey(new Date(+mk.slice(0,4),+mk.slice(5)-2,1)),b=calc(pk);
+    const top=[...c.rows].filter(r=>!r.star&&has(r.amount)&&r.group!=='חסכונות').sort((x,y)=>y.amount-x.amount).slice(0,3);
+    const up=b?c.rows.filter(r=>!r.star&&has(r.amount)).map(r=>{const o=b.rows.find(x=>x.name===r.name);return o&&has(o.amount)&&r.amount-o.amount>=200?`${r.name} (+${fmt(Math.round(r.amount-o.amount))})`:null}).filter(Boolean):[];
+    const dep=S.deposits.filter(x=>SAV.counted(x)&&(x.month===mk)).reduce((t,x)=>t+Number(x.confirmedAmount),0);
+    return {text:`${monthLabel(mk)}: הכנסה ${c.income===null?'לא רשומה':ils(c.income)}, הוצאות ${ils(c.total)}${c.flow!==null?`, ${c.flow>=0?'בפלוס':'במינוס'} ${ils(Math.abs(c.flow))}`:''}.\nהשורות הגדולות: ${top.map(r=>`${r.name} ${ils(r.amount)}`).join(', ')}.${up.length?`\nעלו לעומת ${monthLabel(pk).split(' ')[0]}: ${up.slice(0,4).join(', ')}.`:''}${dep?`\nהפקדות לחיסכון שנרשמו: ${ils(dep)}.`:''}`,acts:[{label:'לחודש',run:()=>{closeSheet();S.month=mk;showTab('home');renderAll()}}]}}
+  if(intent==='goals'){const P=S.plan,parts=[];
+    if(P){const R=planCalc(P);parts.push(`כרית ביטחון: היעד ${ils(R.target)}. לפי תוכנית 2027 יצטברו בה ${ils(R.total)}${R.reach?`, והיא תגיע ליעד ב${monthLabel(R.reach.k)}`:`, חסרים ${ils(R.gap)}`}.`)}
+    const G=GOALS;parts.push(`הון עצמי: גמל והשתלמות היום ${ils(G.equity.gemel+G.equity.hishtalmut)}. עד ${G.equity.hishtalmutMonth?'מרץ ':''}${G.equity.hishtalmutYear}, בלי תשואה, ההפקדות יוסיפו עוד, ועם ההלוואה זה יותר.`);
+    parts.push(G.girl.tradeStart===null?'לבת: התיק עוד לא נפתח, וסכום ההפקדה הראשונה עוד לא נקבע.':`לבת: הפקדה ראשונה ${ils(G.girl.tradeStart)} ואחר כך ${ils(G.girl.tradeMonthly)} בחודש.`);
+    return {text:parts.join('\n'),acts:[{label:'ליעדים',run:()=>{closeSheet();showTab('ins')}},{label:'לסימולציה',run:()=>{closeSheet();showTab('sav');forecastSheet()}}]}}
+  if(intent==='price'){const q=rest.replace(/^(כמה עולה|כמה עולים|מה המחיר של|תבדוק (לי )?(את ה)?מחיר|תחפש (לי )?מחיר|תבדוק כמה עולה)\s*(של\s*)?/,'').replace(/[?.!]+$/,'').trim();
+    if(!q)return {text:'מה לבדוק?',acts};
+    const b=CMD.babyMatches(q,S.baby)[0],p=b&&S.pricecheck.find(x=>x.id===b.id);
+    if(p&&p.count&&!p.loose)return {text:`"${b.name}" בזאפ: רוב המחירים בין ${ils(p.low)} ל-${ils(p.high||p.median)}, באמצע ${ils(p.median)} (נבדק ${new Date(p.at).toLocaleDateString('he-IL')}).`,acts:[{label:'למחירים',run:()=>{closeSheet();babySheet(b)}}]};
+    return {text:null,price:q}}
+  if(intent==='receipt')return {text:'שלחו לי צילום של הקבלה בכפתור המצלמה למטה, ואני אקרא את הסכום, החנות והתאריך.',acts:[{label:'לצלם קבלה',run:()=>$('arikCam')&&$('arikCam').click()}]};
+  return null;
+}
+// moving and cancelling events by talking: the event is found by its words, and nothing changes before a tap
+function arikEvent(intent,rest){
+  const now=Date.now(),evs=calEvents().filter(e=>!e.pending),hits=ARIK.findEvent(rest,evs,now);
+  if(!hits.length)return {text:'לא מצאתי אירוע כזה בשבועות הקרובים. אפשר לכתוב חלק מהשם שלו.',acts:[]};
+  const e=hits[0],more=hits.length>1;
+  if(intent==='cancel_event')return {text:`לבטל את "${e.title}" ב${dmShort(e.s)}${e.allDay?'':' '+hm(e.s)}?${more?` (מצאתי עוד ${hits.length-1} דומים)`:''}`,acts:hits.slice(0,3).map(x=>({label:`לבטל: ${x.title} ${dmShort(x.s)}`.slice(0,44),run:async()=>{
+    if(await store.add('calreq',{op:'delete',target:x.who||'shared',eventId:x.id,title:x.title,status:'pending',createdAt:Date.now()})){await arikSave([{kind:'msg',role:'arik',text:`"${x.title}" יימחק מהיומן בסנכרון הבא.`}]);arikDraw();renderCal()}}}))};
+  // the new time: what comes after "ל" / "ליום" ("למחר ב-10", "ליום חמישי ב-18:00")
+  const tail=(rest.match(/\s(ל(?:מחר|מחרתיים|יום|ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת|שעה|-?\d).*)$/)||[])[1];
+  const p=tail&&parseEvent(e.title+' '+tail.replace(/^ל-?/,'').replace(/^שעה\s*/,'ב-'));
+  if(!p||!p.title)return {text:`למתי להעביר את "${e.title}"? למשל "תעביר את ${e.title} למחר ב-10".`,acts:[]};
+  const dur=+e.e-+e.s,start=p.allDay?new Date(p.start):p.s,end=p.allDay?null:new Date(+p.s+dur);
+  return {text:`להעביר את "${e.title}" מ${dmShort(e.s)}${e.allDay?'':' '+hm(e.s)} ל${dmShort(start)}${p.allDay?'':' '+hm(start)}?`,acts:[{label:'להעביר',run:async()=>{
+    const add={op:'add',target:e.who||'shared',title:e.title,start:p.allDay?p.start:start.toISOString(),end:p.allDay?p.end:end.toISOString(),allDay:!!p.allDay,status:'pending',createdAt:Date.now()};if(e.place)add.place=e.place;if(S.uid)add.by=S.uid;
+    const ok=await store.add('calreq',add)&&await store.add('calreq',{op:'delete',target:e.who||'shared',eventId:e.id,title:e.title,status:'pending',createdAt:Date.now()});
+    await arikSave([{kind:'msg',role:'arik',text:ok?`הועבר. "${e.title}" יופיע ב${dmShort(start)} אחרי הסנכרון.`:'ההעברה לא נשמרה. ננסה שוב?'}]);arikDraw();renderCal()}}]};
+}
+// a receipt from a photo: read on the phone (the same reader as invitations), then the usual expense plan
+function receiptFrom(raw){
+  const lines=String(raw||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  const num=s=>{const m=s.replace(/,/g,'').match(/(\d+\.\d{2})|(\d{2,})/g);return m?m.map(Number):[]};
+  let total=null;for(const l of lines)if(/(סה"?כ|סה״כ|לתשלום|סך הכל|total|TOTAL)/i.test(l)){const n=num(l);if(n.length){total=Math.max(...n);}}
+  if(total===null){const all=lines.flatMap(num).filter(n=>n<20000);total=all.length?Math.max(...all):null}
+  const store_=lines.find(l=>/[א-ת]{2,}/.test(l)&&!/(קבלה|חשבונית|תאריך|עוסק|טל|כתובת|מס'|ח\.פ)/.test(l))||'';
+  const dm=String(raw).match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})/);
+  return {total,store:store_.slice(0,40),date:dm?`${dm[3].length===2?'20'+dm[3]:dm[3]}-${dm[2].padStart(2,'0')}-${dm[1].padStart(2,'0')}`:null};
+}
+async function arikReceipt(file){
+  await arikSave([{kind:'msg',role:'user',text:'📷 צילום קבלה'.replace('📷 ','')},{kind:'msg',role:'arik',text:'קורא את הקבלה… בפעם הראשונה זה לוקח כמה שניות.'}]);arikDraw();
+  try{const T=await loadTess(),img=await shrinkImage(file),r=await T.recognize(img,'heb+eng');const rc=receiptFrom(r&&r.data&&r.data.text);
+    if(!rc.total){await arikSave([{kind:'msg',role:'arik',text:'לא הצלחתי לקרוא סכום מהקבלה. אפשר לנסות צילום חד יותר, או לכתוב לי "הוצאתי X על Y".'}]);arikDraw();return}
+    await arikSave([{kind:'msg',role:'arik',text:`מצאתי: ${rc.store||'חנות לא ברורה'}, ${ils(rc.total)}${rc.date?`, ${rc.date.split('-').reverse().join('/')}`:''}. תבדקו ותאשרו.`}]);
+    closeSheet();cmdSheet(`קבלה: ${rc.store} ${rc.total}`,{kind:'expense',actions:[{type:'expense',name:rc.store,amount:rc.total,row:CMD.rowOf(rc.store)}],missing:rc.store?[]:['name'],choices:null,note:''});
+  }catch(e){await arikSave([{kind:'msg',role:'arik',text:'הקורא לא נטען (צריך אינטרנט בפעם הראשונה). ננסה שוב?'}]);arikDraw()}
+}
 async function arikSave(list){return store.addMany('arik',list.map((x,i)=>({by:S.uid||null,at:Date.now()+i,...x})))}
 // the one place a sentence comes in: from the home line, the chat box or the microphone
 async function arikHear(text){
-  text=String(text||'').trim();if(!text)return;
+  text=String(text||'').trim();if(!text)return;S.arikActs=[]; // buttons belong to the answer they came with
   const {intent,rest}=ARIK.intent(text),fc=arikFocus();
   const user={kind:'msg',role:'user',text};
   if(intent==='remember'){const fact=rest.replace(/^(תזכור|תזכרי|תרשום לך|שים לב)\s+/,'');await arikSave([user,{kind:'fact',text:fact},{kind:'msg',role:'arik',text:ARIK.say('remember')+` "${fact}"`}]);arikDraw();return}
-  if(intent==='remind'){const w=ARIK.when(rest,Date.now());
+  if(intent==='remind'){const rp=ARIK.repeat(rest,Date.now());
+    if(rp){const what=ARIK.reminderText(rp.text,fc&&fc.title)||'מה שביקשת',label=ARIK.REPEAT_HE(rp);
+      const ok=await store.add('reminders',{text:what,at:rp.first,label,repeat:{kind:rp.kind,dow:rp.dow,day:rp.day,hour:rp.hour,min:rp.min},who:S.uid||null,status:'pending',createdAt:Date.now()});
+      await arikSave([user,{kind:'msg',role:'arik',text:ok?`${ARIK.say('done')} אזכיר לך ${label}: ${what}. הפעם הראשונה ${new Date(rp.first).toLocaleDateString('he-IL',{weekday:'long',day:'numeric',month:'numeric'})}.`:'לא הצלחתי לשמור את התזכורת.'}]);arikDraw();return}
+    const w=ARIK.when(rest,Date.now());
     if(w){const what=ARIK.reminderText(w.text,fc&&fc.title)||'מה שביקשת';
       const ok=await store.add('reminders',{text:what,at:w.at,label:w.label,who:S.uid||null,status:'pending',createdAt:Date.now()});
       await arikSave([user,{kind:'msg',role:'arik',text:ok?`${ARIK.say('done')} אזכיר לך ${w.label}: ${what}.${arikPushOk()?'':' (כדי שהתזכורת תגיע, צריך להפעיל התראות בטלפון הזה)'}`:'לא הצלחתי לשמור את התזכורת. ננסה שוב?'}]);arikDraw();return}}
+  if(intent==='move_event'||intent==='cancel_event'){const r=arikEvent(intent,rest);S.arikActs=r.acts;await arikSave([user,{kind:'msg',role:'arik',text:r.text}]);arikDraw();arikSpeak(r.text);return}
+  const more=intent!=='other'?arikMore(intent,rest):null;
+  if(more&&more.price){const qid='q-'+Date.now().toString(36);
+    const ok=await store.put('pricecheck',qid,{kind:'query',query:more.price,status:'pending',by:S.uid||null,at:Date.now()});
+    if(ok)pricesNow('agent-prices.yml');
+    await arikSave([user,{kind:'msg',role:'arik',text:ok?`בודק בזאפ כמה עולה "${more.price}". התשובה תופיע כאן תוך דקה-שתיים.`:'לא הצלחתי לשלוח את הבדיקה.',pq:qid}]);arikDraw();return}
+  if(more){S.arikActs=more.acts||[];await arikSave([user,{kind:'msg',role:'arik',text:more.text}]);arikDraw();arikSpeak(more.text);return}
   const loc=intent!=='other'?arikLocal(intent,rest):null;
   if(loc){S.arikActs=loc.acts||[];await arikSave([user,{kind:'msg',role:'arik',text:loc.text}]);arikDraw();arikSpeak(loc.text);
     if(loc.auto)setTimeout(loc.auto,700);return}
@@ -4618,9 +4826,10 @@ function arikOpen(first){
     <div class="arikacts" id="arikActs"></div>
     <div class="chips arikchips" id="arikChips">${ARIK_CHIPS.map(c=>`<button type="button" class="chip" data-arikchip="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <form class="cmdbar mhcmd arikform" id="arikForm" autocomplete="off"><button class="bare mhgo" aria-label="שליחה"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
-      <input id="arikText" enterkeyhint="send" placeholder="לכתוב לאריק…" aria-label="הודעה לאריק"><button type="button" class="bare cmdmic" id="arikMic" aria-label="לדבר עם אריק" ${SR?'':'hidden'}><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></form>
+      <input id="arikText" enterkeyhint="send" placeholder="לכתוב לאריק…" aria-label="הודעה לאריק"><button type="button" class="bare mharik" id="arikCamBtn" aria-label="צילום קבלה"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:22px;height:22px;fill:none;stroke:var(--ink-2);stroke-width:2"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button><input type="file" id="arikCam" accept="image/*" capture="environment" hidden><button type="button" class="bare cmdmic" id="arikMic" aria-label="לדבר עם אריק" ${SR?'':'hidden'}><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></form>
     <label class="small muted arikvoice"><input type="checkbox" id="arikVoice" ${arikVoice()?'checked':''}> אריק עונה גם בקול</label></div>`);
   $('arikForm').onsubmit=e=>{e.preventDefault();const v=$('arikText').value.trim();if(!v)return;$('arikText').value='';arikHear(v)};
+  $('arikCamBtn').onclick=()=>$('arikCam').click();$('arikCam').onchange=()=>{const f=$('arikCam').files&&$('arikCam').files[0];$('arikCam').value='';if(f)arikReceipt(f)};
   $('arikVoice').onchange=()=>{try{localStorage.setItem('hb_arik_voice',$('arikVoice').checked?'1':'0')}catch(e){}};
   $('arikMic').onclick=()=>{if(!SR)return;if(!voiceOk()){voiceAsk();return}const r=new SR();r.lang='he-IL';r.interimResults=true;$('arikMic').classList.add('rec');let fin='';
     r.onresult=e=>{let tmp='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=t;else tmp+=t}$('arikText').value=(fin+tmp).trim()};
@@ -4630,7 +4839,8 @@ function arikOpen(first){
 function arikDraw(){const el=$('arikLog');if(!el)return;const ms=arikMsgs();
   el.innerHTML=(ms.length?'':`<div class="arikmsg bot"><span>${esc(ARIK.say('hello'))} אפשר לשאול אותי על היום, המשימות, הכסף, התינוק, או לבקש שאזכיר משהו.</span></div>`)+
     ms.map(m=>{const mine=m.role==='user';const wait=m.kind==='ask'&&m.status==='pending';
-      return `<div class="arikmsg ${mine?'me':'bot'}"><span>${esc(m.text).replace(/\n/g,'<br>')}</span><small>${mine?esc(whoSaid(m.by)):'אריק'}${m.kind==='ask'?' · לאריק בענן':''} · ${agoHe(m.at||Date.now())}</small></div>`+
+      const pq=m.pq&&S.pricecheck.find(x=>x.id===m.pq);const pqText=pq&&pq.status==='done'?(pq.count&&pq.median?`בזאפ ${pq.count} תוצאות ל"${pq.query}": רוב המחירים בין ${ils(pq.low)} ל-${ils(pq.high||pq.median)}, באמצע ${ils(pq.median)}.${pq.loose?' התוצאות לא בדיוק תואמות, כדאי לבדוק.':''}`:`לא מצאתי בזאפ תוצאות ל"${pq.query}".`):'';
+      return `<div class="arikmsg ${mine?'me':'bot'}"><span>${esc(m.text).replace(/\n/g,'<br>')}${pqText?`<br><b>${esc(pqText)}</b>${(pq.offers||[]).map(o=>`<br><a href="${esc(o.url)}" target="_blank" rel="noopener nofollow">${esc(o.title.slice(0,40))} · ${ils(o.price)}</a>`).join('')}`:''}</span><small>${mine?esc(whoSaid(m.by)):'אריק'}${m.kind==='ask'?' · לאריק בענן':''} · ${agoHe(m.at||Date.now())}</small></div>`+
         (m.kind==='ask'?(m.status==='answered'?`<div class="arikmsg bot cloud"><span>${esc(m.answer||'').replace(/\n/g,'<br>')}</span><small>אריק בענן · ${agoHe(m.answeredAt||m.at)}</small></div>${(m.actions||[]).length?`<div class="arikacts">${m.actions.map((a,i)=>`<button class="btn ghost" data-arikcloud="${esc(m.id)}|${i}">${esc(ARIK_ACT[a.type]||'לביצוע')}: ${esc(a.text||a.title||'')}</button>`).join('')}</div>`:''}`:m.status==='failed'?`<div class="arikmsg bot"><span>אריק בענן לא הצליח לענות הפעם${m.error?` (${esc(m.error)})`:''}. אפשר לנסות שוב בעוד רגע.</span></div>`:`<div class="arikmsg bot typing"><span><i></i><i></i><i></i> ${esc(ARIK.say('unknown',m.at))}</span></div>`):'')}).join('');
   $('arikActs').innerHTML=(S.arikActs||[]).map((a,i)=>`<button class="btn ${i?'ghost':''}" data-arikact="${i}">${esc(a.label)}</button>`).join('');
   el.scrollTop=el.scrollHeight;
@@ -4644,7 +4854,7 @@ document.addEventListener('click',e=>{const c=e.target.closest('[data-arikchip]'
   const a=e.target.closest('[data-arikact]');if(a){const x=(S.arikActs||[])[Number(a.dataset.arikact)];S.arikActs=[];if(x)x.run();return}
   if(e.target.closest('[data-arikopen]')){arikOpen();return}});
 /* ---------- what the app learned about us: every preference can be seen, changed, or deleted ---------- */
-const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה',task_overdue:'משימה שעבר המועד שלה',cal_conflict:'שני אירועים באותה שעה',money_pace:'קצב הוצאה לקראת חריגה',savings_stale:'יתרה שלא עודכנה',task_split:'חלוקת משימה גדולה',money_change:'השוואה לחודש שעבר',baby_gift:'פריטים שמחכים למתנה',baby_price:'מחירים לפריטי תינוק',grocery_compare:'השוואת סל הסופר',sub_up:'קבוע שהתייקר'};
+const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה',task_overdue:'משימה שעבר המועד שלה',cal_conflict:'שני אירועים באותה שעה',money_pace:'קצב הוצאה לקראת חריגה',savings_stale:'יתרה שלא עודכנה',task_split:'חלוקת משימה גדולה',money_change:'השוואה לחודש שעבר',baby_gift:'פריטים שמחכים למתנה',baby_price:'מחירים לפריטי תינוק',grocery_compare:'השוואת סל הסופר',sub_up:'קבוע שהתייקר',birthday:'ימי הולדת',birth_step:'לוח הזמנים ללידה'};
 function learnedSheet(){
   const keep=!$('sheet').hidden&&$('sheetBody').querySelector('.lrnsec')?$('sheet').scrollTop:0;
   const now=Date.now(),dt=t=>t?new Date(t).toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}):'';
@@ -4791,7 +5001,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ---------- the look shared by every screen: who is here, and each screen's title line ---------- */
-const SG_ILL={baby_price:'crib',grocery_compare:'basket',sub_up:'coins',task_split:'checklist',money_change:'coins',baby_gift:'crib',task_overdue:'checklist',cal_conflict:'together',money_pace:'coins',savings_stale:'piggy',savings_due:'piggy',savings_missed:'piggy',baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
+const SG_ILL={birthday:'together',birth_step:'crib',baby_price:'crib',grocery_compare:'basket',sub_up:'coins',task_split:'checklist',money_change:'coins',baby_gift:'crib',task_overdue:'checklist',cal_conflict:'together',money_pace:'coins',savings_stale:'piggy',savings_due:'piggy',savings_missed:'piggy',baby_check:'checklist',baby_dup:'checklist',baby_budget:'piggy',task_fit:'dresser',task_stuck:'checklist',free_evening:'together',pattern_due:'together',busy_day:'together',grocery_run:'bag',baby_buy:'checklist',money_over:'coins',money_no_income:'coins'};
 function renderHeads(){
   const ppl=S.people||{},who=Object.keys(ppl).filter(l=>l!=='updatedAt');
   const tone=n=>n==='יוסף'?'y':n==='תחיה'?'t':'s';
