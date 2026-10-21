@@ -568,6 +568,18 @@ header.top.nomonth .month{position:absolute;inset-inline-start:0;visibility:hidd
 .tline:has(.aiw)::before{inset-inline-end:116px} /* the timeline line through the dots, beside the trash column */
 .evdel{flex:none;min-width:34px;height:40px;padding:0 4px;border-radius:12px;display:grid;place-items:center;color:var(--ink-2);font-size:13px;font-weight:700}.evdel svg{width:18px;height:18px}
 .evdel.arm{background:var(--neg-soft);color:var(--neg)}
+/* two of you at the same hour: one row in the timeline, one time and a two-colour dot, the cards together inside it */
+.tline .aitem.pairbox{background:var(--surface-2);padding-block:8px;padding-inline-start:8px}
+.pcards{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}.phead{font-size:12px;font-weight:700;color:var(--ink-2);padding-inline-start:4px}
+.pc{position:relative;min-width:0;border-radius:14px;border:1px solid var(--line);border-inline-start:4px solid var(--c);background:color-mix(in srgb,var(--c) 9%,var(--surface))}
+.pc.pending{border-style:dashed;background:transparent}.pc.now{border-color:color-mix(in srgb,var(--c) 55%,var(--line))}
+.pcb{display:flex;flex-direction:column;gap:2px;width:100%;text-align:start;padding-block:9px;padding-inline:10px 30px;min-width:0}
+.pcb b{font-size:14px;line-height:1.3;overflow-wrap:anywhere}.pcb small{font-size:12px;color:var(--ink-2)}
+.pcb .pwho{font-weight:700;color:color-mix(in srgb,var(--c) 80%,var(--ink))}
+.evdel.mini{position:absolute;inset-block-start:4px;inset-inline-end:2px;min-width:26px;height:26px;border-radius:9px}.evdel.mini svg{width:15px;height:15px}
+.evdel.mini.arm{min-width:0;padding:0 6px;font-size:11.5px;z-index:2}
+.evdel.ghost{visibility:hidden}
+.tline .aitem .dot.duo{width:14px;height:14px;box-shadow:0 0 0 2px var(--surface)}
 .tdev.now{background:color-mix(in srgb,var(--c) 7%,var(--surface))}
 .tline .aitem.now{border-color:color-mix(in srgb,var(--c) 55%,var(--line));background:color-mix(in srgb,var(--c) 7%,var(--surface))}
 .evnow{display:inline-flex;align-items:center;gap:5px;margin-inline-start:8px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;vertical-align:2px;background:color-mix(in srgb,var(--c,var(--accent)) 16%,var(--surface));color:color-mix(in srgb,var(--c,var(--accent)) 80%,var(--ink))}
@@ -4070,14 +4082,14 @@ function renderCal(){
   // the day as one list by time; an evening free for both sits in its place in the list
   const now=new Date(),de=onDay(evs,sel).filter(shown);
   const free=sel>=today?freeTogether(evs,sel).map(([a,b])=>({free:true,s:new Date(a),e:new Date(b)})).filter(x=>x.e>now):[];
-  const items=[...de,...free].sort((a,b)=>(b.allDay?1:0)-(a.allDay?1:0)||a.s-b.s);
+  const items=pairUp([...de,...free].sort((a,b)=>(b.allDay?1:0)-(a.allDay?1:0)||a.s-b.s));
   const hidden=onDay(evs,sel).length-de.length;
   const isToday=dkey(sel)===dkey(today),tmr=new Date(today);tmr.setDate(tmr.getDate()+1);
   const dayName=isToday?`היום, יום ${HDAYS[sel.getDay()]}`:dkey(sel)===dkey(tmr)?`מחר, יום ${HDAYS[sel.getDay()]}`:`יום ${HDAYS[sel.getDay()]}`;
   $('dayView').innerHTML=`<div class="dv-hd"><span class="dvic" aria-hidden="true">${evIcon('cal')}</span><span class="col"><b>${dayName}</b><small class="muted">${sel.getDate()} ב${sel.toLocaleDateString('he-IL',{month:'long'})}${de.length?` · ${de.length} אירועים`:''}${hidden?` · ${hidden} מוסתרים`:''}</small></span></div>`+
     (items.length?`<div class="tline">${items.map((e,i)=>e.free
       ?`<button class="bare aitem free" style="--c:var(--who-s);--i:${i}" data-calfree="${HDAYS[sel.getDay()]} ${sel.getDate()}/${sel.getMonth()+1} ${hm(e.s)}"><span class="eic" aria-hidden="true">${evIcon('heart')}</span><span class="col"><b>ערב פנוי לשניכם</b><small>הצעה · נגיעה כדי לקבוע משהו ביחד</small></span><span class="dot hollow" aria-hidden="true"></span><span class="t num">${hm(e.s)}</span></button>`
-      :`<div class="aiw${evNow(e)?' now':''}"><button class="bare aitem${e.pending?' pending':''}${evNow(e)?' now':''}" style="--c:var(${WHO[e.who].c});--i:${i}" data-calev="${esc(e.id)}"><span class="eic" aria-hidden="true">${evIcon(evKind(e))}</span><span class="col"><b>${esc(e.title)}${evNowTag(e)}</b><small>${WHO[e.who].n}${e.allDay?'':' · '+rng(e.s,e.e)}${e.place?' · '+esc(e.place):''}${e.pending?' · ממתין לסנכרון':''}</small></span><span class="dot${e.pending?' hollow':''}" aria-hidden="true"></span><span class="t num">${e.allDay?'כל היום':hm(e.s)}</span></button><button class="bare evdel${S.evArm===e.id?' arm':''}" data-evdel="${esc(e.id)}" data-calw="${e.who}" aria-label="${S.evArm===e.id?'אישור מחיקה':'מחיקת'}: ${esc(e.title)}">${S.evArm===e.id?'למחוק?':I.trash}</button></div>`).join('')}</div>`
+      :e.pair?pairRow(e.pair,i):evRowCal(e,i)).join('')}</div>`
       :`<button class="bare aitem empty" data-caladd><span class="col"><b>אין כלום ביום הזה</b><small>נגיעה כדי להוסיף אירוע</small></span></button>`);
   // the best suggestion about time (calendar or a task), and the tasks that still need a time
   const cs=suggestions(8).find(c=>c.domain==='calendar'||c.domain==='tasks');
@@ -4124,6 +4136,25 @@ function closeCalAdd(){$('calSheet').hidden=true;$('calBg').hidden=true;S.calMov
 $('calBg').onclick=closeCalAdd;$('calShClose').onclick=closeCalAdd;
 /* now: a timed event that is going on (start ≤ now < end) gets a soft pulse and "עכשיו"; one starting within the hour, "בעוד X דק'" */
 const evNow=e=>!e.allDay&&e.s<=Date.now()&&Date.now()<e.e;
+const evDelBtn=(e,cls)=>`<button class="bare evdel${cls||''}${S.evArm===e.id?' arm':''}" data-evdel="${esc(e.id)}" data-calw="${e.who}" aria-label="${S.evArm===e.id?'אישור מחיקה':'מחיקת'}: ${esc(e.title)}">${S.evArm===e.id?'למחוק?':I.trash}</button>`;
+const evRowCal=(e,i)=>`<div class="aiw${evNow(e)?' now':''}"><button class="bare aitem${e.pending?' pending':''}${evNow(e)?' now':''}" style="--c:var(${WHO[e.who].c});--i:${i}" data-calev="${esc(e.id)}"><span class="eic" aria-hidden="true">${evIcon(evKind(e))}</span><span class="col"><b>${esc(e.title)}${evNowTag(e)}</b><small>${WHO[e.who].n}${e.allDay?'':' · '+rng(e.s,e.e)}${e.place?' · '+esc(e.place):''}${e.pending?' · ממתין לסנכרון':''}</small></span><span class="dot${e.pending?' hollow':''}" aria-hidden="true"></span><span class="t num">${e.allDay?'כל היום':hm(e.s)}</span></button>${evDelBtn(e)}</div>`;
+// timed events of two or more people at the same start become one item {pair:[...]}; the rest stay as they are
+function pairUp(items){
+  const out=[];
+  for(const e of items){
+    const last=out[out.length-1],head=last&&(last.pair?last.pair[0]:last);
+    const ok=x=>x&&!x.free&&!x.allDay;
+    if(ok(e)&&ok(head)&&+head.s===+e.s&&!(last.pair||[last]).some(x=>x.who===e.who)){
+      if(last.pair)last.pair.push(e);else out[out.length-1]={pair:[last,e],s:e.s};
+    }else out.push(e);
+  }
+  return out;
+}
+function pairRow(evs,i){
+  const cs=evs.map(e=>`var(${WHO[e.who].c})`),n=evs.some(evNow);
+  const dot=cs.length===2?`linear-gradient(90deg,${cs[0]} 50%,${cs[1]} 50%)`:`conic-gradient(${cs.map((c,k)=>`${c} ${k*100/cs.length}% ${(k+1)*100/cs.length}%`).join(',')})`;
+  return `<div class="aiw aipair${n?' now':''}" style="--i:${i}" role="group" aria-label="באותה שעה, ${hm(evs[0].s)}: ${evs.map(e=>WHO[e.who].n+' '+esc(e.title)).join(', ')}"><div class="aitem pairbox"><div class="pcards"><span class="phead">שניכם באותה שעה</span>${evs.map(e=>`<div class="pc${e.pending?' pending':''}${evNow(e)?' now':''}" style="--c:var(${WHO[e.who].c})"><button class="bare pcb" data-calev="${esc(e.id)}"><small class="pwho">${WHO[e.who].n}</small><b>${esc(e.title)}${evNowTag(e)}</b><small>${rng(e.s,e.e)}${e.place?' · '+esc(e.place):''}${e.pending?' · ממתין':''}</small></button>${evDelBtn(e,' mini')}</div>`).join('')}</div><span class="dot duo" style="background:${dot}" aria-hidden="true"></span><span class="t num">${hm(evs[0].s)}</span></div><span class="evdel ghost" aria-hidden="true"></span></div>`;
+}
 function evNowTag(e){if(e.allDay)return '';const n=Date.now();if(evNow(e))return '<span class="evnow"><i></i>עכשיו</span>';
   const m=Math.round((e.s-n)/6e4);return m>0&&m<=60?`<span class="evnow soon">בעוד ${m} דק׳</span>`:''}
 // keep the marker true while the screen is open: redraw once a minute when today is on screen
