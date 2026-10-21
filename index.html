@@ -791,6 +791,14 @@ div.mhrow{grid-template-columns:auto minmax(0,1fr)}
 .cmdsteps label.ck{display:flex;align-items:center;gap:8px;font-size:14px}
 .cmdnote{font-size:13px;color:var(--ink-2)}
 .tdlearn{align-self:center;margin-top:4px;font-size:14px}
+.agsec{display:flex;flex-direction:column;gap:8px;padding-block:6px 14px}.agsec h3{margin:0;font-size:16px}
+.agplan{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:16px;background:var(--accent-soft)}.agplan .col{display:flex;flex-direction:column;gap:3px;min-width:0}.agplan small{color:var(--ink-2);font-size:12.5px}
+.agbud{display:flex;align-items:center;gap:6px;font-size:14px}.agbud i{width:22px;height:8px;border-radius:99px;background:var(--line)}.agbud i.on{background:var(--accent)}.agbud span{margin-inline-start:6px}
+.agrow,.agfind{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)}.agrow:last-child,.agfind:last-child{border-bottom:0}
+.agrow .col,.agfind .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.agrow small,.agfind small{font-size:12px;color:var(--ink-2)}.agfind span{font-size:14px;overflow-wrap:anywhere}
+.agdot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--line)}.agdot.green{background:var(--pos)}.agdot.amber{background:#D99A1E}.agdot.red{background:var(--neg)}
+.agst{font-size:12px;font-weight:700;color:var(--ink-2)}.agst.red{color:var(--neg)}.agst.amber{color:#B07A12}
+.agtag{flex:none;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--surface))}
 .lrncard{display:flex;flex-direction:column;gap:4px;text-align:start;padding:16px;width:100%}
 .lrnsec{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}.lrnsec>h3{margin:0;font-size:15px}
 .lrnrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:14px}
@@ -1217,6 +1225,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
     <section class="card tdlist" id="tdTasks"></section>
     <div id="tdDoneWrap" hidden><h2 class="sec mhsec">בוצע לאחרונה</h2><div id="tdDone" class="mhlist"></div></div>
     <button class="bare mhlearn" data-learned><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>מה האפליקציה למדה עלינו<span aria-hidden="true">‹</span></button>
+    <button class="bare mhlearn" data-agents><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:var(--accent);stroke-width:2"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 14l2.5-3 2.5 2 3-4"/></svg>חדר הבקרה של הסוכנים<span aria-hidden="true">‹</span></button>
   </section>
 
   <section class="tab" id="t-home">
@@ -2216,7 +2225,7 @@ themeApply(themeGet());
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themeGet()==='auto')themeApply('auto')});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]');if(!b)return;const t=b.dataset.themeSet;
   try{t==='auto'?localStorage.removeItem('hb_theme'):localStorage.setItem('hb_theme',t)}catch(_){}themeApply(t);themeRow()});
-const S={bus:[],arik:[],reminders:[],focus:null,pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={board:[],bus:[],arik:[],reminders:[],focus:null,pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -2366,7 +2375,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(navInd);
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
 // tasks and prefs (feedback on suggestions) are new and live in the app's data only; a missing file reads as empty
-const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck','arik','reminders','bus'];
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck','arik','reminders','bus','board'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -3952,8 +3961,8 @@ function flash(el){
 }
 function goTo(ref){
   const [col,id]=String(ref||'').split('/');
-  const tab={grocery:'shop',purchases:'shop',variable:'home',baby:'baby',months:'home',holdings:'sav',deposits:'sav',calreq:'cal',calendar:'cal',today:'today',tasks:'today',arik:'today'}[col];if(!tab)return;
-  if(tab==='today'){if(!$('sheet').hidden)closeSheet();goTab('today');if(col==='arik')setTimeout(()=>arikOpen(),300);return}
+  const tab={grocery:'shop',purchases:'shop',variable:'home',baby:'baby',months:'home',holdings:'sav',deposits:'sav',calreq:'cal',calendar:'cal',today:'today',tasks:'today',arik:'today',agents:'today'}[col];if(!tab)return;
+  if(tab==='today'){if(!$('sheet').hidden)closeSheet();goTab('today');if(col==='arik')setTimeout(()=>arikOpen(),300);if(col==='agents')setTimeout(agentsSheet,300);return}
   if(tab==='cal'){if(!$('sheet').hidden)closeSheet();goTab('cal');return}
   if(!$('sheet').hidden)closeSheet();
   goTab(tab);
@@ -4900,6 +4909,30 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-arikcloud]
 document.addEventListener('click',e=>{const c=e.target.closest('[data-arikchip]');if(c){arikHear(c.dataset.arikchip);return}
   const a=e.target.closest('[data-arikact]');if(a){const x=(S.arikActs||[])[Number(a.dataset.arikact)];S.arikActs=[];if(x)x.run();return}
   if(e.target.closest('[data-arikopen]')){arikOpen();return}});
+/* ---------- the control room: every agent, when it ran, what it found, and what אריק המנהל decided ---------- */
+const AGENTS_HE=[['manager','אריק המנהל','מחליט מה מגיע לטלפונים, 3 פעמים ביום'],['morning','בוקר טוב','הודעת הבוקר'],['remind','תזכורות','מה שביקשתם שאריק יזכיר'],['bus','אוטובוסים','קו 20 בדרך לעבודה ובחזרה'],
+  ['agent-prices','השוואת מחירים','זאפ לפריטי התינוק, שופרסל מול רמי לוי'],['grocery','מחירי סופר','רמי לוי, כל שעה'],['prices','מחירים וחסכונות','מניות, קרנות והפקדות אוטומטיות'],
+  ['weekly','סיכום שבועי','שישי בצהריים'],['monthly','סיכום חודשי','ב־1 לחודש'],['arik','אריק בענן','שאלות שהטלפון לא ידע לענות']];
+const BOARD_ST={new:['ממתין להחלטה','var(--ink-2)'],sent:['נשלח','var(--pos)'],held:['מחכה לבוקר','var(--warn,#C98A1B)'],dropped:['ירד','var(--ink-3,var(--ink-2))']};
+function agentHealth(r){if(!r)return ['gray','עוד לא רץ'];if(!r.ok)return ['red','נכשל'];if(r.every_h&&Date.now()-r.at>r.every_h*1.5*3600000)return ['amber','מאחר'];return ['green','תקין']}
+function agentsSheet(){
+  const keep=!$('sheet').hidden&&$('sheetBody').querySelector('.agsec')?$('sheet').scrollTop:0;
+  const runs=Object.fromEntries(S.board.filter(d=>d.kind==='run').map(d=>[d.agent,d])),plan=S.board.find(d=>d.id==='plan');
+  const bud=S.board.find(d=>d.id==='budget-'+dkey(new Date())),used=(bud&&bud.used&&S.uid&&bud.used[S.uid])||0;
+  const week=Date.now()-7*86400000,mine=S.board.filter(d=>d.kind==='finding'&&(d.at||0)>week&&(!d.for||!S.uid||d.for===S.uid)).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,20);
+  const name=a=>(AGENTS_HE.find(x=>x[0]===a)||[0,a])[1],cloud=runs.arik&&runs.arik.ok;
+  openSheet('חדר הבקרה',`
+   <div class="agsec"><div class="agplan"><span class="arikav" aria-hidden="true">א</span><span class="col"><b>אריק המנהל</b><span>${plan?esc(plan.text||''):'עוד לא רץ. הריצה הראשונה תהיה בבוקר.'}</span><small>${plan?relTime(plan.at)+' · ':''}${plan&&plan.by==='claude'?'החליט אריק בענן':'החליטו כללים פשוטים'+(cloud?'':' (אריק בענן עוד לא מחובר)')}</small></span></div>
+     <div class="agbud" role="img" aria-label="פושים היום: ${used} מתוך 4">${[0,1,2,3].map(i=>`<i class="${i<used?'on':''}"></i>`).join('')}<span>פושים אליך היום: <b class="num">${used}</b> מתוך 4</span></div>
+     <span class="cmdnote">אריק רק מספר, לא מבצע שום דבר לבד. תזכורות שביקשתם, האוטובוס ועדכונים מבן/בת הזוג לא נספרים ב־4.</span></div>
+   <div class="agsec"><h3>הסוכנים</h3>${AGENTS_HE.map(([k,n,what])=>{const r=runs[k],[c,st]=agentHealth(r);
+     return `<div class="agrow"><i class="agdot ${c}" aria-hidden="true"></i><span class="col"><b>${n}</b><small>${what}${r?' · רץ '+relTime(r.at):''}${r&&r.note?' · '+esc(r.note):''}</small></span><span class="agst ${c}">${st}</span></div>`}).join('')}</div>
+   <div class="agsec"><h3>מה הסוכנים מצאו השבוע</h3>${mine.length?mine.map(f=>{const [t,c]=BOARD_ST[f.status]||[f.status,'var(--ink-2)'];
+     return `<div class="agfind"><span class="col"><b>${esc(f.final_title||f.title||'')}</b><span>${esc(f.final_text||f.text||'')}</span><small>${esc(name(f.agent))} · ${relTime(f.at)}${f.why?' · '+esc(f.why):''}</small></span><span class="agtag" style="--c:${c}">${t}</span></div>`}).join(''):'<span class="cmdnote">עוד אין ממצאים. כשסוכן ימצא משהו, תראו אותו כאן ומה אריק החליט לגביו.</span>'}</div>`);
+  if(keep)$('sheet').scrollTop=keep;
+}
+document.addEventListener('click',e=>{if(e.target.closest('[data-agents]'))agentsSheet()});
+
 /* ---------- what the app learned about us: every preference can be seen, changed, or deleted ---------- */
 const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה',task_overdue:'משימה שעבר המועד שלה',cal_conflict:'שני אירועים באותה שעה',money_pace:'קצב הוצאה לקראת חריגה',savings_stale:'יתרה שלא עודכנה',task_split:'חלוקת משימה גדולה',money_change:'השוואה לחודש שעבר',baby_gift:'פריטים שמחכים למתנה',baby_price:'מחירים לפריטי תינוק',grocery_compare:'השוואת סל הסופר',sub_up:'קבוע שהתייקר',birthday:'ימי הולדת',birth_step:'לוח הזמנים ללידה'};
 function learnedSheet(){
