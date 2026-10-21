@@ -1389,6 +1389,7 @@ const ARIK = (() => {
     ['birthdays', /(ימי (ה)?הולדת|יום (ה)?הולדת|יומולדת|למי יש|מתנות? (ל|קרוב))/],
     ['appointments', /^(מתי|מה|אילו|יש|איזה)\s.{0,20}(תור|תורים|בדיקה|בדיקות|ביקור|ביקורים|רופא)/],
     ['receipt', /(קבלה|חשבונית)/],
+    ['bus', /(אוטובוס|קו \d+|מתי (יוצא|מגיע) ה?קו|מתי יוצא ה|מתי מגיע ה)/],
     ['today', /(מה (יש|מחכה|קורה)( לי| לנו)? היום|מה (הכי )?דחוף|מה התוכנית (של |ל)?היום|מה היום שלי|איך נראה היום)/],
     ['week_tasks', /((תעשה|לעשות|תסדר|לסדר|סדר)( לי| לנו)? (סדר )?(ב|את ה)?משימות|משימות (של )?השבוע|מה (יש|צריך) לעשות השבוע)/],
     ['find_time', /((תמצא|למצוא|מצא|תחפש)( לי| לנו)? (זמן|חלון|מקום ביומן)|מתי (אפשר|יש לי זמן|נוכל))/],
@@ -2202,7 +2203,7 @@ themeApply(themeGet());
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themeGet()==='auto')themeApply('auto')});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]');if(!b)return;const t=b.dataset.themeSet;
   try{t==='auto'?localStorage.removeItem('hb_theme'):localStorage.setItem('hb_theme',t)}catch(_){}themeApply(t);themeRow()});
-const S={arik:[],reminders:[],focus:null,pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={bus:[],arik:[],reminders:[],focus:null,pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -2352,7 +2353,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(navInd);
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
 // tasks and prefs (feedback on suggestions) are new and live in the app's data only; a missing file reads as empty
-const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck','arik','reminders'];
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck','arik','reminders','bus'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -4718,6 +4719,10 @@ function bagSheet(){
 // events whose title says what they are
 const evsAhead=(days,re)=>{const now=Date.now(),end=now+days*864e5;return calEvents().filter(e=>+e.e>now&&+e.s<end&&re.test(e.title))};
 const dmShort=d=>`${HDAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+// "קו 20 מקפלן/ארלוזורוב: 07:57 (בעוד 3 דק'), 08:15 …", the leg of the time of day first
+function busText(d,c){const now=Date.now(),legs=(c.legs||[]).slice(),pm=new Date().getHours()>=12;if(pm)legs.reverse();
+  return legs.map(l=>{const s=(d.stops||{})[l.stop]||{},e=(s.etas||[]).map(x=>new Date(String(x).replace(' ','T'))).filter(x=>+x>now-6e4);
+    return `קו ${c.line} מ${l.name}: ${e.length?e.slice(0,3).map(x=>`${hm(x)} (בעוד ${Math.max(0,Math.round((x-now)/6e4))} דק׳)`).join(', ')+(l.ride?`. עם הראשון תגיע ל${l.to} בערך ב-${hm(new Date(+e[0]+l.ride*6e4))}`:''):'אין כרגע נתוני זמן אמת'}`}).join('\n')}
 function arikMore(intent,rest){
   const now=Date.now(),acts=[];
   if(intent==='due_date'){const due=ARIK.dateOf(rest,now);if(!due)return {text:'לא הצלחתי לקרוא את התאריך. אפשר לכתוב למשל "תאריך הלידה המשוער 15.12".',acts};
@@ -4747,6 +4752,10 @@ function arikMore(intent,rest){
     const b=CMD.babyMatches(q,S.baby)[0],p=b&&S.pricecheck.find(x=>x.id===b.id);
     if(p&&p.count&&!p.loose)return {text:`"${b.name}" בזאפ: רוב המחירים בין ${ils(p.low)} ל-${ils(p.high||p.median)}, באמצע ${ils(p.median)} (נבדק ${new Date(p.at).toLocaleDateString('he-IL')}).`,acts:[{label:'למחירים',run:()=>{closeSheet();babySheet(b)}}]};
     return {text:null,price:q}}
+  if(intent==='bus'){const c=S.prefs.find(x=>x.id==='commute');if(!c)return {text:'עוד לא הגדרנו את הקו והתחנות שלך.',acts};
+    const d=(S.bus.find(x=>x.id==='now')||{}),fresh=d.at&&now-new Date(d.at).getTime()<3*6e4;
+    if(!fresh)return {text:null,bus:true};
+    return {text:busText(d,c),acts}}
   if(intent==='receipt')return {text:'שלחו לי צילום של הקבלה בכפתור המצלמה למטה, ואני אקרא את הסכום, החנות והתאריך.',acts:[{label:'לצלם קבלה',run:()=>$('arikCam')&&$('arikCam').click()}]};
   return null;
 }
@@ -4802,6 +4811,7 @@ async function arikHear(text){
       await arikSave([user,{kind:'msg',role:'arik',text:ok?`${ARIK.say('done')} אזכיר לך ${w.label}: ${what}.${arikPushOk()?'':' (כדי שהתזכורת תגיע, צריך להפעיל התראות בטלפון הזה)'}`:'לא הצלחתי לשמור את התזכורת. ננסה שוב?'}]);arikDraw();return}}
   if(intent==='move_event'||intent==='cancel_event'){const r=arikEvent(intent,rest);S.arikActs=r.acts;await arikSave([user,{kind:'msg',role:'arik',text:r.text}]);arikDraw();arikSpeak(r.text);return}
   const more=intent!=='other'?arikMore(intent,rest):null;
+  if(more&&more.bus){pricesNow('bus.yml');await arikSave([user,{kind:'msg',role:'arik',text:'בודק את קו 20 בזמן אמת, רגע…',bus:Date.now()}]);arikDraw();return}
   if(more&&more.price){const qid='q-'+Date.now().toString(36);
     const ok=await store.put('pricecheck',qid,{kind:'query',query:more.price,status:'pending',by:S.uid||null,at:Date.now()});
     if(ok)pricesNow('agent-prices.yml');
@@ -4839,8 +4849,8 @@ function arikOpen(first){
 function arikDraw(){const el=$('arikLog');if(!el)return;const ms=arikMsgs();
   el.innerHTML=(ms.length?'':`<div class="arikmsg bot"><span>${esc(ARIK.say('hello'))} אפשר לשאול אותי על היום, המשימות, הכסף, התינוק, או לבקש שאזכיר משהו.</span></div>`)+
     ms.map(m=>{const mine=m.role==='user';const wait=m.kind==='ask'&&m.status==='pending';
-      const pq=m.pq&&S.pricecheck.find(x=>x.id===m.pq);const pqText=pq&&pq.status==='done'?(pq.count&&pq.median?`בזאפ ${pq.count} תוצאות ל"${pq.query}": רוב המחירים בין ${ils(pq.low)} ל-${ils(pq.high||pq.median)}, באמצע ${ils(pq.median)}.${pq.loose?' התוצאות לא בדיוק תואמות, כדאי לבדוק.':''}`:`לא מצאתי בזאפ תוצאות ל"${pq.query}".`):'';
-      return `<div class="arikmsg ${mine?'me':'bot'}"><span>${esc(m.text).replace(/\n/g,'<br>')}${pqText?`<br><b>${esc(pqText)}</b>${(pq.offers||[]).map(o=>`<br><a href="${esc(o.url)}" target="_blank" rel="noopener nofollow">${esc(o.title.slice(0,40))} · ${ils(o.price)}</a>`).join('')}`:''}</span><small>${mine?esc(whoSaid(m.by)):'אריק'}${m.kind==='ask'?' · לאריק בענן':''} · ${agoHe(m.at||Date.now())}</small></div>`+
+      const bq=m.bus&&S.bus.find(x=>x.id==='now'&&new Date(x.at).getTime()>=m.bus-5000),cm=S.prefs.find(x=>x.id==='commute');const pq=m.pq&&S.pricecheck.find(x=>x.id===m.pq);const pqText=pq&&pq.status==='done'?(pq.count&&pq.median?`בזאפ ${pq.count} תוצאות ל"${pq.query}": רוב המחירים בין ${ils(pq.low)} ל-${ils(pq.high||pq.median)}, באמצע ${ils(pq.median)}.${pq.loose?' התוצאות לא בדיוק תואמות, כדאי לבדוק.':''}`:`לא מצאתי בזאפ תוצאות ל"${pq.query}".`):'';
+      return `<div class="arikmsg ${mine?'me':'bot'}"><span>${esc(m.text).replace(/\n/g,'<br>')}${bq&&cm?`<br><b>${esc(busText(bq,cm)).replace(/\n/g,'<br>')}</b>`:''}${pqText?`<br><b>${esc(pqText)}</b>${(pq.offers||[]).map(o=>`<br><a href="${esc(o.url)}" target="_blank" rel="noopener nofollow">${esc(o.title.slice(0,40))} · ${ils(o.price)}</a>`).join('')}`:''}</span><small>${mine?esc(whoSaid(m.by)):'אריק'}${m.kind==='ask'?' · לאריק בענן':''} · ${agoHe(m.at||Date.now())}</small></div>`+
         (m.kind==='ask'?(m.status==='answered'?`<div class="arikmsg bot cloud"><span>${esc(m.answer||'').replace(/\n/g,'<br>')}</span><small>אריק בענן · ${agoHe(m.answeredAt||m.at)}</small></div>${(m.actions||[]).length?`<div class="arikacts">${m.actions.map((a,i)=>`<button class="btn ghost" data-arikcloud="${esc(m.id)}|${i}">${esc(ARIK_ACT[a.type]||'לביצוע')}: ${esc(a.text||a.title||'')}</button>`).join('')}</div>`:''}`:m.status==='failed'?`<div class="arikmsg bot"><span>אריק בענן לא הצליח לענות הפעם${m.error?` (${esc(m.error)})`:''}. אפשר לנסות שוב בעוד רגע.</span></div>`:`<div class="arikmsg bot typing"><span><i></i><i></i><i></i> ${esc(ARIK.say('unknown',m.at))}</span></div>`):'')}).join('');
   $('arikActs').innerHTML=(S.arikActs||[]).map((a,i)=>`<button class="btn ${i?'ghost':''}" data-arikact="${i}">${esc(a.label)}</button>`).join('');
   el.scrollTop=el.scrollHeight;
