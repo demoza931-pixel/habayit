@@ -721,6 +721,22 @@ body.noscroll{overflow:hidden}
 .pchd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .pcoff{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--surface);color:var(--ink);text-decoration:none}
 .pcoff b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pcoff small{font-size:12px;color:var(--ink-2)}
+.arikhd{display:inline-flex;align-items:center;gap:8px}
+.arikav{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;background:var(--accent);color:#fff;font:800 15px var(--font-display)}
+.cmdbar.mhcmd .mharik{width:40px;height:40px;background:none;flex:none}.cmdbar.mhcmd .mharik .arikav{width:34px;height:34px}
+.arik{display:flex;flex-direction:column;gap:10px;min-height:60vh;min-width:0;width:100%}.arik>*{min-width:0;max-width:100%} /* the chips row scrolls instead of widening the chat */
+.ariklog{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto;padding:4px 2px}
+.arikmsg{display:flex;flex-direction:column;gap:3px;max-width:86%}
+.arikmsg span{padding:10px 13px;border-radius:18px;font-size:15px;line-height:1.5;white-space:normal}
+.arikmsg small{font-size:11px;color:var(--ink-2);padding:0 6px}
+.arikmsg.me{align-self:flex-start}.arikmsg.me span{background:var(--accent);color:#fff;border-end-start-radius:6px}
+.arikmsg.bot{align-self:flex-end;text-align:start}.arikmsg.bot span{background:var(--surface-2);color:var(--ink);border-end-end-radius:6px}
+.arikmsg.cloud span{background:var(--accent-soft)}
+.arikmsg.typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ink-2);margin-inline-end:3px;vertical-align:2px}
+@media (prefers-reduced-motion:no-preference){.arikmsg{animation:popin .25s ease-out}.arikmsg.typing i{animation:evpulse 1.2s ease-in-out infinite}.arikmsg.typing i:nth-child(2){animation-delay:.2s}.arikmsg.typing i:nth-child(3){animation-delay:.4s}}
+.arikacts{display:flex;flex-wrap:wrap;gap:8px}.arikacts:empty{display:none}.arikacts .btn{min-height:42px;font-size:14px;padding:0 14px}
+.arikchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.arikchips .chip{min-height:34px;font-size:13px;padding:0 12px;white-space:nowrap}
+.arikform{margin-top:2px}.arikvoice{display:flex;align-items:center;gap:6px}
 .mhsec{margin:6px 0 -2px;font-size:20px}#t-today .tdsec .sec{font-size:20px}
 .mhcard{display:flex;flex-direction:column;gap:12px;padding:16px;position:relative}.mhcard+.mhcard{margin-top:12px}
 .mhtop{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start}
@@ -1171,7 +1187,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   <section class="tab" id="t-today" hidden>
     <div class="phead mhhead"><div class="col"><small id="tdGreet" class="mhgreet"></small><h1 class="ptitle">מנהל הבית</h1><small class="psub">מה אפשר להוריד לכם מהראש?</small><small id="tdDate" hidden></small></div><img class="ill mhill" src="img/house.png" alt="" aria-hidden="true"></div>
     <form class="cmdbar mhcmd" id="cmdForm" autocomplete="off"><button class="bare mhgo" id="cmdGo" aria-label="המשך"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
-      <input id="cmdText" enterkeyhint="send" placeholder="כתבו או אמרו מה צריך לעשות…" aria-label="מה צריך לעשות"><button type="button" class="bare cmdmic" id="cmdMic" aria-label="אמירה בקול" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></form>
+      <input id="cmdText" enterkeyhint="send" placeholder="כתבו או אמרו לאריק מה צריך…" aria-label="מה צריך לעשות"><button type="button" class="bare mharik" data-arikopen aria-label="שיחה עם אריק"><span class="arikav" aria-hidden="true">א</span></button><button type="button" class="bare cmdmic" id="cmdMic" aria-label="אמירה בקול" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></form>
     <div id="cmdUndo"></div>
     <div class="mhquick">
       <button class="bare mhq t-mint" data-mhq="shop"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16l-1.6 9H5.6zM8 10l4-6 4 6M9 14v2M12 14v2M15 14v2"/></svg></span>הכינו קניות</button>
@@ -1347,7 +1363,96 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
   </form>
 </div>
 
-<script>/* ---------- savings: deposits and the mirror portfolio (pure, no DOM, no writes) ----------
+<script>/* ---------- אריק, the house assistant: what a sentence asks for (pure, no DOM, no network) ----------
+   ARIK.intent(text) → {intent, rest}: one of
+     today · week_tasks · find_time · explain · budget_left · buy_check · baby_missing · remind · advance · remember · other
+   ("other" goes to the CMD parser for actions, and what nobody understands goes to אריק בענן).
+   ARIK.when(text, now) reads a reminder's time: "בערב", "מחר בבוקר", "בשעה 17:30", "בעוד שעתיים", "ביום חמישי ב-9"
+   and returns {at (ms), label, text} with the time words taken out, or null when no time is said.
+   ARIK.say(kind, n) gives the small changing lines that make him sound like someone, not a form. */
+const ARIK = (() => {
+  const clean = s => String(s || '').replace(/\s+/g, ' ').trim();
+  // "אריק," / "היי אריק" / "בבקשה" around the sentence are not part of the request
+  const strip = s => clean(String(s || '').replace(/^(היי|הי|אהלן|יו)\s+/, '').replace(/^אריק[,!:.]?\s*/, '').replace(/[,\s]*בבקשה[.!?]?\s*$/, '').replace(/^בבקשה\s+/, ''));
+
+  const RULES = [
+    ['remember', /^(תזכור|תזכרי|תרשום לך|שים לב)\s+(ש|את|כי)/],
+    ['remind', /^(תזכיר|תזכירי|להזכיר|הזכר|תעשה לי תזכורת|תזכורת)/],
+    ['today', /(מה (יש|מחכה|קורה)( לי| לנו)? היום|מה (הכי )?דחוף|מה התוכנית (של |ל)?היום|מה היום שלי|איך נראה היום)/],
+    ['week_tasks', /((תעשה|לעשות|תסדר|לסדר|סדר)( לי| לנו)? (סדר )?(ב|את ה)?משימות|משימות (של )?השבוע|מה (יש|צריך) לעשות השבוע)/],
+    ['find_time', /((תמצא|למצוא|מצא|תחפש)( לי| לנו)? (זמן|חלון|מקום ביומן)|מתי (אפשר|יש לי זמן|נוכל))/],
+    ['explain', /(מה (ה)?משמעות|מה זה אומר|תסביר( לי)?|להסביר|מה (ה)?נתונים (האלה )?אומרים)/],
+    ['budget_left', /((כמה|מה) (עוד )?(נשאר|נותר)|כמה (עוד )?(אפשר|מותר) להוציא|כמה כסף (נשאר|יש)|איפה אנחנו (עם|ב)(ה)?תקציב)/],
+    ['buy_check', /(משתלמ|כדאי (לנו )?לקנות|(תבדוק|לבדוק|בדוק)( אם)? (ה)?(קנייה|רכישה)|אפשר להרשות)/],
+    ['baby_missing', /(מה|כמה).{0,12}(חסר|נשאר|צריך).{0,25}(לידה|תינוק|תינוקת|לבת|הכנות)/],
+    ['advance', /(מה (אתה )?(מציע|ממליץ)|מה כדאי (לקדם|לעשות)|על מה (כדאי )?לעבוד|מה הדבר הבא|מה לקדם)/],
+  ];
+  function intent(text) {
+    const rest = strip(text);
+    for (const [k, re] of RULES) if (re.test(rest)) return { intent: k, rest };
+    return { intent: 'other', rest };
+  }
+
+  const DAYW = { 'ראשון': 0, 'שני': 1, 'שלישי': 2, 'רביעי': 3, 'חמישי': 4, 'שישי': 5, 'שבת': 6 };
+  const PART = { 'בבוקר': 8, 'בצהריים': 13, 'אחר הצהריים': 16, 'אחה"צ': 16, 'בערב': 20, 'בלילה': 22 };
+  const pad = n => String(n).padStart(2, '0');
+  const HDAY = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  function when(text, now) {
+    // punctuation around the words ("בערב.") is not part of the time
+    let t = ' ' + clean(String(text || '').replace(/[.!?,;]+/g, ' ')) + ' ', found = false, m;
+    const base = new Date(now), d = new Date(now);
+    let hour = null, min = 0, dayShift = null;
+    const cut = re => { const x = t.match(re); if (x) { t = t.replace(x[0], ' '); found = true; } return x; };
+    // "בעוד 20 דקות" / "בעוד שעה" / "בעוד שעתיים" / "בעוד 3 שעות"
+    if ((m = cut(/\sבעוד\s+(\d+|חצי)?\s*(דקות|דקה|שעה|שעות|שעתיים)\s/))) {
+      const n = m[1] === 'חצי' ? 0.5 : m[1] ? Number(m[1]) : 1;
+      const ms = /דק/.test(m[2]) ? n * 6e4 : m[2] === 'שעתיים' ? 2 * 36e5 : n * 36e5;
+      const at = new Date(now + ms);
+      return { at: at.getTime(), label: `ב-${pad(at.getHours())}:${pad(at.getMinutes())}`, text: clean(t) };
+    }
+    if (cut(/\sמחרתיים\s/)) dayShift = 2;
+    else if (cut(/\sמחר\s/)) dayShift = 1;
+    else if (cut(/\sהיום\s/)) dayShift = 0;
+    if ((m = cut(/\s(?:ב)?יום\s+(ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)\s|\sב(ראשון|שני|שלישי|רביעי|חמישי|שישי|שבת)\s/))) {
+      const w = DAYW[m[1] || m[2]];
+      dayShift = ((w - base.getDay() + 7) % 7) || 7;
+    }
+    if ((m = cut(/\s(?:בשעה|ב-?)\s*(\d{1,2})(?::(\d{2}))?\s/))) { hour = Number(m[1]); min = Number(m[2] || 0); }
+    for (const [w, h] of Object.entries(PART)) if (cut(new RegExp('\\s' + w.replace(/"/g, '"') + '\\s'))) {
+      if (hour === null) hour = h;
+      else if (h >= 13 && hour < 12) hour += 12; // "ב-8 בערב" is 20:00
+    }
+    if (!found || (hour === null && dayShift === null)) return null;
+    if (hour === null) hour = 9;
+    d.setHours(hour, min, 0, 0);
+    if (dayShift !== null) d.setDate(base.getDate() + dayShift);
+    else if (d.getTime() <= now) d.setDate(d.getDate() + 1); // "בערב" said after the evening began: tomorrow
+    const days = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date(base).setHours(0, 0, 0, 0)) / 864e5);
+    const day = days === 0 ? 'היום' : days === 1 ? 'מחר' : `ביום ${HDAY[d.getDay()]}`;
+    return { at: d.getTime(), label: `${day} ב-${pad(d.getHours())}:${pad(d.getMinutes())}`, text: clean(t) };
+  }
+  // what to remind: the sentence without "תזכיר לי" and without the time; "את זה" is the thing on the screen
+  const reminderText = (rest, focus) => {
+    let s = clean(rest.replace(/^(תזכיר|תזכירי|להזכיר|הזכר|תעשה לי תזכורת|תזכורת)\s*(לי|לנו|ל\S+)?\s*/, '').replace(/^(ש|על|את|ל)?\s*/, m => m.trim() === 'ש' ? '' : m));
+    if (focus && /(את זה|זה|הזאת|הזה)/.test(s)) s = clean(s.replace(/את זה|הזאת|הזה|\bזה\b/, `"${focus}"`));
+    return s;
+  };
+
+  // small changing lines, so he does not sound like a form (light humour, never about money troubles)
+  const LINES = {
+    hello: ['כאן, מקשיב.', 'אני פה. מה צריך?', 'ערוך ומוכן, כמו מגבת חמה.'],
+    done: ['סגור.', 'נעשה.', 'רשמתי. אפשר לשכוח מזה, אני לא.'],
+    unknown: ['את זה אני שולח לאריק הגדול בענן, הוא יחזור אליכם בעוד רגע.', 'זה קצת מעבר לי כאן בטלפון. שלחתי לענן, תשובה תוך דקה-שתיים.'],
+    nothing: ['שקט מוחלט. תהנו מזה.', 'אין כלום דחוף. נדיר, אז כדאי להנות.'],
+    remember: ['רשמתי בזיכרון.', 'נשמר. אני כמו פיל, רק מנומס יותר.'],
+  };
+  const say = (kind, n = Date.now()) => { const l = LINES[kind] || ['']; return l[Math.floor(n / 1000) % l.length]; };
+
+  return { intent, strip, when, reminderText, say };
+})();
+if (typeof module !== 'undefined') module.exports = ARIK;
+
+/* ---------- savings: deposits and the mirror portfolio (pure, no DOM, no writes) ----------
    Three layers that never mix:
      1. deposits that were confirmed (typed in by you in the app)
      2. the actual value of the account (typed in, or a price from a checked source)
@@ -1509,7 +1614,8 @@ const CMD = (() => {
     const amt = money(t);
 
     // 1. shopping list: "תוסיפו לקניות …", "צריך לקנות …", "נגמר החלב"
-    let m = t.match(/^(?:תוסיפ[וי]?|הוסיפ[וי]?|תכניס[וי]?|תשים[וי]?|לרשום)\s+(?:ל(?:רשימת ה)?(?:קניות|סופר|רשימה)\s+)?(.+?)(?:\s+ל(?:רשימת ה)?(?:קניות|סופר|רשימה))?$/)
+    // one person or both ("תוסיף" / "תוסיפו"), and "the shared list" / "our list" at the end
+    let m = t.match(/^(?:תוסיפ[וי]?|תוסיף|הוסיפ[וי]?|הוסף|תכניס[וי]?|תשים[וי]?|תשים|לרשום|תרשום)\s+(?:ל(?:רשימת ה)?(?:קניות|סופר|רשימה)\s+)?(.+?)(?:\s+ל(?:רשימת ה)?(?:קניות|סופר|רשימה)(?:\s+(?:ה)?(?:משותפת|שלנו))?)?$/)
       || t.match(/^(?:צריך|צריכים)\s+לקנות\s+(.+)$/) || t.match(/^(?:נגמר|נגמרה|נגמרו)\s+(?:ה)?(.+)$/);
     if (m && /קניות|סופר|רשימה|לקנות|נגמר/.test(t) && !/קנינו|קניתי/.test(t)) {
       const list = m[1].replace(/^ל(?:רשימת ה)?(?:קניות|סופר|רשימה)\s+/, '');
@@ -2003,7 +2109,7 @@ themeApply(themeGet());
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themeGet()==='auto')themeApply('auto')});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]');if(!b)return;const t=b.dataset.themeSet;
   try{t==='auto'?localStorage.removeItem('hb_theme'):localStorage.setItem('hb_theme',t)}catch(_){}themeApply(t);themeRow()});
-const S={pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={arik:[],reminders:[],focus:null,pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -2153,7 +2259,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(navInd);
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
 // tasks and prefs (feedback on suggestions) are new and live in the app's data only; a missing file reads as empty
-const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck'];
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck','arik','reminders'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -2221,6 +2327,8 @@ const store={
   // a deposit without its day's index price: the daily price job runs now instead of tonight
   async put(col,id,data){const ok=await mutate(col,d=>{d[id]={...data,updatedAt:Date.now()}},'save '+col,noteFor('put',col,id,data),col+'/'+id);if(ok&&col==='deposits'&&SAV.counted(data)&&!has(data.assetPrice))pricesNow('prices.yml');return ok},
   update(col,id,data){return mutate(col,d=>{if(d[id])d[id]={...d[id],...data,updatedAt:Date.now()}},'update '+col,noteFor('update',col,id,data),col+'/'+id)},
+  // a question for אריק בענן: its own commit message, which starts the cloud job (arik.yml)
+  arikAsk(doc){const id=localId();return mutate('arik',d=>{d[id]={...doc,updatedAt:Date.now()}},'ask arik',null,'arik/'+id)},
   del(col,id){return mutate(col,d=>{delete d[id]},'delete '+col,noteFor('del',col,id,null),col+'/'+id)},
   setMonth(k,data){return write(()=>mutate('months',d=>{d[k]={...data,updatedAt:Date.now()}},'month '+k,monthNote(k,data),'months/'+k),'נשמר')}
 };
@@ -3502,6 +3610,7 @@ function incomeSheet(){
     const n=calc(S.month);if(n&&n.flow>0&&!(was>0))cheer(`החודש בפלוס: ${fmt(n.flow)} ₪`)};
 }
 function babySheet(b){
+  if(b)S.focus={kind:'baby',id:b.id,title:b.name,at:Date.now()};
   const isNew=!b;b=b||{name:'',category:'',status:'לקנות',price:null,note:'',min:null,max:null};
   openSheet(isNew?'פריט חדש':esc(b.name),`
   <div class="field"><label class="lbl" for="sbName">פריט</label><input class="in" id="sbName" value="${esc(b.name)}"></div>
@@ -3939,6 +4048,7 @@ document.addEventListener('click',async e=>{if(!e.target.closest('[data-evundo]'
   // only while the delete is still waiting for the sync; once done, the event is gone from the calendar
   const r=S.calreq.find(x=>x.op==='delete'&&x.eventId===u.eventId&&x.status==='pending');if(r&&await store.del('calreq',r.id)){renderCal();toast('המחיקה בוטלה')}else toast('כבר נמחק ביומן')});
 function openCalEvent(e){
+  S.focus={kind:'event',id:e.id,title:e.title,at:Date.now()};
   const when=e.allDay?`${HDAYS[e.s.getDay()]} ${dm(e.s)} · כל היום`:`${HDAYS[e.s.getDay()]} ${dm(e.s)} · ${rng(e.s,e.e)}`;
   openSheet(esc(e.title),`<div class="evsheet" style="--c:var(${WHO[e.who].c})">
     <div class="row"><span class="muted">מתי</span><b class="num">${when}</b></div>
@@ -4261,6 +4371,7 @@ function runAction(c){
 }
 // a task: title, who, status, priority, minutes, date, waiting reason; written through the usual store (tasks)
 function taskSheet(t){
+  if(t)S.focus={kind:'task',id:t.id,title:t.title,at:Date.now()};
   const isNew=!t;t=t||{title:'',owner:learnTop('owner',myWho()||'shared'),status:'new',priority:2,estimatedMinutes:null,dueDate:'',waitingReason:''};
   const chips=(name,map,cur)=>`<div class="chips" data-tsf="${name}" role="radiogroup">${Object.entries(map).map(([k,v])=>`<button type="button" class="chip" role="radio" data-v="${k}" aria-checked="${String(cur)===String(k)}">${v}</button>`).join('')}</div>`;
   openSheet(isNew?'משימה חדשה':'משימה',`
@@ -4310,7 +4421,11 @@ const cmdTaskDoc=a=>({title:a.title,owner:myWho()||'shared',status:'new',priorit
 function cmdUndoShow(text,col,stamps){S.cmdUndo={text,col,stamps};clearTimeout(cmdUndoShow._t);cmdUndoShow._t=setTimeout(()=>{S.cmdUndo=null;cmdUndoDraw()},8000);cmdUndoDraw()}
 function cmdUndoDraw(){const el=$('cmdUndo');if(!el)return;const u=S.cmdUndo;el.innerHTML=u?`<div class="sgundo" role="status"><span>${esc(u.text)}</span><button class="bare link" data-cmdundo>ביטול</button></div>`:''}
 $('cmdForm').onsubmit=e=>{e.preventDefault();const v=$('cmdText').value.trim();if(!v){$('cmdText').focus();return}cmdStart(v)};
-async function cmdStart(text){
+async function cmdStart(text,direct){
+  // a question, a reminder, his name, or a sentence no rule knows: אריק takes it (the conversation, and the cloud when needed)
+  const ai=ARIK.intent(text);
+  if(!direct&&(ai.intent!=='other'||(/^\s*(היי\s+|הי\s+)?אריק/.test(text)&&CMD.parse(ai.rest,{baby:S.baby}).kind==='unknown')||CMD.parse(ai.rest,{baby:S.baby}).kind==='unknown')){$('cmdText').value='';arikOpen(text);return}
+  text=ai.rest;
   const r=CMD.parse(text,{baby:S.baby}),a=r.actions[0];
   const lv=r.kind==='grocery'?autoLevel('grocery'):r.kind==='task'?autoLevel('tasks'):r.kind==='event'?autoLevel('calendar'):'suggest';
   if(r.kind==='grocery'&&a&&lv!=='suggest'){
@@ -4409,6 +4524,125 @@ const learnDoc=()=>S.prefs.find(p=>p.id==='learn')||{kind:'learn',cal:{},owner:{
 const learnTop=(k,def)=>{const e=Object.entries(learnDoc()[k]||{}).sort((a,b)=>b[1]-a[1]);return e.length&&e[0][1]>=3&&(!e[1]||e[0][1]>=e[1][1]*1.5)?e[0][0]:def};
 function learnNote(k,v){if(!v)return;const d=learnDoc(),m={...(d[k]||{})};m[v]=(m[v]||0)+1;
   const doc={kind:'learn',cal:{...(d.cal||{})},owner:{...(d.owner||{})},at:Date.now()};doc[k]=m;store.put('prefs','learn',doc)}
+/* ---------- אריק in the app: a conversation that remembers (data/arik.json), answers from the data on the phone,
+   sends what it cannot answer to אריק בענן (Claude Code in GitHub Actions, the reply comes back to the same thread),
+   and keeps reminders (data/reminders.json; the sheet's script sends them as a notification on time) ---------- */
+const ARIK_CHIPS=['מה יש לי היום ומה הכי דחוף?','תעשה לי סדר במשימות של השבוע','כמה נשאר לנו להוציא החודש?','מה עדיין חסר לנו לקראת הלידה?','מה אתה מציע לקדם עכשיו?'];
+const arikVoice=()=>{try{return localStorage.getItem('hb_arik_voice')==='1'}catch(e){return false}};
+function arikSpeak(t){if(!arikVoice()||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).replace(/[*_"]/g,''));u.lang='he-IL';u.rate=1.02;
+  const v=speechSynthesis.getVoices().find(x=>/^he/i.test(x.lang));if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}}
+const arikMsgs=()=>S.arik.filter(m=>m.kind==='msg'||m.kind==='ask').sort((a,b)=>(a.at||0)-(b.at||0)).slice(-40);
+const arikFacts=()=>S.arik.filter(m=>m.kind==='fact').sort((a,b)=>(b.at||0)-(a.at||0));
+const whoSaid=by=>(S.people||{})[by]||(by==='tchiyade'?'תחיה':by?'יוסף':'');
+// what is on the screen, so "this task" / "these numbers" mean something
+function arikFocus(){const f=S.focus;return f&&Date.now()-f.at<30*6e4?f:null}
+/* answers made on the phone; each returns {text, acts:[{label, run}]} or null when the cloud should answer */
+function arikLocal(intent,rest){
+  const now=Date.now(),mk=monthKey(new Date()),c=calc(mk),evs=calEvents(),t0=new Date();t0.setHours(0,0,0,0);
+  const t1=new Date(t0);t1.setDate(t1.getDate()+1),fc=arikFocus(),acts=[];
+  const open=openTasks(),today=dkey(new Date()),hm2=d=>hm(d);
+  if(intent==='today'){
+    const es=evs.filter(e=>e.e>now&&e.s<t1);const top=suggestions(3)[0];
+    const due=open.filter(t=>t.dueDate&&t.dueDate<=today);
+    const parts=[es.length?`היום ${es.length===1?'אירוע אחד':es.length+' אירועים'}: ${es.slice(0,3).map(e=>`${e.allDay?'':hm2(e.s)+' '}${e.title}`).join(', ')}${es.length>3?' ועוד':''}.`:'היום אין עוד אירועים ביומן.'];
+    if(due.length)parts.push(`משימות שהגיע זמנן: ${due.slice(0,3).map(t=>t.title).join(', ')}.`);
+    parts.push(top?`הכי דחוף לדעתי: ${top.title}`:ARIK.say('nothing'));
+    if(top)acts.push({label:top.primaryAction.label||'בואו נעשה את זה',run:()=>{closeSheet();runAction(top)}});
+    return {text:parts.join(' '),acts};
+  }
+  if(intent==='week_tasks'){
+    const wk=new Date(t0);wk.setDate(wk.getDate()+7);const wkk=dkey(wk);
+    const rank=t=>t.dueDate&&t.dueDate<today?0:t.dueDate&&t.dueDate<=wkk?1:t.status==='waiting'?4:2+(3-(t.priority||2))*.1;
+    const ord=[...open].sort((a,b)=>rank(a)-rank(b)||(a.dueDate||'9').localeCompare(b.dueDate||'9')||(a.priority||2)-(b.priority||2));
+    if(!ord.length)return {text:'אין משימות פתוחות. שבוע נקי, תשמרו עליו.',acts:[{label:'משימה חדשה',run:()=>{closeSheet();taskSheet(null)}}]};
+    const lab=t=>rank(t)===0?' (עבר המועד)':t.dueDate&&rank(t)===1?` (עד ${t.dueDate.slice(8,10)}/${t.dueDate.slice(5,7)})`:t.status==='waiting'?' (מחכה לתשובה)':'';
+    const first=ord.find(t=>!taskSync(t)&&t.status!=='waiting');
+    if(first)acts.push({label:`למצוא זמן ל"${first.title}"`,run:()=>{closeSheet();findTimeSheet(first)}});
+    return {text:`ככה הייתי מסדר את השבוע:\n${ord.slice(0,6).map((t,i)=>`${i+1}. ${t.title}${lab(t)}`).join('\n')}${ord.length>6?`\nועוד ${ord.length-6}.`:''}`,acts};
+  }
+  if(intent==='find_time'){
+    const t=fc&&fc.kind==='task'?S.tasks.find(x=>x.id===fc.id):null;
+    if(t){return {text:`מחפש זמן ל"${t.title}".`,acts:[{label:'לחלונות הפנויים',run:()=>{closeSheet();findTimeSheet(t)}}],auto:()=>{closeSheet();findTimeSheet(t)}}}
+    const pick=open.filter(x=>x.status!=='waiting').slice(0,3);
+    return {text:pick.length?'לאיזו משימה לחפש זמן?':'לאיזה דבר לחפש זמן?',acts:[...pick.map(x=>({label:x.title,run:()=>{closeSheet();findTimeSheet(x)}})),{label:'משהו אחר',run:()=>{closeSheet();findSheet()}}]};
+  }
+  if(intent==='budget_left'){
+    if(!c)return {text:'לחודש הזה עוד אין נתונים בגיליון, אז אין לי ממה לחשב.',acts:[]};
+    if(c.flow===null)return {text:'אין הכנסה רשומה לחודש, ובלי הכנסה אני לא יכול לדעת כמה נשאר.',acts:[]};
+    const d=new Date(),days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate();
+    const lists=['קניות/פארם',foodRow(mk)].map(rn=>{const r=c.rows.find(x=>x.name===rn),rv=r&&has(r.amount)&&!r.star?Number(r.amount):null,sp=varSum(monthVar(mk,rn));return rv!==null&&Math.abs(rv-sp)>=1?`${rn}: ${rv-sp>=0?`נשארו ${ils(rv-sp)}`:`${ils(sp-rv)} מעל`} מתוך ${ils(rv)}`:null}).filter(Boolean);
+    return {text:`לפי הגיליון: הכנסה ${ils(c.income)}, הוצאות ${ils(c.total)}, כלומר ${c.flow>=0?`נשארו ${ils(c.flow)}`:`מינוס של ${ils(-c.flow)}`} ל-${days} הימים שנשארו בחודש.${lists.length?'\n'+lists.join('\n'):''}\nזה לא יתרת בנק, רק מה שרשום.`,acts:[{label:'לחודש',run:()=>{closeSheet();S.month=mk;showTab('home');renderAll()}}]};
+  }
+  if(intent==='buy_check'){
+    const amt=CMD.amount(rest)??(rest.match(/(\d{2,})/)||[])[1];
+    return {text:amt?'פותח את בדיקת הרכישה עם הסכום.':'בוא נבדוק: מה רוצים לקנות ובכמה?',acts:[{label:'לבדיקת רכישה',run:()=>{closeSheet();buySheet();if(amt){$('byAmt').value=amt;$('byAmt').dispatchEvent(new Event('input'))}}}],auto:()=>{closeSheet();buySheet();if(amt){$('byAmt').value=amt;$('byAmt').dispatchEvent(new Event('input'))}}};
+  }
+  if(intent==='baby_missing'){
+    const st=babyStats(),buy=st.by('לקנות').sort((a,b)=>bRank(a)-bRank(b)),chk=st.by('לבדוק'),gift=st.by('לקבל');
+    if(!st.total)return {text:'רשימת התינוק ריקה.',acts:[]};
+    return {text:`${st.bp}% מוכן. נשארו ${buy.length} לקנות${buy.length?` (קודם: ${buy.slice(0,3).map(b=>b.name).join(', ')})`:''}, ${chk.length} לבדוק, ו-${gift.length} מחכים למתנה${gift.filter(b=>!b.giver).length?`, מתוכם ${gift.filter(b=>!b.giver).length} בלי שידוע מי מביא`:''}.${st.fp?` בקופת הקנייה הראשונה נשארו ${ils(st.fp.budget-st.fpSum)}.`:''}`,acts:[{label:'לרשימת התינוק',run:()=>{closeSheet();S.bFilter='לקנות';showTab('baby');renderBaby()}}]};
+  }
+  if(intent==='advance'){
+    const sg=suggestions(3);if(!sg.length)return {text:ARIK.say('nothing'),acts:[]};
+    return {text:`שלושה דברים שהייתי מקדם:\n${sg.map((x,i)=>`${i+1}. ${x.title}`).join('\n')}`,acts:sg.map(x=>({label:x.primaryAction.label||x.title,run:()=>{closeSheet();runAction(x)}}))};
+  }
+  return null;
+}
+async function arikSave(list){return store.addMany('arik',list.map((x,i)=>({by:S.uid||null,at:Date.now()+i,...x})))}
+// the one place a sentence comes in: from the home line, the chat box or the microphone
+async function arikHear(text){
+  text=String(text||'').trim();if(!text)return;
+  const {intent,rest}=ARIK.intent(text),fc=arikFocus();
+  const user={kind:'msg',role:'user',text};
+  if(intent==='remember'){const fact=rest.replace(/^(תזכור|תזכרי|תרשום לך|שים לב)\s+/,'');await arikSave([user,{kind:'fact',text:fact},{kind:'msg',role:'arik',text:ARIK.say('remember')+` "${fact}"`}]);arikDraw();return}
+  if(intent==='remind'){const w=ARIK.when(rest,Date.now());
+    if(w){const what=ARIK.reminderText(w.text,fc&&fc.title)||'מה שביקשת';
+      const ok=await store.add('reminders',{text:what,at:w.at,label:w.label,who:S.uid||null,status:'pending',createdAt:Date.now()});
+      await arikSave([user,{kind:'msg',role:'arik',text:ok?`${ARIK.say('done')} אזכיר לך ${w.label}: ${what}.${arikPushOk()?'':' (כדי שהתזכורת תגיע, צריך להפעיל התראות בטלפון הזה)'}`:'לא הצלחתי לשמור את התזכורת. ננסה שוב?'}]);arikDraw();return}}
+  const loc=intent!=='other'?arikLocal(intent,rest):null;
+  if(loc){S.arikActs=loc.acts||[];await arikSave([user,{kind:'msg',role:'arik',text:loc.text}]);arikDraw();arikSpeak(loc.text);
+    if(loc.auto)setTimeout(loc.auto,700);return}
+  // an action the phone understands ("תוסיף לקניות…", "קנינו…", "תקבע…"): the usual plan and confirmation
+  const r=CMD.parse(fc&&/(את זה|הזה|הזאת)/.test(rest)?rest.replace(/את זה|הזה|הזאת/,fc.title):rest,{baby:S.baby});
+  if(r.kind!=='unknown'){await arikSave([user,{kind:'msg',role:'arik',text:'מכין את זה. תבדקו ותאשרו.'}]);closeSheet();cmdStart(fc&&/(את זה|הזה|הזאת)/.test(rest)?rest.replace(/את זה|הזה|הזאת/,fc.title):rest,true);return}
+  // everything else (and "explain"): to אריק בענן, with what is on the screen
+  const ask={kind:'ask',role:'user',text,status:'pending',tab:S.tab==='today'&&S.arikFrom?S.arikFrom:S.tab,focus:fc?{kind:fc.kind,id:fc.id,title:fc.title}:null,by:S.uid||null,at:Date.now()};
+  const ok=await store.arikAsk(ask);
+  if(ok)arikDraw();else toast('השליחה לאריק בענן נכשלה');
+}
+const arikPushOk=()=>{try{return localStorage.getItem('hb_push')==='1'||!!localStorage.getItem('hb_push')}catch(e){return false}};
+function arikOpen(first){
+  S.arikFrom=S.tab;
+  openSheet('<span class="arikhd"><span class="arikav" aria-hidden="true">א</span>אריק</span>',`<div class="arik">
+    <div class="ariklog" id="arikLog" aria-live="polite"></div>
+    <div class="arikacts" id="arikActs"></div>
+    <div class="chips arikchips" id="arikChips">${ARIK_CHIPS.map(c=>`<button type="button" class="chip" data-arikchip="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+    <form class="cmdbar mhcmd arikform" id="arikForm" autocomplete="off"><button class="bare mhgo" aria-label="שליחה"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      <input id="arikText" enterkeyhint="send" placeholder="לכתוב לאריק…" aria-label="הודעה לאריק"><button type="button" class="bare cmdmic" id="arikMic" aria-label="לדבר עם אריק" ${SR?'':'hidden'}><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></form>
+    <label class="small muted arikvoice"><input type="checkbox" id="arikVoice" ${arikVoice()?'checked':''}> אריק עונה גם בקול</label></div>`);
+  $('arikForm').onsubmit=e=>{e.preventDefault();const v=$('arikText').value.trim();if(!v)return;$('arikText').value='';arikHear(v)};
+  $('arikVoice').onchange=()=>{try{localStorage.setItem('hb_arik_voice',$('arikVoice').checked?'1':'0')}catch(e){}};
+  $('arikMic').onclick=()=>{if(!SR)return;if(!voiceOk()){voiceAsk();return}const r=new SR();r.lang='he-IL';r.interimResults=true;$('arikMic').classList.add('rec');let fin='';
+    r.onresult=e=>{let tmp='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=t;else tmp+=t}$('arikText').value=(fin+tmp).trim()};
+    r.onend=()=>{$('arikMic').classList.remove('rec');const v=fin.trim();if(v){$('arikText').value='';arikHear(v)}};try{r.start()}catch(e){$('arikMic').classList.remove('rec')}};
+  arikDraw();if(first)arikHear(first);else setTimeout(()=>$('arikText')&&$('arikText').focus(),80);
+}
+function arikDraw(){const el=$('arikLog');if(!el)return;const ms=arikMsgs();
+  el.innerHTML=(ms.length?'':`<div class="arikmsg bot"><span>${esc(ARIK.say('hello'))} אפשר לשאול אותי על היום, המשימות, הכסף, התינוק, או לבקש שאזכיר משהו.</span></div>`)+
+    ms.map(m=>{const mine=m.role==='user';const wait=m.kind==='ask'&&m.status==='pending';
+      return `<div class="arikmsg ${mine?'me':'bot'}"><span>${esc(m.text).replace(/\n/g,'<br>')}</span><small>${mine?esc(whoSaid(m.by)):'אריק'}${m.kind==='ask'?' · לאריק בענן':''} · ${agoHe(m.at||Date.now())}</small></div>`+
+        (m.kind==='ask'?(m.status==='answered'?`<div class="arikmsg bot cloud"><span>${esc(m.answer||'').replace(/\n/g,'<br>')}</span><small>אריק בענן · ${agoHe(m.answeredAt||m.at)}</small></div>${(m.actions||[]).length?`<div class="arikacts">${m.actions.map((a,i)=>`<button class="btn ghost" data-arikcloud="${esc(m.id)}|${i}">${esc(ARIK_ACT[a.type]||'לביצוע')}: ${esc(a.text||a.title||'')}</button>`).join('')}</div>`:''}`:m.status==='failed'?`<div class="arikmsg bot"><span>אריק בענן לא הצליח לענות הפעם${m.error?` (${esc(m.error)})`:''}. אפשר לנסות שוב בעוד רגע.</span></div>`:`<div class="arikmsg bot typing"><span><i></i><i></i><i></i> ${esc(ARIK.say('unknown',m.at))}</span></div>`):'')}).join('');
+  $('arikActs').innerHTML=(S.arikActs||[]).map((a,i)=>`<button class="btn ${i?'ghost':''}" data-arikact="${i}">${esc(a.label)}</button>`).join('');
+  el.scrollTop=el.scrollHeight;
+  const last=ms[ms.length-1];if(last&&last.kind==='ask'&&last.status==='answered'&&S.arikSpoke!==last.id){S.arikSpoke=last.id;arikSpeak(last.answer)}}
+// an action אריק בענן suggested: the usual plan and confirmation, nothing runs without a tap
+const ARIK_ACT={grocery_add:'לקניות',task:'משימה',event:'ליומן',reminder:'תזכורת'};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-arikcloud]');if(!b)return;const [id,i]=b.dataset.arikcloud.split('|'),m=S.arik.find(x=>x.id===id),a=m&&(m.actions||[])[Number(i)];if(!a)return;
+  if(a.type==='reminder'){arikHear('תזכיר לי '+a.text);return}
+  closeSheet();cmdStart(a.type==='grocery_add'?'תוסיפו לקניות '+a.text:a.type==='task'?'משימה: '+a.title:'תקבעו '+a.text,true)});
+document.addEventListener('click',e=>{const c=e.target.closest('[data-arikchip]');if(c){arikHear(c.dataset.arikchip);return}
+  const a=e.target.closest('[data-arikact]');if(a){const x=(S.arikActs||[])[Number(a.dataset.arikact)];S.arikActs=[];if(x)x.run();return}
+  if(e.target.closest('[data-arikopen]')){arikOpen();return}});
 /* ---------- what the app learned about us: every preference can be seen, changed, or deleted ---------- */
 const SG_TYPE_HE={grocery_run:'ערב פנוי לקניות',free_evening:'ערב פנוי יחד',pattern_due:'דברים שחוזרים כל כמה זמן',busy_day:'יום עמוס',baby_buy:'מה לקנות לתינוק',baby_check:'פריטים לבדוק לתינוק',baby_dup:'כפילויות ברשימת התינוק',baby_budget:'תקציב התינוק',money_no_income:'חודש בלי הכנסה רשומה',money_over:'חריגה ממסגרת',task_stuck:'משימה תקועה',task_fit:'זמן פנוי למשימה',savings_due:'הפקדה שהגיע מועדה',savings_missed:'חודש בלי הפקדה',task_overdue:'משימה שעבר המועד שלה',cal_conflict:'שני אירועים באותה שעה',money_pace:'קצב הוצאה לקראת חריגה',savings_stale:'יתרה שלא עודכנה',task_split:'חלוקת משימה גדולה',money_change:'השוואה לחודש שעבר',baby_gift:'פריטים שמחכים למתנה',baby_price:'מחירים לפריטי תינוק',grocery_compare:'השוואת סל הסופר',sub_up:'קבוע שהתייקר'};
 function learnedSheet(){
@@ -4421,6 +4655,7 @@ function learnedSheet(){
   openSheet('מה האפליקציה למדה עלינו',`
    <div class="lrnsec"><h3>כמה האפליקציה עושה לבד</h3><span class="cmdnote">להציע: מראה מה יקרה ומחכה לאישור. להכין: ממלא את הטופס ואתם שולחים. לבצע לבד: מבצע מיד, ואפשר לבטל.</span>
      ${AUTO_CAP.map(c=>`<div class="lrnrow"><span class="col"><b>${c.t}</b>${c.note?`<small>${c.note}</small>`:''}</span>${c.levels.length>1?`<div class="chips" data-lrnauto="${c.k}">${c.levels.map(l=>`<button type="button" class="chip" data-v="${l}" aria-checked="${autoLevel(c.k)===l}">${AUTO_HE[l]}</button>`).join('')}</div>`:''}</div>`).join('')}</div>
+   <div class="lrnsec"><h3>מה אריק זוכר</h3><span class="cmdnote">מה שביקשתם שיזכור ("אריק, תזכור ש…"). השיחות עצמן נשמרות, 200 האחרונות.</span>${arikFacts().length?arikFacts().map(f=>`<div class="lrnrow"><span class="col">${esc(f.text)}<small>${esc(whoSaid(f.by))}${f.at?' · '+new Date(f.at).toLocaleDateString('he-IL'):''}</small></span><button class="bare link" data-arikforget="${esc(f.id)}">לשכוח</button></div>`).join(''):'<span class="cmdnote">עוד אין. אפשר לכתוב "אריק, תזכור שסבתא מביאה את העגלה".</span>'}</div>
    <div class="lrnsec"><h3>מה למדנו מהבחירות שלכם</h3>${(()=>{const d=learnDoc(),nm={shared:'משותף',yosef:'יוסף',tchiya:'תחיה'},row=(k,t)=>{const e=Object.entries(d[k]||{}).sort((a,b)=>b[1]-a[1]);
        return `<div class="lrnrow"><span class="col">${t}<small>${e.length?e.map(([v,n])=>`${nm[v]||v} ${n}`).join(' · '):'עוד אין בחירות'}</small></span><b class="small">${learnTop(k,'')?'ברירת מחדל: '+(nm[learnTop(k,'')]||learnTop(k,'')):'אין עדיין'}</b></div>`};
        return row('cal','לאיזה יומן נשלחים אירועים')+row('owner','מי לוקח משימות חדשות')+(S.prefs.some(p=>p.id==='learn')?'<button class="bare link" data-lrnreset>לאפס את מה שנלמד</button>':'')})()}</div>
@@ -4443,6 +4678,7 @@ document.addEventListener('click',async e=>{
   const lm=e.target.closest('[data-lrnmute] [data-v]');if(lm){const ty=lm.parentNode.dataset.lrnmute,off=lm.dataset.v==='off',cur=S.prefs.find(p=>p.kind==='mute'&&p.type===ty);if(off===!!cur)return;
     const ok=off?await store.put('prefs','mute:'+ty,{kind:'mute',type:ty,at:Date.now(),by:S.uid||null}):await store.del('prefs',cur.id);if(ok){learnedSheet();renderToday()}return}
   const lf=e.target.closest('[data-lrnforget]');if(lf){const n=lf.dataset.lrnforget;if(await store.put('prefs','forget:'+n,{kind:'prodforget',name:n,at:Date.now(),by:S.uid||null})){learnedSheet();toast(`"${n}" נשכח`)}return}
+  const af=e.target.closest('[data-arikforget]');if(af){if(await store.del('arik',af.dataset.arikforget)){learnedSheet();toast('אריק שכח')}return}
   if(e.target.closest('[data-lrnreset]')){if(await store.del('prefs','learn')){learnedSheet();toast('מה שנלמד אופס')}return}
   const lu=e.target.closest('[data-lrnunforget]');if(lu){if(await store.del('prefs',lu.dataset.lrnunforget))learnedSheet();return}
 });
