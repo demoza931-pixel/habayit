@@ -731,7 +731,8 @@ body.noscroll{overflow:hidden}
 .arikmsg small{font-size:11px;color:var(--ink-2);padding:0 6px}
 .arikmsg.me{align-self:flex-start}.arikmsg.me span{background:var(--accent);color:#fff;border-end-start-radius:6px}
 .arikmsg.bot{align-self:flex-end;text-align:start}.arikmsg.bot span{background:var(--surface-2);color:var(--ink);border-end-end-radius:6px}
-.arikmsg.cloud span{background:var(--accent-soft)}
+.arikmsg.cloud span{background:var(--accent-soft)}.arikmsg.push span{background:var(--clay-soft)}.arikpt{font-style:normal;font-weight:800;font-size:13px}
+.mharik{position:relative}.mharik.unread::after{content:"";position:absolute;top:2px;inset-inline-end:2px;width:11px;height:11px;border-radius:50%;background:var(--neg);border:2px solid var(--surface)}
 .arikmsg.typing i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ink-2);margin-inline-end:3px;vertical-align:2px}
 @media (prefers-reduced-motion:no-preference){.arikmsg{animation:popin .25s ease-out}.arikmsg.typing i{animation:evpulse 1.2s ease-in-out infinite}.arikmsg.typing i:nth-child(2){animation-delay:.2s}.arikmsg.typing i:nth-child(3){animation-delay:.4s}}
 .arikacts{display:flex;flex-wrap:wrap;gap:8px}.arikacts:empty{display:none}.arikacts .btn{min-height:42px;font-size:14px;padding:0 14px}
@@ -3939,8 +3940,8 @@ function flash(el){
 }
 function goTo(ref){
   const [col,id]=String(ref||'').split('/');
-  const tab={grocery:'shop',purchases:'shop',variable:'home',baby:'baby',months:'home',holdings:'sav',deposits:'sav',calreq:'cal',calendar:'cal',today:'today',tasks:'today'}[col];if(!tab)return;
-  if(tab==='today'){if(!$('sheet').hidden)closeSheet();goTab('today');return}
+  const tab={grocery:'shop',purchases:'shop',variable:'home',baby:'baby',months:'home',holdings:'sav',deposits:'sav',calreq:'cal',calendar:'cal',today:'today',tasks:'today',arik:'today'}[col];if(!tab)return;
+  if(tab==='today'){if(!$('sheet').hidden)closeSheet();goTab('today');if(col==='arik')setTimeout(()=>arikOpen(),300);return}
   if(tab==='cal'){if(!$('sheet').hidden)closeSheet();goTab('cal');return}
   if(!$('sheet').hidden)closeSheet();
   goTab(tab);
@@ -4411,6 +4412,7 @@ document.addEventListener('click',e=>{
   if(S.sgMenu&&!e.target.closest('.mhmenu')){S.sgMenu=null;renderToday()}
 });
 function renderToday(){
+  arikBadge();
   if(!$('t-today'))return;
   const now=new Date(),h=now.getHours(),me=(S.people||{})[S.uid];
   $('tdGreet').textContent=(h>=5&&h<12?'בוקר טוב':h>=12&&h<17?'צהריים טובים':'ערב טוב')+(me?`, ${me}`:'');
@@ -4629,7 +4631,7 @@ const ARIK_CHIPS=['מה יש לי היום ומה הכי דחוף?','תעשה ל
 const arikVoice=()=>{try{return localStorage.getItem('hb_arik_voice')==='1'}catch(e){return false}};
 function arikSpeak(t){if(!arikVoice()||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).replace(/[*_"]/g,''));u.lang='he-IL';u.rate=1.02;
   const v=speechSynthesis.getVoices().find(x=>/^he/i.test(x.lang));if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}}
-const arikMsgs=()=>S.arik.filter(m=>m.kind==='msg'||m.kind==='ask').sort((a,b)=>(a.at||0)-(b.at||0)).slice(-40);
+const arikMsgs=()=>S.arik.filter(m=>(m.kind==='msg'||m.kind==='ask')&&(!m.for||!S.uid||m.for===S.uid)).sort((a,b)=>(a.at||0)-(b.at||0)).slice(-40);
 const arikFacts=()=>S.arik.filter(m=>m.kind==='fact').sort((a,b)=>(b.at||0)-(a.at||0));
 const whoSaid=by=>(S.people||{})[by]||(by==='tchiyade'?'תחיה':by?'יוסף':'');
 // what is on the screen, so "this task" / "these numbers" mean something
@@ -4829,7 +4831,11 @@ async function arikHear(text){
   if(ok)arikDraw();else toast('השליחה לאריק בענן נכשלה');
 }
 const arikPushOk=()=>{try{return localStorage.getItem('hb_push')==='1'||!!localStorage.getItem('hb_push')}catch(e){return false}};
+const arikSeen=()=>{try{return Number(localStorage.getItem('hb_arik_seen')||0)}catch(e){return 0}};
+const arikUnread=()=>arikMsgs().filter(m=>m.push&&(m.at||0)>arikSeen()).length;
+function arikBadge(){const b=document.querySelector('.mharik[data-arikopen]');if(b)b.classList.toggle('unread',arikUnread()>0)}
 function arikOpen(first){
+  try{localStorage.setItem('hb_arik_seen',String(Date.now()))}catch(e){}arikBadge();
   S.arikFrom=S.tab;
   openSheet('<span class="arikhd"><span class="arikav" aria-hidden="true">א</span>אריק</span>',`<div class="arik">
     <div class="ariklog" id="arikLog" aria-live="polite"></div>
@@ -4850,7 +4856,7 @@ function arikDraw(){const el=$('arikLog');if(!el)return;const ms=arikMsgs();
   el.innerHTML=(ms.length?'':`<div class="arikmsg bot"><span>${esc(ARIK.say('hello'))} אפשר לשאול אותי על היום, המשימות, הכסף, התינוק, או לבקש שאזכיר משהו.</span></div>`)+
     ms.map(m=>{const mine=m.role==='user';const wait=m.kind==='ask'&&m.status==='pending';
       const bq=m.bus&&S.bus.find(x=>x.id==='now'&&new Date(x.at).getTime()>=m.bus-5000),cm=S.prefs.find(x=>x.id==='commute');const pq=m.pq&&S.pricecheck.find(x=>x.id===m.pq);const pqText=pq&&pq.status==='done'?(pq.count&&pq.median?`בזאפ ${pq.count} תוצאות ל"${pq.query}": רוב המחירים בין ${ils(pq.low)} ל-${ils(pq.high||pq.median)}, באמצע ${ils(pq.median)}.${pq.loose?' התוצאות לא בדיוק תואמות, כדאי לבדוק.':''}`:`לא מצאתי בזאפ תוצאות ל"${pq.query}".`):'';
-      return `<div class="arikmsg ${mine?'me':'bot'}"><span>${esc(m.text).replace(/\n/g,'<br>')}${bq&&cm?`<br><b>${esc(busText(bq,cm)).replace(/\n/g,'<br>')}</b>`:''}${pqText?`<br><b>${esc(pqText)}</b>${(pq.offers||[]).map(o=>`<br><a href="${esc(o.url)}" target="_blank" rel="noopener nofollow">${esc(o.title.slice(0,40))} · ${ils(o.price)}</a>`).join('')}`:''}</span><small>${mine?esc(whoSaid(m.by)):'אריק'}${m.kind==='ask'?' · לאריק בענן':''} · ${agoHe(m.at||Date.now())}</small></div>`+
+      return `<div class="arikmsg ${mine?'me':'bot'}${m.push?' push':''}"><span>${m.push&&m.title?`<em class="arikpt">${esc(m.title.replace(/^אריק · /,''))}</em><br>`:''}${esc(m.text).replace(/\n/g,'<br>')}${bq&&cm?`<br><b>${esc(busText(bq,cm)).replace(/\n/g,'<br>')}</b>`:''}${pqText?`<br><b>${esc(pqText)}</b>${(pq.offers||[]).map(o=>`<br><a href="${esc(o.url)}" target="_blank" rel="noopener nofollow">${esc(o.title.slice(0,40))} · ${ils(o.price)}</a>`).join('')}`:''}</span><small>${mine?esc(whoSaid(m.by)):'אריק'}${m.push?' · נשלח לטלפון':''}${m.kind==='ask'?' · לאריק בענן':''} · ${agoHe(m.at||Date.now())}</small></div>`+
         (m.kind==='ask'?(m.status==='answered'?`<div class="arikmsg bot cloud"><span>${esc(m.answer||'').replace(/\n/g,'<br>')}</span><small>אריק בענן · ${agoHe(m.answeredAt||m.at)}</small></div>${(m.actions||[]).length?`<div class="arikacts">${m.actions.map((a,i)=>`<button class="btn ghost" data-arikcloud="${esc(m.id)}|${i}">${esc(ARIK_ACT[a.type]||'לביצוע')}: ${esc(a.text||a.title||'')}</button>`).join('')}</div>`:''}`:m.status==='failed'?`<div class="arikmsg bot"><span>אריק בענן לא הצליח לענות הפעם${m.error?` (${esc(m.error)})`:''}. אפשר לנסות שוב בעוד רגע.</span></div>`:`<div class="arikmsg bot typing"><span><i></i><i></i><i></i> ${esc(ARIK.say('unknown',m.at))}</span></div>`):'')}).join('');
   $('arikActs').innerHTML=(S.arikActs||[]).map((a,i)=>`<button class="btn ${i?'ghost':''}" data-arikact="${i}">${esc(a.label)}</button>`).join('');
   el.scrollTop=el.scrollHeight;
