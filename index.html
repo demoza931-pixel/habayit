@@ -837,6 +837,9 @@ div.mhrow{grid-template-columns:auto minmax(0,1fr)}
 .pace .pl{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}.pace .pa{stroke:var(--cv-a)}.pace .pb{stroke:var(--cv-b);stroke-dasharray:4 3}
 .pace .pdot{fill:var(--cv-a);stroke:var(--surface);stroke-width:2}.pace .plab{font-size:10px;font-weight:700;fill:var(--ink)}.pace .plab.mute{fill:var(--ink-2);font-weight:600}
 .pace .pcross{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:2 2}
+.mchg{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:99px;white-space:nowrap;direction:rtl}
+.mchg.up{color:var(--pos);background:color-mix(in srgb,var(--pos) 12%,var(--surface))}.mchg.dn{color:var(--neg);background:var(--neg-soft)}
+.hrow .side .mchg{align-self:flex-end}.mkline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13.5px;margin:6px 0 2px}
 .feecard{padding:14px 16px;display:flex;flex-direction:column;gap:2px}.feetot{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
 .feetot .num{font-size:24px;font-weight:800}.feetot small{color:var(--ink-2);font-size:13px}
 .feerow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.feerow .col{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -2272,7 +2275,7 @@ themeApply(themeGet());
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themeGet()==='auto')themeApply('auto')});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]');if(!b)return;const t=b.dataset.themeSet;
   try{t==='auto'?localStorage.removeItem('hb_theme'):localStorage.setItem('hb_theme',t)}catch(_){}themeApply(t);themeRow()});
-const S={insights:[],creditmatch:[],credit:[],board:[],bus:[],arik:[],reminders:[],focus:null,pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={market:[],insights:[],creditmatch:[],credit:[],board:[],bus:[],arik:[],reminders:[],focus:null,pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -2422,7 +2425,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(navInd);
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
 // tasks and prefs (feedback on suggestions) are new and live in the app's data only; a missing file reads as empty
-const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck','arik','reminders','bus','board','insights','creditmatch','credit'];
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck','arik','reminders','bus','board','insights','creditmatch','credit','market'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -3318,10 +3321,36 @@ function renderSav(){
   renderMirror();
 }
 // one holding inside an open account (the same details as before: owner, balance date, pending, pension, fees)
+/* ---------- since the last report: an estimate from the indexes (data/market.json, the sheet script, every 15 minutes) ----------
+   A holding's value is from a report (valueDate). Each part of it follows an index: S&P 500 (in shekels: the index and the
+   dollar), TA-125, Nvidia. Its change since that date is the part times the index's move. A managed "מניות" track has no
+   index, money market and cash are left as they are: those parts are not estimated, and the badge says so. */
+const MKT_OF={sp:['SPX','USDILS'],ta:['TA125']};
+function mktMove(keys,fromIso){
+  let f=1;for(const k of keys){const q=S.market.find(d=>d.id===k);if(!q||!q.now||!q.closes)return null;
+    const ds=Object.keys(q.closes).filter(d=>d<=fromIso).sort();if(!ds.length)return null;f*=q.now/q.closes[ds[ds.length-1]]}
+  return f-1;
+}
+function holdChange(h){
+  const base=hBase(h),d=parseHeDate(h.valueDate);if(!base||!d)return null;
+  const dt=new Date(d),iso=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`,kind=t=>{const e=EXPO.find(x=>x[2].test(t));return e?e[0]:'other'};
+  const parts=Array.isArray(h.parts)&&h.parts.length?h.parts.map(p=>[p[0],Number(p[1])]):Array.isArray(h.tracks)&&h.tracks.length?h.tracks.map(t=>[t[0],Number(t[1])]):[[`${h.name} ${h.type||''} ${h.note||''}`,1]];
+  const tot=parts.reduce((a,p)=>a+p[1],0);let chg=0,covered=0,open=0;
+  for(const [name,w] of parts){const k=kind(name),v=base*w/tot;
+    if(MKT_OF[k]){const m=mktMove(MKT_OF[k],iso);if(m===null){open+=v;continue}chg+=v*m;covered+=v}
+    else if(k==='cash'||k==='mm')covered+=v; else open+=v}
+  if(!covered)return null;
+  return {chg,covered,open,since:iso};
+}
+function chgBadge(c,label){
+  if(!c||Math.abs(c.chg)<1)return '';
+  const up=c.chg>0,q=S.market.find(d=>d.id==='SPX');
+  return `<span class="mchg ${up?'up':'dn'}" title="הערכה מ־${dmIso(c.since)} עד ${q&&q.time?new Date(q.time*1000).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}):'עכשיו'}, לפי המדדים${c.open>0?`. ${ils(Math.round(c.open))} במסלול מנוהל בלי מדד לא נכללו`:''}" aria-label="${label||''}${up?'עלה':'ירד'} בהערכה ${ils(Math.round(Math.abs(c.chg)))}">${up?'▲':'▼'} ${ils(Math.round(Math.abs(c.chg)))}</span>`;
+}
 function holdingRow(h){const hv=hValue(h),p=has(h.cost)&&hv!==null?hv-Number(h.cost):null;
   const meta=(h.owner?esc(h.owner)+' · ':'')+(h.opened===false?'עוד לא נפתח · ':'')+(h.source==='manual'?`יתרה ידנית${h.valueDate?' · '+esc(h.valueDate):''}`:`${esc(h.type||'')}${has(h.qty)?` · ${fmt(h.qty)} יח'`:''}${has(h.price)?` × ${fmt(h.price)} ₪`:' · ממתין למחיר'}${h.priceDate?` · ${esc(h.priceDate)}`:''}`)
     +(has(h.pending)?` · ${ils(h.pending)} בתהליך הפקדה`:'')+(()=>{const a=hAdd(h);return a.count?` · כולל ${ils(a.sum)} מ־${a.count} ${a.count===1?'הפקדה':'הפקדות'}${a.since?` מאז ${dmy(a.since)}`:''}${hBase(h)===null?' (היתרה שלפני לא ידועה)':''}`:''})()+(has(h.pensionMonthly)?` · קצבה צפויה ${ils(h.pensionMonthly)}`:'')+(has(h.feeSavings)?` · דמי ניהול ${fmt(h.feeSavings)}% מהחיסכון, ${fmt(h.feeDeposit||0)}% מהפקדה`:'');
-  return `<button class="bare hrow" data-hold="${esc(h.id)}"><span class="col"><b>${esc(h.name)}</b><small class="num">${meta}</small></span><span class="side"><span class="num">${hv===null?'—':ils(hv)}</span>${p!==null?`<small class="num pl ${p<0?'dn':'up'}">${signed(p)}</small>`:''}${chgPill(h.change)}</span></button>`}
+  return `<button class="bare hrow" data-hold="${esc(h.id)}"><span class="col"><b>${esc(h.name)}</b><small class="num">${meta}</small></span><span class="side"><span class="num">${hv===null?'—':ils(hv)}</span>${chgBadge(holdChange(h))}${p!==null?`<small class="num pl ${p<0?'dn':'up'}">${signed(p)}</small>`:''}${chgPill(h.change)}</span></button>`}
 // the chart: one point a month; "הכול" shows the actual total, an account with a mirror also its deposits and mirror
 /* ---------- what the money rides on: every account's tracks, weighted by its value (savings document, 20.10.2026) ---------- */
 const EXPO=[['sp','S&P 500',/S&P|SPX|500/i],['ta','ת"א 125',/125/],['stocks','מסלול מניות (מנוהל)',/מניות/],['age','מסלול תלוי גיל',/לבני 50|תלוי גיל/],['mm','קרן כספית',/כספית/],['cash','מזומן ופיקדונות',/מזומן|פיקדון/]];
@@ -3338,7 +3367,9 @@ function savExposure(){
   const el=$('svExpo');if(!el)return;const ex=expoOf(),tot=Object.values(ex).reduce((a,x)=>a+x.v,0);if(!tot){el.innerHTML='';return}
   const rows=Object.entries(ex).sort((a,b)=>b[1].v-a[1].v),name=k=>(EXPO.find(x=>x[0]===k)||[0,'אחר'])[1];
   const top=rows[0];
+  const cs=S.holdings.map(holdChange).filter(Boolean),all=cs.reduce((a,c)=>a+c.chg,0),q=S.market.find(d=>d.id==='SPX');
   el.innerHTML=`<h2 class="sec" style="margin-top:8px">על מה הכסף שלכם רוכב</h2><div class="small muted">כל קופה לפי המסלולים שלה, משוקלל לפי השווי. ${Math.round(top[1].v/tot*100)}% מכל החיסכון עוקבים אחרי ${esc(name(top[0]))}.</div>
+    ${cs.length?`<div class="mkline">מאז הדוחות האחרונים, לפי המדדים: ${chgBadge({chg:all,open:cs.reduce((a,c)=>a+c.open,0),since:cs.map(c=>c.since).sort()[0]},'כל החיסכון ')}<small class="muted">${q&&q.time?`מחירים מ־${new Date(q.time*1000).toLocaleString('he-IL',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}. `:''}הערכה בלבד, השווי המדויק יגיע בדוח הבא של הקופה.</small></div>`:''}
     <section class="card chartcard mbars" role="list">${rows.map(([k,x],i)=>`<div class="mb" role="listitem" style="--i:${i}"><span class="tl"><b>${esc(name(k))}</b><span class="num">${ils(Math.round(x.v))}</span></span><span class="tbar cv" aria-hidden="true"><i style="width:${Math.max(2,x.v/top[1].v*100)}%"></i></span><small class="num muted">${Math.round(x.v/tot*100)}% · ${x.from.sort((a,b)=>b[1]-a[1]).map(f=>esc(f[0])).filter((n,j,a)=>a.indexOf(n)===j).join(', ')}</small></div>`).join('')}</section>`;
 }
 /* ---------- management fees: what each account costs a year, from its rates (savings document) ---------- */
