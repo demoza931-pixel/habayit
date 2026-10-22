@@ -799,6 +799,37 @@ div.mhrow{grid-template-columns:auto minmax(0,1fr)}
 .agdot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--line)}.agdot.green{background:var(--pos)}.agdot.amber{background:#D99A1E}.agdot.red{background:var(--neg)}
 .agst{font-size:12px;font-weight:700;color:var(--ink-2)}.agst.red{color:var(--neg)}.agst.amber{color:#B07A12}
 .agtag{flex:none;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--surface))}
+.aicards{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.aic{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;border-inline-start:4px solid var(--line)}
+.aic.u3{border-inline-start-color:var(--neg)}.aic.u2{border-inline-start-color:#C98A1B}.aic.u1{border-inline-start-color:var(--accent)}
+.aic h3{margin:0;font-size:16.5px;line-height:1.35}.aic p{margin:0;font-size:14.5px;line-height:1.55;color:var(--ink)}
+.aichips{display:flex;gap:6px;flex-wrap:wrap}.aichip{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--surface-2);color:var(--ink-2)}
+.aichip.hot{background:var(--neg-soft);color:var(--neg)}.aichip.soft{background:var(--accent-soft);color:var(--accent)}
+.aiact,.aiq{font-size:13.5px;color:var(--ink-2);line-height:1.5}.aiact b,.aiq b{color:var(--ink)}
+.aiev summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--accent);padding:4px 0}
+.aievh{font-size:12px;font-weight:700;color:var(--ink-2);margin:6px 0 2px}
+.aievr{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.aievr .nm{overflow-wrap:anywhere}.aievr:last-child{border-bottom:0}
+.aifb{display:flex;gap:8px;margin-top:4px}.aifb button{font-size:12.5px;padding:5px 12px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2)}
+.aifb button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.mcard{padding:14px 16px;display:flex;flex-direction:column;gap:4px}.mchead{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.mcbig{font-size:26px;font-weight:800;color:var(--neg)}.mcbig.ok{color:var(--pos)}.mchead .col{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mcr{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}.mcr.ok{color:var(--ink-2)}.mcr b{min-width:24px;text-align:center}
+.mcl{padding:0 0 4px}
+:root{--cv-a:#0B8A70;--cv-b:#A8740F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--cv-a:#2A9C80;--cv-b:#B9821C}}
+:root[data-theme="dark"]{--cv-a:#2A9C80;--cv-b:#B9821C}
+.mbars{padding:12px 16px;display:flex;flex-direction:column;gap:10px}.mb{display:flex;flex-direction:column;gap:3px}
+.mb .tl{display:flex;justify-content:space-between;gap:8px;font-size:14px}.mb .tl b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tbar.cv i{background:var(--cv-a);border-radius:0;border-start-end-radius:4px;border-end-end-radius:4px}
+#pcTip{position:absolute;top:2px;bottom:auto;inset-inline-start:14px;inset-inline-end:auto;left:auto}
+.pclegend{display:flex;gap:14px;font-size:12.5px;color:var(--ink-2);padding:10px 14px 0}.pclegend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-inline-end:6px;vertical-align:middle}
+.pclegend .ca{background:var(--cv-a)}.pclegend .cb{background:var(--cv-b)}
+.pcwrap{position:relative;padding:4px 10px 6px}svg.pace{width:100%;height:auto;display:block;touch-action:pan-y;direction:ltr}
+.pace .pbase{stroke:var(--line);stroke-width:1}.pace .ptk{font-size:9px;fill:var(--ink-2)}
+.pace .pl{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}.pace .pa{stroke:var(--cv-a)}.pace .pb{stroke:var(--cv-b);stroke-dasharray:4 3}
+.pace .pdot{fill:var(--cv-a);stroke:var(--surface);stroke-width:2}.pace .plab{font-size:10px;font-weight:700;fill:var(--ink)}.pace .plab.mute{fill:var(--ink-2);font-weight:600}
+.pace .pcross{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:2 2}
 .lrncard{display:flex;flex-direction:column;gap:4px;text-align:start;padding:16px;width:100%}
 .lrnsec{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}.lrnsec>h3{margin:0;font-size:15px}
 .lrnrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:14px}
@@ -1312,6 +1343,7 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
 
   <!-- INSIGHTS -->
   <section class="tab" id="t-ins" hidden>
+    <div id="aiIns"></div>
     <h2 class="sec" id="gTitle">היעדים שלנו</h2>
     <!-- goals stay first in insights -->
 
@@ -2225,7 +2257,7 @@ themeApply(themeGet());
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themeGet()==='auto')themeApply('auto')});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-theme-set]');if(!b)return;const t=b.dataset.themeSet;
   try{t==='auto'?localStorage.removeItem('hb_theme'):localStorage.setItem('hb_theme',t)}catch(_){}themeApply(t);themeRow()});
-const S={board:[],bus:[],arik:[],reminders:[],focus:null,pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
+const S={insights:[],creditmatch:[],credit:[],board:[],bus:[],arik:[],reminders:[],focus:null,pricecheck:[],savhist:[],svAll:false,svScope:null,deposits:[],mirOpen:{},tdRange:'day',sgHide:{},tasks:[],prefs:[],bOpen:{},vOpen:{},rowOpen:{},vqs:{},calendar:null,calreq:[],calDay:null,months:{},variable:[],baby:[],grocery:[],purchases:[],holdings:[],openAcc:{},openPurchase:{},dragging:false,pendingShop:false,fp:null,picking:{},openGroups:{},fpOpen:false,expView:null,armVar:null,month:monthKey(new Date()),tab:'home',filter:'הכל',uid:null,db:null,user:null};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const has=v=>v!==null&&v!==undefined&&v!=='';
@@ -2375,7 +2407,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(navInd);
    Writes PUT the whole file with its sha; on a conflict the file is re-read and the change re-applied. */
 const REPO='demoza931-pixel/habayit-data',BRANCH='main',API='https://api.github.com';
 // tasks and prefs (feedback on suggestions) are new and live in the app's data only; a missing file reads as empty
-const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck','arik','reminders','bus','board'];
+const COLS=['months','variable','baby','grocery','purchases','holdings','info','synclog','calendar','calreq','tasks','prefs','deposits','savhist','pricecheck','arik','reminders','bus','board','insights','creditmatch','credit'];
 const G={token:null,login:null,files:{},head:null,headEtag:null,timer:null};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(_){return null}};
 const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}};
@@ -3637,6 +3669,81 @@ function topChart(){
   $('iTop').innerHTML=rows.map((r,i)=>`<div class="tb" style="--i:${i}">${ric(r.name,GROUP_TINT[r.group])}<span class="col"><span class="tl"><b>${esc(r.name)}</b><span class="num">${ils(r.amount)}</span></span>
     <span class="tbar" aria-hidden="true"><i style="width:${Number(r.amount)/mx*100}%"></i></span><small class="num">${Math.round(Number(r.amount)/c.total*100)}% מסה"כ ההוצאות</small></span></div>`).join('')||'<div class="emptyline" style="border-top:0">אין הוצאות רשומות.</div>';
 }
+/* ---------- insights from Claude (data/insights.json, written by insights.yml) and the credit card ----------
+   Every number on a card was computed by insights_check.py from the card file or the sheet; the evidence (the card's
+   transactions and list items) opens under it. "מועיל" / "לא רלוונטי" is kept as feedback for the next run. */
+const INS_TYPE={reconcile:'התאמה לאשראי',over_target:'מעל היעד',pace:'קצב החודש',regulars:'עסקים חוזרים',subscriptions:'מנויים וקבועים',unusual:'עסקה חריגה',installments:'תשלומים',baby:'התינוק',other:'תובנה'};
+const cSpent=t=>t.installment?Number(t.amount):t.charge!==undefined&&t.charge!==null?Number(t.charge):Number(t.amount);
+const dmIso=iso=>iso?`${Number(iso.slice(8,10))}.${Number(iso.slice(5,7))}`:'';
+function aiInsights(){
+  const box=$('aiIns');if(!box)return;
+  const cards=S.insights.filter(d=>d.kind==='card').sort((a,b)=>(b.urgency||1)-(a.urgency||1)||String(a.id).localeCompare(String(b.id)));
+  const run=S.insights.find(d=>d.id==='run'),fb=Object.fromEntries(S.insights.filter(d=>d.kind==='fb').map(d=>[d.card,d.v]));
+  const tx=Object.fromEntries(S.credit.filter(d=>d.kind==='tx').map(d=>[d.id,d])),vr=Object.fromEntries(S.variable.map(v=>[v.id,v]));
+  const ev=c=>{const ts=(c.tx||[]).map(i=>tx[i]).filter(Boolean).sort((a,b)=>a.date<b.date?-1:1),is=(c.items||[]).map(i=>vr[i]).filter(Boolean);
+    if(!ts.length&&!is.length)return '';
+    return `<details class="aiev"><summary>על סמך מה (${ts.length+is.length})</summary>${ts.length?`<div class="aievh">בכרטיס האשראי</div>${ts.map(t=>`<div class="aievr"><span class="num">${dmIso(t.date)}</span><span class="nm">${esc(t.name)}${t.pending?' · ממתינה':''}${t.installment?' · תשלום '+esc(t.installment):''}</span><b class="num">${ils(cSpent(t))}</b></div>`).join('')}`:''}${is.length?`<div class="aievh">ברשימות בגיליון</div>${is.map(v=>`<div class="aievr"><span class="num">${v.date?dmIso(v.date):''}</span><span class="nm">${esc(v.name)}</span><b class="num">${ils(Number(v.amount)||0)}</b></div>`).join('')}`:''}</details>`};
+  const card=c=>`<article class="aic u${c.urgency||1}" aria-label="${esc(INS_TYPE[c.type]||'תובנה')}: ${esc(c.title)}">
+    <div class="aichips"><span class="aichip">${esc(INS_TYPE[c.type]||'תובנה')}</span>${c.urgency>=3?'<span class="aichip hot">כדאי לטפל</span>':''}${c.confidence==='נמוכה'?'<span class="aichip soft">השערה</span>':''}</div>
+    <h3>${esc(c.title)}</h3><p>${esc(c.finding)}</p>
+    ${c.action?`<div class="aiact"><b>מה לעשות:</b> ${esc(c.action)}</div>`:''}${c.question?`<div class="aiq"><b>שאלה פתוחה:</b> ${esc(c.question)}</div>`:''}
+    ${ev(c)}
+    <div class="aifb" role="group" aria-label="משוב על התובנה"><button class="bare" data-insfb="${esc(c.id)}|up" aria-pressed="${fb[c.id]==='up'}">מועיל</button><button class="bare" data-insfb="${esc(c.id)}|down" aria-pressed="${fb[c.id]==='down'}">לא רלוונטי</button></div></article>`;
+  const head=`<h2 class="sec">מה Claude מצא</h2><div class="small muted">${run?`עודכן ${relTime(run.at)}${run.through?` · לפי פירוט האשראי עד ${dmIso(run.through)}`:''}`:'עוד לא רץ. התובנות נכתבות כל יום ראשון ואחרי כל פירוט אשראי חדש.'}</div>`;
+  box.innerHTML=head+(cards.length?`<div class="aicards">${cards.map(card).join('')}</div>`:'')+matchCard()+merchantsChart()+paceChart();
+}
+// the card against the month's lists (data/creditmatch.json)
+function matchCard(){
+  const m=S.creditmatch.find(d=>d.id===S.month&&d.hasLists);if(!m)return '';
+  const tx=Object.fromEntries(S.credit.filter(d=>d.kind==='tx').map(d=>[d.id,d]));
+  const row=(n,t,list)=>`<div class="mcr${n?'':' ok'}"><span>${t}</span><b class="num">${n}</b></div>${n&&list?`<div class="mcl">${list}</div>`:''}`;
+  const lst=ids=>ids.map(i=>tx[i]).filter(Boolean).map(t=>`<div class="aievr"><span class="num">${dmIso(t.date)}</span><span class="nm">${esc(t.name)}</span><b class="num">${ils(cSpent(t))}</b></div>`).join('');
+  const ok=m.gapPct!==null&&m.gapPct<1;
+  return `<h2 class="sec" style="margin-top:8px">הכרטיס מול הרשימות · ${esc(monthLabel(S.month))}</h2>
+    <section class="card mcard"><div class="mchead"><span class="mcbig num${ok?' ok':''}">${m.gapPct===null?'—':m.gapPct+'%'}</span><span class="col"><b>${ok?'הרשימות תואמות לכרטיס':'פער בין הרשימות לכרטיס'}</b><small class="muted">ברשימות ${ils(m.lists.total)} · בכרטיס ${ils(m.card.forLists)} · עד ${dmIso(m.card.through)}</small></span></div>
+      ${row(m.missing.length,'בכרטיס ולא ברשימות',lst(m.missing))}${row((m.maybeDouble||[]).length,'אולי נרשמו פעמיים')}${row(m.credits.length,'זיכויים שלא נרשמו',lst(m.credits))}${row((m.afterFile||[]).length,'נרשמו אחרי תאריך הקובץ')}
+      <div class="small muted" style="margin-top:6px">${m.matched.length} פריטים הותאמו לעסקה בכרטיס. שורות קבועות (ספוטיפיי, נטפליקס, קלוד) נבדקות בנפרד.</div></section>`;
+}
+// where the card money went this month, by business (one series: one hue, longest first)
+function merchantsChart(){
+  const ts=S.credit.filter(d=>d.kind==='tx'&&d.date&&d.date.slice(0,7)===S.month&&cSpent(d)>0);if(!ts.length)return '';
+  const by={};ts.forEach(t=>{const n=t.name.trim().replace(/\s+/g,' ');(by[n]=by[n]||{n,s:0,c:0});by[n].s+=cSpent(t);by[n].c++});
+  const top=Object.values(by).sort((a,b)=>b.s-a.s).slice(0,8),mx=top[0].s,tot=ts.reduce((a,t)=>a+cSpent(t),0);
+  return `<h2 class="sec" style="margin-top:8px">העסקים המובילים בכרטיס · ${esc(monthLabel(S.month))}</h2>
+    <section class="card chartcard mbars" role="list" aria-label="שמונת העסקים עם הסכום הגבוה בכרטיס החודש">${top.map((x,i)=>`<div class="mb" role="listitem" style="--i:${i}" title="${esc(x.n)}: ${x.c} עסקאות"><span class="tl"><b>${esc(x.n)}</b><span class="num">${ils(Math.round(x.s*100)/100)}</span></span><span class="tbar cv" aria-hidden="true"><i style="width:${Math.max(2,x.s/mx*100)}%"></i></span><small class="num muted">${x.c} ${x.c===1?'עסקה':'עסקאות'} · ${Math.round(x.s/tot*100)}% מהכרטיס</small></div>`).join('')}</section>`;
+}
+// the month so far against last month, day by day (two series, one axis, a legend and labels at the line ends)
+function paceChart(){
+  const k=S.month,pk=shiftMonth(k,-1),days=new Date(Number(k.slice(0,4)),Number(k.slice(5,7)),0).getDate();
+  const cum=mk=>{const a=Array(32).fill(0);S.credit.filter(d=>d.kind==='tx'&&d.date&&d.date.slice(0,7)===mk&&cSpent(d)>0).forEach(t=>{a[Number(t.date.slice(8,10))]+=cSpent(t)});for(let i=1;i<32;i++)a[i]+=a[i-1];return a};
+  const cur=cum(k),prev=cum(pk),ts=S.credit.filter(d=>d.kind==='tx'&&d.date&&d.date.slice(0,7)===k);if(!ts.length||!prev[31])return '';
+  const upto=Number(ts.reduce((a,t)=>t.date>a?t.date:a,'').slice(8,10)),mx=Math.max(cur[upto],prev[31])*1.08,W=320,H=150,P=8;
+  const x=d=>P+(d-1)/(30)*(W-2*P),y=v=>H-18-(v/mx)*(H-34),line=(a,n)=>a.slice(1,n+1).map((v,i)=>`${i?'L':'M'}${x(i+1).toFixed(1)},${y(v).toFixed(1)}`).join('');
+  S.paceData={cur,prev,upto,k,pk};
+  return `<h2 class="sec" style="margin-top:8px">קצב החודש בכרטיס</h2><div class="small muted">כמה יצא בכרטיס מתחילת החודש, יום אחרי יום, מול ${esc(monthLabel(pk))}. נגיעה בגרף מציגה יום.</div>
+    <section class="card chartcard"><div class="pclegend" aria-hidden="true"><span><i class="ca"></i>${esc(monthLabel(k))}</span><span><i class="cb"></i>${esc(monthLabel(pk))}</span></div>
+      <div class="pcwrap"><svg class="pace" viewBox="0 0 ${W} ${H}" role="img" aria-label="עד ${upto} בחודש יצאו ${ils(Math.round(cur[upto]))}; בחודש הקודם עד אותו יום ${ils(Math.round(prev[upto]))}, ובכל החודש ${ils(Math.round(prev[31]))}">
+        <line class="pbase" x1="${P}" x2="${W-P}" y1="${H-18}" y2="${H-18}"/>${[1,10,20,30].map(d=>`<text class="ptk" x="${x(d)}" y="${H-4}" text-anchor="middle">${d}</text>`).join('')}
+        <path class="pl pb" d="${line(prev,days)}"/><path class="pl pa" d="${line(cur,upto)}"/>
+        <circle class="pdot pa" cx="${x(upto)}" cy="${y(cur[upto])}" r="4"/><text class="plab" x="${x(upto)}" y="${y(cur[upto])-9}" text-anchor="middle">${ils(Math.round(cur[upto]))}</text>
+        <text class="plab mute" x="${x(days)}" y="${y(prev[days])-9}" text-anchor="end">${ils(Math.round(prev[days]))}</text>
+        <line class="pcross" id="pcX" x1="0" x2="0" y1="8" y2="${H-18}" visibility="hidden"/></svg><div class="ctip num" id="pcTip" hidden></div></div>
+      <details class="tableview"><summary>הצגה כטבלה</summary><div class="num small">${[7,14,21,upto,days].filter((d,i,a)=>a.indexOf(d)===i).sort((a,b)=>a-b).map(d=>`<div class="aievr"><span>עד ${d} בחודש</span><span class="nm">${d<=upto?ils(Math.round(cur[d])):'—'}</span><b>${ils(Math.round(prev[d]))}</b></div>`).join('')}</div></details></section>`;
+}
+function paceHover(e){
+  const svg=e.target.closest('svg.pace'),D=S.paceData;if(!svg||!D)return;
+  const r=svg.getBoundingClientRect(),W=320,P=8,px=(e.clientX-r.left)/r.width*W,d=Math.max(1,Math.min(31,Math.round((px-P)/(W-2*P)*30+1)));
+  const xl=$('pcX'),tip=$('pcTip');xl.setAttribute('x1',P+(d-1)/30*(W-2*P));xl.setAttribute('x2',P+(d-1)/30*(W-2*P));xl.setAttribute('visibility','visible');
+  tip.hidden=false;tip.innerHTML=`<b>עד ${d} בחודש</b><br>${esc(monthLabel(D.k))}: ${d<=D.upto?ils(Math.round(D.cur[d])):'עוד אין'}<br>${esc(monthLabel(D.pk))}: ${ils(Math.round(D.prev[d]))}`;
+}
+document.addEventListener('pointermove',e=>{if(e.target.closest&&e.target.closest('svg.pace'))paceHover(e)});
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('svg.pace'))paceHover(e)});
+document.addEventListener('pointerleave',e=>{if(e.target.matches&&e.target.matches('svg.pace')){const t=$('pcTip');if(t)t.hidden=true;const xl=$('pcX');if(xl)xl.setAttribute('visibility','hidden')}},true);
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-insfb]');if(!b)return;
+  const [id,v]=b.dataset.insfb.split('|'),c=S.insights.find(d=>d.id===id)||{},cur=S.insights.find(d=>d.id==='fb-'+id);
+  const ok=cur&&cur.v===v?await store.del('insights','fb-'+id):await store.put('insights','fb-'+id,{kind:'fb',card:id,v,type:c.type||null,title:c.title||'',by:S.uid||null,at:Date.now()});
+  if(ok){aiInsights();toast(cur&&cur.v===v?'המשוב הוסר':v==='up'?'תודה, Claude ימשיך בכיוון הזה':'Claude יכתוב פחות תובנות כאלה')}});
+
 // every card is built from the numbers in the app; a card with nothing to say is not shown
 function insightCards(){
   const k=S.month,c=calc(k),out=[],L=monthLabel(k),prevK=shiftMonth(k,-1),pc=calc(prevK);
@@ -3689,6 +3796,7 @@ function salarySheet(y){
     closeSheet();store.put('info','salaries',{months});buzz(8);toast('נשמר')};
 }
 function renderIns(){
+  aiInsights();
   renderGoals();flowChart();salaryCard();topChart();insightCards();
   const ks=Object.keys(S.months).sort().filter(k=>calc(k).income!==null);
   $('iFlows').innerHTML=ks.length?ks.map(k=>{const c=calc(k),neg=c.flow<0,cur=k===S.month;
@@ -3971,7 +4079,7 @@ function flash(el){
 }
 function goTo(ref){
   const [col,id]=String(ref||'').split('/');
-  const tab={grocery:'shop',purchases:'shop',variable:'home',baby:'baby',months:'home',holdings:'sav',deposits:'sav',calreq:'cal',calendar:'cal',today:'today',tasks:'today',arik:'today',agents:'today'}[col];if(!tab)return;
+  const tab={grocery:'shop',purchases:'shop',variable:'home',baby:'baby',months:'home',holdings:'sav',deposits:'sav',calreq:'cal',calendar:'cal',today:'today',tasks:'today',arik:'today',agents:'today',ins:'ins',insights:'ins'}[col];if(!tab)return;
   if(tab==='today'){if(!$('sheet').hidden)closeSheet();goTab('today');if(col==='arik')setTimeout(()=>arikOpen(),300);if(col==='agents')setTimeout(agentsSheet,300);return}
   if(tab==='cal'){if(!$('sheet').hidden)closeSheet();goTab('cal');return}
   if(!$('sheet').hidden)closeSheet();
