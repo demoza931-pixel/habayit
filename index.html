@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' https://api.github.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://avatars.githubusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' https://api.github.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://avatars.githubusercontent.com; frame-src https://www.tradingview-widget.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2C6B5E">
 <script>try{var t=localStorage.getItem('hb_theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -837,6 +837,12 @@ div.mhrow{grid-template-columns:auto minmax(0,1fr)}
 .pace .pl{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}.pace .pa{stroke:var(--cv-a)}.pace .pb{stroke:var(--cv-b);stroke-dasharray:4 3}
 .pace .pdot{fill:var(--cv-a);stroke:var(--surface);stroke-width:2}.pace .plab{font-size:10px;font-weight:700;fill:var(--ink)}.pace .plab.mute{fill:var(--ink-2);font-weight:600}
 .pace .pcross{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:2 2}
+.feecard{padding:14px 16px;display:flex;flex-direction:column;gap:2px}.feetot{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.feetot .num{font-size:24px;font-weight:800}.feetot small{color:var(--ink-2);font-size:13px}
+.feerow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.feerow .col{display:flex;flex-direction:column;gap:2px;min-width:0}
+.feerow b{font-size:14.5px;font-weight:600}.feerow small{font-size:12px}.feerow>.num{font-weight:700;white-space:nowrap}
+.livecard{padding:12px 14px;display:flex;flex-direction:column;gap:12px}.livebox{display:flex;flex-direction:column;gap:4px}
+.livehd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.livehd b{font-size:14.5px}.livew{min-height:0}.livew[data-done]{min-height:180px}
 .lrncard{display:flex;flex-direction:column;gap:4px;text-align:start;padding:16px;width:100%}
 .lrnsec{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}.lrnsec>h3{margin:0;font-size:15px}
 .lrnrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:14px}
@@ -1340,6 +1346,9 @@ body.locked .wrap,body.locked nav.tabs,body.locked .fab{visibility:hidden}
     <div class="phead"><div class="col"><h1 class="ptitle">החיסכון שלנו</h1><small class="psub" id="phSav"></small></div><img class="ill phill" src="img/piggy.png" alt="" aria-hidden="true"></div>
     <div id="svHero"></div>
     <div id="svChart"></div>
+    <div id="svExpo"></div>
+    <div id="svFees"></div>
+    <div id="svLive"></div>
     <div id="svAgent"></div>
     <section class="card svaccs" id="svAccounts"></section>
     <div id="svForecast"></div>
@@ -3251,6 +3260,7 @@ const parseHeDate=s=>{const m=String(s||'').match(/(\d{1,2})[./](\d{1,2})[./](\d
 const agoText=t=>{if(!t)return '';const d=Math.floor((Date.now()-t)/864e5);return d<=0?'עודכן היום':d===1?'עודכן אתמול':`עודכן לפני ${d} ימים`};
 function svHist(){return [...S.savhist].filter(x=>/^\d{4}-\d{2}$/.test(x.id)).sort((a,b)=>a.id.localeCompare(b.id))}
 function renderSav(){
+  savExposure();savFees();savLive();
   const hs=S.holdings,val=hs.map(hValue),total=val.reduce((t,v)=>t+(v||0),0);
   if(!hs.length){
     $('svHero').innerHTML=`<div class="emptyhero"><span class="ic">${I.page}</span><span class="disp" style="font-weight:700;font-size:18px">עוד אין החזקות</span><span class="muted" style="font-size:15px">הוסיפו קופה או החזקה ידנית.</span></div>`;
@@ -3313,6 +3323,59 @@ function holdingRow(h){const hv=hValue(h),p=has(h.cost)&&hv!==null?hv-Number(h.c
     +(has(h.pending)?` · ${ils(h.pending)} בתהליך הפקדה`:'')+(()=>{const a=hAdd(h);return a.count?` · כולל ${ils(a.sum)} מ־${a.count} ${a.count===1?'הפקדה':'הפקדות'}${a.since?` מאז ${dmy(a.since)}`:''}${hBase(h)===null?' (היתרה שלפני לא ידועה)':''}`:''})()+(has(h.pensionMonthly)?` · קצבה צפויה ${ils(h.pensionMonthly)}`:'')+(has(h.feeSavings)?` · דמי ניהול ${fmt(h.feeSavings)}% מהחיסכון, ${fmt(h.feeDeposit||0)}% מהפקדה`:'');
   return `<button class="bare hrow" data-hold="${esc(h.id)}"><span class="col"><b>${esc(h.name)}</b><small class="num">${meta}</small></span><span class="side"><span class="num">${hv===null?'—':ils(hv)}</span>${p!==null?`<small class="num pl ${p<0?'dn':'up'}">${signed(p)}</small>`:''}${chgPill(h.change)}</span></button>`}
 // the chart: one point a month; "הכול" shows the actual total, an account with a mirror also its deposits and mirror
+/* ---------- what the money rides on: every account's tracks, weighted by its value (savings document, 20.10.2026) ---------- */
+const EXPO=[['sp','S&P 500',/S&P|SPX|500/i],['ta','ת"א 125',/125/],['stocks','מסלול מניות (מנוהל)',/מניות/],['age','מסלול תלוי גיל',/לבני 50|תלוי גיל/],['mm','קרן כספית',/כספית/],['cash','מזומן ופיקדונות',/מזומן|פיקדון/]];
+function expoOf(){
+  const out={},add=(k,v,who)=>{if(!v)return;(out[k]=out[k]||{v:0,from:[]});out[k].v+=v;out[k].from.push([who,v])};
+  const kind=t=>{const e=EXPO.find(x=>x[2].test(t));return e?e[0]:'other'};
+  S.holdings.forEach(h=>{const v=hValue(h);if(!v)return;
+    if(Array.isArray(h.parts)&&h.parts.length){const tot=h.parts.reduce((a,p)=>a+Number(p[1]||0),0);h.parts.forEach(p=>add(kind(p[0]),v*Number(p[1])/tot,h.name));return}
+    if(Array.isArray(h.tracks)&&h.tracks.length){const tot=h.tracks.reduce((a,t)=>a+Number(t[1]||0),0);h.tracks.forEach(t=>add(kind(t[0]),v*Number(t[1])/tot,h.name));return}
+    add(kind(`${h.name} ${h.type||''} ${h.note||''}`),v,h.name)});
+  return out;
+}
+function savExposure(){
+  const el=$('svExpo');if(!el)return;const ex=expoOf(),tot=Object.values(ex).reduce((a,x)=>a+x.v,0);if(!tot){el.innerHTML='';return}
+  const rows=Object.entries(ex).sort((a,b)=>b[1].v-a[1].v),name=k=>(EXPO.find(x=>x[0]===k)||[0,'אחר'])[1];
+  const top=rows[0];
+  el.innerHTML=`<h2 class="sec" style="margin-top:8px">על מה הכסף שלכם רוכב</h2><div class="small muted">כל קופה לפי המסלולים שלה, משוקלל לפי השווי. ${Math.round(top[1].v/tot*100)}% מכל החיסכון עוקבים אחרי ${esc(name(top[0]))}.</div>
+    <section class="card chartcard mbars" role="list">${rows.map(([k,x],i)=>`<div class="mb" role="listitem" style="--i:${i}"><span class="tl"><b>${esc(name(k))}</b><span class="num">${ils(Math.round(x.v))}</span></span><span class="tbar cv" aria-hidden="true"><i style="width:${Math.max(2,x.v/top[1].v*100)}%"></i></span><small class="num muted">${Math.round(x.v/tot*100)}% · ${x.from.sort((a,b)=>b[1]-a[1]).map(f=>esc(f[0])).filter((n,j,a)=>a.indexOf(n)===j).join(', ')}</small></div>`).join('')}</section>`;
+}
+/* ---------- management fees: what each account costs a year, from its rates (savings document) ---------- */
+function savFees(){
+  const el=$('svFees');if(!el)return;
+  const hs=S.holdings.filter(h=>has(h.feeSavings)||has(h.feeDeposit));if(!hs.length){el.innerHTML='';return}
+  const monthly=h=>h.mirror&&has(h.mirror.planned)?Number(h.mirror.planned):null;
+  const rows=hs.map(h=>{const v=hValue(h)||0,fs=Number(h.feeSavings||0),fd=Number(h.feeDeposit||0),m=monthly(h);
+    return {h,v,fs,fd,m,onSav:v*fs/100,onDep:m!==null?m*12*fd/100:null}}).sort((a,b)=>(b.onSav+(b.onDep||0))-(a.onSav+(a.onDep||0)));
+  const tot=rows.reduce((a,r)=>a+r.onSav+(r.onDep||0),0),unknownDep=rows.filter(r=>r.fd>0&&r.onDep===null);
+  el.innerHTML=`<h2 class="sec" style="margin-top:8px">דמי ניהול</h2><div class="small muted">כמה זה עולה בשנה לפי השיעורים ממסמך החסכונות והשווי היום.${unknownDep.length?` בפנסיות ההפקדה החודשית לא ידועה, אז החלק מההפקדות לא נכלל.`:''}</div>
+    <section class="card feecard"><div class="feetot"><span class="num">${ils(Math.round(tot))}</span><small>בשנה${unknownDep.length?' לפחות':''}, בערך ${ils(Math.round(tot/12))} בחודש</small></div>
+    ${rows.map(r=>`<div class="feerow"><span class="col"><b>${esc(r.h.name)}</b><small class="muted num">${fmt(r.fs)}% מהחיסכון · ${fmt(r.fd)}% מהפקדה</small></span><span class="num">${ils(Math.round(r.onSav+(r.onDep||0)))}${r.fd>0&&r.onDep===null?'<small class="muted"> + מההפקדות</small>':''}</span></div>`).join('')}
+    <div class="small muted" style="margin-top:6px">החישוב: השווי כפול השיעור מהחיסכון, ועוד ההפקדה החודשית כפול 12 כפול השיעור מההפקדה. זה מידע על מה שאתם משלמים, לא המלצה לעבור קופה.</div></section>`;
+}
+/* ---------- the markets now: live charts of what the savings ride on (TradingView widgets, public index data only;
+   loaded on a tap, so nothing leaves the phone unless asked) ---------- */
+const LIVE=[['FOREXCOM:SPXUSD','S&P 500','sp'],['TASE:TA125','ת"א 125','ta'],['NASDAQ:NVDA','Nvidia',null],['FX_IDC:USDILS','דולר/שקל',null]];
+function savLive(){
+  const el=$('svLive');if(!el)return;const ex=expoOf();
+  el.innerHTML=`<h2 class="sec" style="margin-top:8px">השווקים עכשיו</h2><div class="small muted">גרפים חיים של המדדים שהחיסכון שלכם עוקב אחריהם. הנתונים מ־TradingView, ונטענים רק כשלוחצים.</div>
+    <section class="card livecard">${LIVE.map(([sym,label,k],i)=>`<div class="livebox"><div class="livehd"><b>${esc(label)}</b>${k&&ex[k]?`<small class="muted num">${ils(Math.round(ex[k].v))} מהחיסכון שלכם</small>`:''}</div><div class="livew" id="live${i}" data-sym="${esc(sym)}"></div></div>`).join('')}
+    <button class="btn ghost block" id="liveLoad" data-liveload>להציג גרפים חיים</button></section>`;
+  if(S.liveOn)liveLoad();
+}
+function liveLoad(){
+  // an isolated frame per chart: TradingView draws in its own origin and cannot reach the app, its data or its keys
+  S.liveOn=true;const b=$('liveLoad');if(b)b.remove();
+  const dark=document.documentElement.getAttribute('data-theme')==='dark'||(!document.documentElement.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme: dark)').matches);
+  document.querySelectorAll('.livew[data-sym]').forEach(w=>{if(w.dataset.done)return;w.dataset.done='1';
+    const cfg={symbol:w.dataset.sym,width:'100%',height:180,locale:'he_IL',dateRange:'1M',colorTheme:dark?'dark':'light',isTransparent:true,autosize:true,largeChartUrl:'',chartOnly:false,noTimeScale:false};
+    const f=document.createElement('iframe');f.src='https://www.tradingview-widget.com/embed-widget/mini-symbol-overview/?locale=he_IL#'+encodeURIComponent(JSON.stringify(cfg));
+    f.title='גרף חי: '+w.dataset.sym;f.referrerPolicy='no-referrer';f.setAttribute('sandbox','allow-scripts allow-same-origin allow-popups');
+    f.style.cssText='width:100%;height:180px;border:0;display:block';w.appendChild(f)});
+}
+document.addEventListener('click',e=>{if(e.target.closest('[data-liveload]'))liveLoad()});
+
 function renderSavChart(hist){
   const ms=S.holdings.filter(h=>h.mirror),scope=ms.some(h=>h.id===S.svScope)?S.svScope:'all',h=ms.find(x=>x.id===scope);
   const pts=hist.slice(-6),ks=pts.map(x=>x.id);
