@@ -2806,17 +2806,19 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-depr
     :await depositSave(h,prev||null,{kind:'monthly',month:S.month,status:'confirmed',confirmedAmount:Number(r.amount),confirmedDate:prev&&prev.confirmedDate||date,source:'row'});
   if(ok)toast(on?`ההפקדה ל"${label(row)}" בוטלה`:`נרשמה הפקדה של ${ils0(r.amount)} ל${h.account==='תיק מסחר'?'תיק המסחר':h.name}`)});
 function rowHtml(r,i){
-  const amt=has(r.amount)?`<span class="amt num${r.star?' mute':''}">${ils(r.amount)}</span>`:`<span class="amt mute">${r.star?'*':'—'}</span>`;
+  // a list with a monthly target in the sheet shows the target on its line; what was spent is in the detail below
+  const goalShown=listNames().includes(r.name)&&hasGoal(S.month,r.name);
+  const amt=goalShown?`<span class="amt num">${ils(goalOf(S.month,r.name,r))}</span>`:has(r.amount)?`<span class="amt num${r.star?' mute':''}">${ils(r.amount)}</span>`:`<span class="amt mute">${r.star?'*':'—'}</span>`;
   let det='';
   const vs=monthVar(S.month,r.name);
   const isList=listNames().includes(r.name);
   if(isList){
     const goal=hasGoal(S.month,r.name),sum=varSum(vs),rv=goal?goalOf(S.month,r.name,r):has(r.amount)?Number(r.amount):null,over=rv!==null&&sum>rv,open=!!S.rowOpen[r.name];
-    det=`<button class="bare detail vtog" data-vopen="${esc(r.name)}" aria-expanded="${open}"><div class="dl num"><span class="muted">${vs.length?`פירוט: ${ils(sum)} ב־${vs.length} פריטים`:'פירוט · עוד אין פריטים, אפשר להוסיף'}${goal?` · יעד ${ils(rv)}`:''}</span><span class="vtr">${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל${goal?' היעד':''}</span>`:rv&&vs.length?`<span class="muted">נשארו ${fmt(rv-sum)}${goal?' עד היעד':''}</span>`:''}<span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></span></div>
+    det=`<button class="bare detail vtog" data-vopen="${esc(r.name)}" aria-expanded="${open}"><div class="dl num"><span class="muted">${vs.length?`פירוט: ${ils(sum)}${goal?'':` ב־${vs.length} פריטים`}`:'פירוט · עוד אין פריטים, אפשר להוסיף'}</span><span class="vtr">${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל${goal?' היעד':''}</span>`:rv&&vs.length?`<span class="muted">נשארו ${fmt(rv-sum)}${goal?' עד היעד':''}</span>`:''}<span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></span></div>
       ${rv&&vs.length?`<span class="minibar${over?' over':''}" aria-hidden="true">${over?'':`<i style="width:${Math.min(100,sum/rv*100)}%"></i>`}</span>`:''}</button>${open?listBody(r.name,i):''}`;
   }else if(vs.length){
     const goal=hasGoal(S.month,r.name),sum=varSum(vs),rv=goal?goalOf(S.month,r.name,r):has(r.amount)?Number(r.amount):null,over=rv!==null&&sum>rv;
-    det=`<div class="detail"><div class="dl num"><span class="muted">פירוט: ${ils(sum)} ב־${vs.length} פריטים${goal?` · יעד ${ils(rv)}`:''}</span>${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל${goal?' היעד':''}</span>`:''}</div>
+    det=`<div class="detail"><div class="dl num"><span class="muted">פירוט: ${ils(sum)}${goal?'':` ב־${vs.length} פריטים`}</span>${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל${goal?' היעד':''}</span>`:''}</div>
       ${rv?`<span class="minibar${over?' over':''}" aria-hidden="true">${over?'':`<i style="width:${Math.min(100,sum/rv*100)}%"></i>`}</span>`:''}</div>`;
   }
   return `<div class="rowwrap${isList?' haslist':''}"><div class="lrowx"><button class="bare lrow" ${isList?`data-vopen="${esc(r.name)}" aria-expanded="${!!S.rowOpen[r.name]}" aria-label="${esc(label(r.name))}: פתיחת הפירוט"`:`data-row="${i}"`}>${ric(r.name,GROUP_TINT[r.group])}<span class="nm">${esc(label(r.name))}</span>${r.star?`<span class="tag-other">${I.out}חשבון אחר</span>`:''}${rowTrend(r)}<span class="leader" aria-hidden="true"></span>${amt}</button>${depTog(r)}</div>${det}</div>`;
