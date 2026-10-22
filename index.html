@@ -811,6 +811,9 @@ div.mhrow{grid-template-columns:auto minmax(0,1fr)}
 .aievr{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--line)}
 .aievr .nm{overflow-wrap:anywhere}.aievr:last-child{border-bottom:0}
 .aifb{display:flex;gap:8px;margin-top:4px}.aifb button{font-size:12.5px;padding:5px 12px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2)}
+.aifb .aiask{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700;margin-inline-end:auto}
+.arikctx{display:flex;align-items:center;gap:8px;justify-content:space-between;font-size:13px;padding:8px 12px;border-radius:12px;background:var(--accent-soft);color:var(--ink)}
+.arikctx b{font-weight:700}.arikctx button{flex:none;min-width:28px;height:28px;border-radius:99px;color:var(--ink-2)}
 .aifb button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
 .mcard{padding:14px 16px;display:flex;flex-direction:column;gap:4px}.mchead{display:flex;gap:12px;align-items:center;margin-bottom:6px}
 .mcbig{font-size:26px;font-weight:800;color:var(--neg)}.mcbig.ok{color:var(--pos)}.mchead .col{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -3688,7 +3691,7 @@ function aiInsights(){
     <h3>${esc(c.title)}</h3><p>${esc(c.finding)}</p>
     ${c.action?`<div class="aiact"><b>מה לעשות:</b> ${esc(c.action)}</div>`:''}${c.question?`<div class="aiq"><b>שאלה פתוחה:</b> ${esc(c.question)}</div>`:''}
     ${ev(c)}
-    <div class="aifb" role="group" aria-label="משוב על התובנה"><button class="bare" data-insfb="${esc(c.id)}|up" aria-pressed="${fb[c.id]==='up'}">מועיל</button><button class="bare" data-insfb="${esc(c.id)}|down" aria-pressed="${fb[c.id]==='down'}">לא רלוונטי</button></div></article>`;
+    <div class="aifb" role="group" aria-label="משוב על התובנה"><button class="bare aiask" data-insask="${esc(c.id)}">לשאול את אריק</button><button class="bare" data-insfb="${esc(c.id)}|up" aria-pressed="${fb[c.id]==='up'}">מועיל</button><button class="bare" data-insfb="${esc(c.id)}|down" aria-pressed="${fb[c.id]==='down'}">לא רלוונטי</button></div></article>`;
   const head=`<h2 class="sec">מה Claude מצא</h2><div class="small muted">${run?`עודכן ${relTime(run.at)}${run.through?` · לפי פירוט האשראי עד ${dmIso(run.through)}`:''}`:'עוד לא רץ. התובנות נכתבות כל יום ראשון ואחרי כל פירוט אשראי חדש.'}</div>`;
   box.innerHTML=head+(cards.length?`<div class="aicards">${cards.map(card).join('')}</div>`:'')+matchCard()+merchantsChart()+paceChart();
 }
@@ -3739,6 +3742,11 @@ function paceHover(e){
 document.addEventListener('pointermove',e=>{if(e.target.closest&&e.target.closest('svg.pace'))paceHover(e)});
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('svg.pace'))paceHover(e)});
 document.addEventListener('pointerleave',e=>{if(e.target.matches&&e.target.matches('svg.pace')){const t=$('pcTip');if(t)t.hidden=true;const xl=$('pcX');if(xl)xl.setAttribute('visibility','hidden')}},true);
+// asking about a card: the conversation opens with the card as its subject, and the question goes to אריק בענן,
+// who reads the card, its evidence, the card file and the sheet
+document.addEventListener('click',e=>{const b=e.target.closest('[data-insask]');if(!b)return;const c=S.insights.find(d=>d.id===b.dataset.insask);if(!c)return;
+  S.focus={kind:'insight',id:c.id,title:c.title,at:Date.now()};arikOpen()});
+document.addEventListener('click',e=>{if(e.target.closest('[data-arikctxx]')){S.focus=null;const x=$('arikCtx');if(x)x.remove();const ch=$('arikChips');if(ch)ch.innerHTML=ARIK_CHIPS.map(c=>`<button type="button" class="chip" data-arikchip="${esc(c)}">${esc(c)}</button>`).join('')}});
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-insfb]');if(!b)return;
   const [id,v]=b.dataset.insfb.split('|'),c=S.insights.find(d=>d.id===id)||{},cur=S.insights.find(d=>d.id==='fb-'+id);
   const ok=cur&&cur.v===v?await store.del('insights','fb-'+id):await store.put('insights','fb-'+id,{kind:'fb',card:id,v,type:c.type||null,title:c.title||'',by:S.uid||null,at:Date.now()});
@@ -4960,6 +4968,9 @@ async function arikHear(text){
   text=String(text||'').trim();if(!text)return;S.arikActs=[]; // buttons belong to the answer they came with
   const {intent,rest}=ARIK.intent(text),fc=arikFocus();
   const user={kind:'msg',role:'user',text};
+  if(fc&&fc.kind==='insight'&&intent!=='remember'&&intent!=='remind'){
+    const ok=await store.arikAsk({kind:'ask',role:'user',text,status:'pending',tab:'ins',focus:{kind:'insight',id:fc.id,title:fc.title},by:S.uid||null,at:Date.now()});
+    if(ok)arikDraw();else toast('השליחה לאריק בענן נכשלה');return}
   if(intent==='remember'){const fact=rest.replace(/^(תזכור|תזכרי|תרשום לך|שים לב)\s+/,'');await arikSave([user,{kind:'fact',text:fact},{kind:'msg',role:'arik',text:ARIK.say('remember')+` "${fact}"`}]);arikDraw();return}
   if(intent==='remind'){const rp=ARIK.repeat(rest,Date.now());
     if(rp){const what=ARIK.reminderText(rp.text,fc&&fc.title)||'מה שביקשת',label=ARIK.REPEAT_HE(rp);
@@ -4998,7 +5009,8 @@ function arikOpen(first){
   openSheet('<span class="arikhd"><span class="arikav" aria-hidden="true">א</span>אריק</span>',`<div class="arik">
     <div class="ariklog" id="arikLog" aria-live="polite"></div>
     <div class="arikacts" id="arikActs"></div>
-    <div class="chips arikchips" id="arikChips">${ARIK_CHIPS.map(c=>`<button type="button" class="chip" data-arikchip="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+    ${(()=>{const f=arikFocus();return f&&f.kind==='insight'?`<div class="arikctx" id="arikCtx"><span>על התובנה: <b>${esc(f.title)}</b></span><button type="button" class="bare" data-arikctxx aria-label="לא על התובנה הזאת">✕</button></div>`:''})()}
+    <div class="chips arikchips" id="arikChips">${(arikFocus()&&arikFocus().kind==='insight'?INS_CHIPS:ARIK_CHIPS).map(c=>`<button type="button" class="chip" data-arikchip="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <form class="cmdbar mhcmd arikform" id="arikForm" autocomplete="off"><button class="bare mhgo" aria-label="שליחה"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
       <input id="arikText" enterkeyhint="send" placeholder="לכתוב לאריק…" aria-label="הודעה לאריק"><button type="button" class="bare mharik" id="arikCamBtn" aria-label="צילום קבלה"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:22px;height:22px;fill:none;stroke:var(--ink-2);stroke-width:2"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button><input type="file" id="arikCam" accept="image/*" capture="environment" hidden><button type="button" class="bare cmdmic" id="arikMic" aria-label="לדבר עם אריק" ${SR?'':'hidden'}><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button></form>
     <label class="small muted arikvoice"><input type="checkbox" id="arikVoice" ${arikVoice()?'checked':''}> אריק עונה גם בקול</label></div>`);
@@ -5020,9 +5032,14 @@ function arikDraw(){const el=$('arikLog');if(!el)return;const ms=arikMsgs();
   el.scrollTop=el.scrollHeight;
   const last=ms[ms.length-1];if(last&&last.kind==='ask'&&last.status==='answered'&&S.arikSpoke!==last.id){S.arikSpoke=last.id;arikSpeak(last.answer)}}
 // an action אריק בענן suggested: the usual plan and confirmation, nothing runs without a tap
-const ARIK_ACT={grocery_add:'לקניות',task:'משימה',event:'ליומן',reminder:'תזכורת'};
+const ARIK_ACT={grocery_add:'לקניות',task:'משימה',event:'ליומן',reminder:'תזכורת',rule:'לשמור ככלל לתובנות'};
+const INS_CHIPS=['למה זה קרה?','מה הכי כדאי לעשות?','תראה לי לפי חודשים','זה לא נכון, אסביר'];
 document.addEventListener('click',e=>{const b=e.target.closest('[data-arikcloud]');if(!b)return;const [id,i]=b.dataset.arikcloud.split('|'),m=S.arik.find(x=>x.id===id),a=m&&(m.actions||[])[Number(i)];if(!a)return;
   if(a.type==='reminder'){arikHear('תזכיר לי '+a.text);return}
+  if(a.type==='rule'){const id='rule-'+Date.now().toString(36);
+    store.put('insights',id,{kind:'rule',text:a.text,card:m.focus&&m.focus.id||null,by:S.uid||null,at:Date.now()}).then(ok=>{
+      if(ok){arikSave([{kind:'msg',role:'arik',text:`שמרתי ככלל: "${a.text}". מהריצה הבאה התובנות יתחשבו בזה. אפשר לראות ולמחוק ב"מה האפליקציה למדה עלינו".`}]).then(arikDraw)}
+      else toast('השמירה נכשלה')});return}
   closeSheet();cmdStart(a.type==='grocery_add'?'תוסיפו לקניות '+a.text:a.type==='task'?'משימה: '+a.title:'תקבעו '+a.text,true)});
 document.addEventListener('click',e=>{const c=e.target.closest('[data-arikchip]');if(c){arikHear(c.dataset.arikchip);return}
   const a=e.target.closest('[data-arikact]');if(a){const x=(S.arikActs||[])[Number(a.dataset.arikact)];S.arikActs=[];if(x)x.run();return}
@@ -5063,6 +5080,7 @@ function learnedSheet(){
   openSheet('מה האפליקציה למדה עלינו',`
    <div class="lrnsec"><h3>כמה האפליקציה עושה לבד</h3><span class="cmdnote">להציע: מראה מה יקרה ומחכה לאישור. להכין: ממלא את הטופס ואתם שולחים. לבצע לבד: מבצע מיד, ואפשר לבטל.</span>
      ${AUTO_CAP.map(c=>`<div class="lrnrow"><span class="col"><b>${c.t}</b>${c.note?`<small>${c.note}</small>`:''}</span>${c.levels.length>1?`<div class="chips" data-lrnauto="${c.k}">${c.levels.map(l=>`<button type="button" class="chip" data-v="${l}" aria-checked="${autoLevel(c.k)===l}">${AUTO_HE[l]}</button>`).join('')}</div>`:''}</div>`).join('')}</div>
+   <div class="lrnsec"><h3>כללים לתובנות</h3><span class="cmdnote">תיקונים שנתתם לאריק על תובנות. מנוע התובנות מתחשב בהם בכל ריצה.</span>${S.insights.filter(d=>d.kind==='rule').sort((a,b)=>(b.at||0)-(a.at||0)).map(r=>`<div class="lrnrow"><span class="col">${esc(r.text)}<small>${esc(whoSaid(r.by))}${r.at?' · '+new Date(r.at).toLocaleDateString('he-IL'):''}</small></span><button class="bare link" data-insruledel="${esc(r.id)}">למחוק</button></div>`).join('')||'<span class="cmdnote">עוד אין. כשתתקנו תובנה בשיחה עם אריק, הוא יציע לשמור את התיקון ככלל.</span>'}</div>
    <div class="lrnsec"><h3>מה אריק זוכר</h3><span class="cmdnote">מה שביקשתם שיזכור ("אריק, תזכור ש…"). השיחות עצמן נשמרות, 200 האחרונות.</span>${arikFacts().length?arikFacts().map(f=>`<div class="lrnrow"><span class="col">${esc(f.text)}<small>${esc(whoSaid(f.by))}${f.at?' · '+new Date(f.at).toLocaleDateString('he-IL'):''}</small></span><button class="bare link" data-arikforget="${esc(f.id)}">לשכוח</button></div>`).join(''):'<span class="cmdnote">עוד אין. אפשר לכתוב "אריק, תזכור שסבתא מביאה את העגלה".</span>'}</div>
    <div class="lrnsec"><h3>מה למדנו מהבחירות שלכם</h3>${(()=>{const d=learnDoc(),nm={shared:'משותף',yosef:'יוסף',tchiya:'תחיה'},row=(k,t)=>{const e=Object.entries(d[k]||{}).sort((a,b)=>b[1]-a[1]);
        return `<div class="lrnrow"><span class="col">${t}<small>${e.length?e.map(([v,n])=>`${nm[v]||v} ${n}`).join(' · '):'עוד אין בחירות'}</small></span><b class="small">${learnTop(k,'')?'ברירת מחדל: '+(nm[learnTop(k,'')]||learnTop(k,'')):'אין עדיין'}</b></div>`};
@@ -5076,6 +5094,7 @@ function learnedSheet(){
 }
 document.addEventListener('click',async e=>{
   if(e.target.closest('[data-learned]')){learnedSheet();return}
+  const rd=e.target.closest('[data-insruledel]');if(rd){if(await store.del('insights',rd.dataset.insruledel)){learnedSheet();toast('הכלל נמחק')}return}
   if(e.target.closest('[data-cmdundo]')){const u=S.cmdUndo;if(!u)return;S.cmdUndo=null;cmdUndoDraw();(S[u.col]||[]).filter(d=>u.stamps.includes(d.createdAt)).forEach(d=>store.del(u.col,d.id));toast('בוטל');return}
   const cc=e.target.closest('[data-cmdown] [data-v],[data-cmdcal] [data-v]');if(cc){const g=cc.parentNode;[...g.children].forEach(x=>x.setAttribute('aria-checked',x===cc));
     if(S.cmdO){if('cmdown' in g.dataset)S.cmdO.owner=cc.dataset.v;else S.cmdO.target=cc.dataset.v}return}
