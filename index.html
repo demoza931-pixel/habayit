@@ -2811,12 +2811,12 @@ function rowHtml(r,i){
   const vs=monthVar(S.month,r.name);
   const isList=listNames().includes(r.name);
   if(isList){
-    const sum=varSum(vs),rv=has(r.amount)?Number(r.amount):null,over=rv!==null&&sum>rv,open=!!S.rowOpen[r.name];
-    det=`<button class="bare detail vtog" data-vopen="${esc(r.name)}" aria-expanded="${open}"><div class="dl num"><span class="muted">${vs.length?`פירוט: ${ils(sum)} ב־${vs.length} פריטים`:'פירוט · עוד אין פריטים, אפשר להוסיף'}</span><span class="vtr">${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל</span>`:rv&&vs.length?`<span class="muted">נשארו ${fmt(rv-sum)}</span>`:''}<span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></span></div>
+    const goal=hasGoal(S.month,r.name),sum=varSum(vs),rv=goal?goalOf(S.month,r.name,r):has(r.amount)?Number(r.amount):null,over=rv!==null&&sum>rv,open=!!S.rowOpen[r.name];
+    det=`<button class="bare detail vtog" data-vopen="${esc(r.name)}" aria-expanded="${open}"><div class="dl num"><span class="muted">${vs.length?`פירוט: ${ils(sum)} ב־${vs.length} פריטים`:'פירוט · עוד אין פריטים, אפשר להוסיף'}${goal?` · יעד ${ils(rv)}`:''}</span><span class="vtr">${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל${goal?' היעד':''}</span>`:rv&&vs.length?`<span class="muted">נשארו ${fmt(rv-sum)}${goal?' עד היעד':''}</span>`:''}<span class="chev" aria-hidden="true">${open?I.chevD:I.chevL}</span></span></div>
       ${rv&&vs.length?`<span class="minibar${over?' over':''}" aria-hidden="true">${over?'':`<i style="width:${Math.min(100,sum/rv*100)}%"></i>`}</span>`:''}</button>${open?listBody(r.name,i):''}`;
   }else if(vs.length){
-    const sum=varSum(vs),rv=has(r.amount)?Number(r.amount):null,over=rv!==null&&sum>rv;
-    det=`<div class="detail"><div class="dl num"><span class="muted">פירוט: ${ils(sum)} ב־${vs.length} פריטים</span>${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל</span>`:''}</div>
+    const goal=hasGoal(S.month,r.name),sum=varSum(vs),rv=goal?goalOf(S.month,r.name,r):has(r.amount)?Number(r.amount):null,over=rv!==null&&sum>rv;
+    det=`<div class="detail"><div class="dl num"><span class="muted">פירוט: ${ils(sum)} ב־${vs.length} פריטים${goal?` · יעד ${ils(rv)}`:''}</span>${over?`<span class="over-txt">${I.up}${fmt(sum-rv)} מעל${goal?' היעד':''}</span>`:''}</div>
       ${rv?`<span class="minibar${over?' over':''}" aria-hidden="true">${over?'':`<i style="width:${Math.min(100,sum/rv*100)}%"></i>`}</span>`:''}</div>`;
   }
   return `<div class="rowwrap${isList?' haslist':''}"><div class="lrowx"><button class="bare lrow" ${isList?`data-vopen="${esc(r.name)}" aria-expanded="${!!S.rowOpen[r.name]}" aria-label="${esc(label(r.name))}: פתיחת הפירוט"`:`data-row="${i}"`}>${ric(r.name,GROUP_TINT[r.group])}<span class="nm">${esc(label(r.name))}</span>${r.star?`<span class="tag-other">${I.out}חשבון אחר</span>`:''}${rowTrend(r)}<span class="leader" aria-hidden="true"></span>${amt}</button>${depTog(r)}</div>${det}</div>`;
@@ -2895,9 +2895,17 @@ function rowTrend(r){
   return pr&&!pr.star?trendChip(Number(r.amount),has(pr.amount)?Number(pr.amount):null,r.group==='חסכונות'):'';
 }
 // @rules:begin
+// the month's target for a list: the "יעד חודשי" row the sheet keeps above it (months[k].targets); without one,
+// the category's own line, as before (when that line is a fixed amount it is the target)
+function goalOf(k,rn,row){
+  const t=(S.months[k]||{}).targets;
+  if(t&&has(t[rn]))return Number(t[rn]);
+  return row&&has(row.amount)&&!row.star?Number(row.amount):null;
+}
+const hasGoal=(k,rn)=>{const t=(S.months[k]||{}).targets;return !!(t&&has(t[rn]))};
 function listInfo(rn,c){
   const vs=monthVar(S.month,rn),sum=varSum(vs),starSum=vs.filter(x=>x.star).reduce((t,x)=>t+(Number(x.amount)||0),0);
-  const row=c&&c.rows.find(r=>r.name===rn),rv=row&&has(row.amount)?Number(row.amount):null;
+  const row=c&&c.rows.find(r=>r.name===rn),rv=hasGoal(S.month,rn)?goalOf(S.month,rn,row):row&&has(row.amount)?Number(row.amount):null;
   return {vs,sum,starSum,rv,over:rv!==null&&sum>rv};
 }
 // @rules:end
@@ -3632,7 +3640,7 @@ function insightCards(){
   const k=S.month,c=calc(k),out=[],L=monthLabel(k),prevK=shiftMonth(k,-1),pc=calc(prevK);
   if(c){
     const overs=listRows().filter(r=>r!==CASH).map(r=>[r,listInfo(r,c)]).filter(([,x])=>x.over);
-    if(overs.length)out.push(['hi','▲ '+L,'רשימה עברה את המסגרת',overs.map(([r,x])=>`ב"${r}" נרשמו ${ils(x.sum)} מול ${ils(x.rv)} בשורה, ${ils(x.sum-x.rv)} מעל.`).join(' ')]);
+    if(overs.length)out.push(['hi','▲ '+L,'רשימה עברה את היעד',overs.map(([r,x])=>`ב"${r}" נרשמו ${ils(x.sum)} מול ${ils(x.rv)} ${hasGoal(S.month,r)?'ביעד':'בשורה'}, ${ils(x.sum-x.rv)} מעל.`).join(' ')]);
     const left=listRows().filter(r=>r!==CASH).map(r=>[r,listInfo(r,c)]).filter(([,x])=>x.rv!==null&&x.vs.length&&!x.over&&x.rv-x.sum>0);
     if(left.length)out.push(['ok','✓ '+L,'מה שנשאר במסגרות',left.map(([r,x])=>`${r}: נשארו ${ils(x.rv-x.sum)} מתוך ${ils(x.rv)}.`).join(' ')]);
     if(pc){
@@ -3789,7 +3797,7 @@ document.addEventListener('submit',e=>{const f=e.target.closest('[data-vadd]');i
   const data={month:S.month,row,name,amount:parseAmt(f.a.value),date:today(),createdAt:Date.now(),source:'app'};if(S.uid)data.by=S.uid;
   const before=listInfo(row,calc(S.month));buzz(10);S.vOpen[row+'|היום']=true;
   store.add('variable',data).then(()=>{const after=listInfo(row,calc(S.month));
-    toast(after.over&&!before.over?`שימו לב: "${row===VAR_ROW?'משתנות':row}" עברה את המסגרת ב־${fmt(after.sum-after.rv)} ₪`:'ההוצאה נוספה');
+    toast(after.over&&!before.over?`שימו לב: "${row===VAR_ROW?'משתנות':row}" עברה את היעד ב־${fmt(after.sum-after.rv)} ₪`:'ההוצאה נוספה');
     const nf=document.querySelector(`[data-vadd="${CSS.escape(row)}"]`);if(nf)nf.a.focus()})});
 document.addEventListener('click',e=>{
   const vo=e.target.closest('[data-vopen]');if(vo){const rn=vo.dataset.vopen;S.rowOpen[rn]=!S.rowOpen[rn];renderHome();fillAvatars();
@@ -4294,7 +4302,7 @@ function agentSignals(now){
   const nt=x=>String(x||'').replace(/[0-9"'׳״()\-–:.,!?]/g,' ').replace(/\s+/g,' ').trim();
   const soon=new Date(t0);soon.setDate(soon.getDate()+7);
   const k=monthKey(new Date(now)),c=calc(k);
-  const over=c?[VAR_ROW,'קניות/פארם',foodRow(k)].map(rn=>{const sum=varSum(monthVar(k,rn)),row=c.rows.find(r=>r.name===rn),rv=row&&has(row.amount)&&!row.star?Number(row.amount):null;
+  const over=c?[VAR_ROW,'קניות/פארם',foodRow(k)].map(rn=>{const sum=varSum(monthVar(k,rn)),row=c.rows.find(r=>r.name===rn),rv=goalOf(k,rn,row);
     return rv!==null&&sum>rv?{row:rn,over:Math.round((sum-rv)*100)/100}:null}).filter(Boolean):[];
   const cutoff=now-30*864e5,dismissedByType={};
   S.prefs.filter(p=>p.kind==='sugg'&&p.state==='dismissed'&&(p.at||0)>cutoff).forEach(p=>dismissedByType[p.type]=(dismissedByType[p.type]||0)+1);
