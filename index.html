@@ -3675,7 +3675,9 @@ function topChart(){
 /* ---------- insights from Claude (data/insights.json, written by insights.yml) and the credit card ----------
    Every number on a card was computed by insights_check.py from the card file or the sheet; the evidence (the card's
    transactions and list items) opens under it. "מועיל" / "לא רלוונטי" is kept as feedback for the next run. */
-const INS_TYPE={reconcile:'התאמה לאשראי',over_target:'מעל היעד',pace:'קצב החודש',regulars:'עסקים חוזרים',subscriptions:'מנויים וקבועים',unusual:'עסקה חריגה',installments:'תשלומים',baby:'התינוק',other:'תובנה'};
+const INS_TYPE={reconcile:'התאמה לאשראי',over_target:'מעל היעד',pace:'קצב החודש',regulars:'עסקים חוזרים',subscriptions:'מנויים וקבועים',unusual:'עסקה חריגה',installments:'תשלומים',baby:'התינוק',categories:'לפי קטגוריה',benchmark:'מול כלל אצבע',other:'תובנה'};
+// the card's categories (scripts/categories.py, from the israeli-bank-connector skill's rules and the household's own)
+const CAT_HE={groceries:'סופר ומכולת',dining:'אוכל בחוץ',baby:'תינוק',healthcare:'בריאות ופארם',shopping:'קניות וביגוד',transportation:'רכב ותחבורה',utilities:'חשבונות בית',housing:'דיור',insurance:'ביטוח',subscriptions:'מנויים',entertainment:'בילוי ופנאי',education:'חינוך וקורסים',bit:'העברות בביט',giftcards:'טעינות ושוברים',savings:'חיסכון',taxes:'מסים',other:'אחר'};
 const cSpent=t=>t.installment?Number(t.amount):t.charge!==undefined&&t.charge!==null?Number(t.charge):Number(t.amount);
 const dmIso=iso=>iso?`${Number(iso.slice(8,10))}.${Number(iso.slice(5,7))}`:'';
 function aiInsights(){
@@ -3685,7 +3687,7 @@ function aiInsights(){
   const tx=Object.fromEntries(S.credit.filter(d=>d.kind==='tx').map(d=>[d.id,d])),vr=Object.fromEntries(S.variable.map(v=>[v.id,v]));
   const ev=c=>{const ts=(c.tx||[]).map(i=>tx[i]).filter(Boolean).sort((a,b)=>a.date<b.date?-1:1),is=(c.items||[]).map(i=>vr[i]).filter(Boolean);
     if(!ts.length&&!is.length)return '';
-    return `<details class="aiev"><summary>על סמך מה (${ts.length+is.length})</summary>${ts.length?`<div class="aievh">בכרטיס האשראי</div>${ts.map(t=>`<div class="aievr"><span class="num">${dmIso(t.date)}</span><span class="nm">${esc(t.name)}${t.pending?' · ממתינה':''}${t.installment?' · תשלום '+esc(t.installment):''}</span><b class="num">${ils(cSpent(t))}</b></div>`).join('')}`:''}${is.length?`<div class="aievh">ברשימות בגיליון</div>${is.map(v=>`<div class="aievr"><span class="num">${v.date?dmIso(v.date):''}</span><span class="nm">${esc(v.name)}</span><b class="num">${ils(Number(v.amount)||0)}</b></div>`).join('')}`:''}</details>`};
+    return `<details class="aiev"><summary>על סמך מה (${ts.length+is.length})</summary>${ts.length?`<div class="aievh">בכרטיס האשראי</div>${ts.map(t=>`<div class="aievr"><span class="num">${dmIso(t.date)}</span><span class="nm">${esc(t.name)}${t.cat&&CAT_HE[t.cat]?` <small class="muted">· ${CAT_HE[t.cat]}</small>`:''}${t.pending?' · ממתינה':''}${t.installment?' · תשלום '+esc(t.installment):''}</span><b class="num">${ils(cSpent(t))}</b></div>`).join('')}`:''}${is.length?`<div class="aievh">ברשימות בגיליון</div>${is.map(v=>`<div class="aievr"><span class="num">${v.date?dmIso(v.date):''}</span><span class="nm">${esc(v.name)}</span><b class="num">${ils(Number(v.amount)||0)}</b></div>`).join('')}`:''}</details>`};
   const card=c=>`<article class="aic u${c.urgency||1}" aria-label="${esc(INS_TYPE[c.type]||'תובנה')}: ${esc(c.title)}">
     <div class="aichips"><span class="aichip">${esc(INS_TYPE[c.type]||'תובנה')}</span>${c.urgency>=3?'<span class="aichip hot">כדאי לטפל</span>':''}${c.confidence==='נמוכה'?'<span class="aichip soft">השערה</span>':''}</div>
     <h3>${esc(c.title)}</h3><p>${esc(c.finding)}</p>
@@ -3693,7 +3695,7 @@ function aiInsights(){
     ${ev(c)}
     <div class="aifb" role="group" aria-label="משוב על התובנה"><button class="bare aiask" data-insask="${esc(c.id)}">לשאול את אריק</button><button class="bare" data-insfb="${esc(c.id)}|up" aria-pressed="${fb[c.id]==='up'}">מועיל</button><button class="bare" data-insfb="${esc(c.id)}|down" aria-pressed="${fb[c.id]==='down'}">לא רלוונטי</button></div></article>`;
   const head=`<h2 class="sec">מה Claude מצא</h2><div class="small muted">${run?`עודכן ${relTime(run.at)}${run.through?` · לפי פירוט האשראי עד ${dmIso(run.through)}`:''}`:'עוד לא רץ. התובנות נכתבות כל יום ראשון ואחרי כל פירוט אשראי חדש.'}</div>`;
-  box.innerHTML=head+(cards.length?`<div class="aicards">${cards.map(card).join('')}</div>`:'')+matchCard()+merchantsChart()+paceChart();
+  box.innerHTML=head+(cards.length?`<div class="aicards">${cards.map(card).join('')}</div>`:'')+matchCard()+catsChart()+merchantsChart()+paceChart();
 }
 // the card against the month's lists (data/creditmatch.json)
 function matchCard(){
@@ -3706,6 +3708,15 @@ function matchCard(){
     <section class="card mcard"><div class="mchead"><span class="mcbig num${ok?' ok':''}">${m.gapPct===null?'—':m.gapPct+'%'}</span><span class="col"><b>${ok?'הרשימות תואמות לכרטיס':'פער בין הרשימות לכרטיס'}</b><small class="muted">ברשימות ${ils(m.lists.total)} · בכרטיס ${ils(m.card.forLists)} · עד ${dmIso(m.card.through)}</small></span></div>
       ${row(m.missing.length,'בכרטיס ולא ברשימות',lst(m.missing))}${row((m.maybeDouble||[]).length,'אולי נרשמו פעמיים')}${row(m.credits.length,'זיכויים שלא נרשמו',lst(m.credits))}${row((m.afterFile||[]).length,'נרשמו אחרי תאריך הקובץ')}
       <div class="small muted" style="margin-top:6px">${m.matched.length} פריטים הותאמו לעסקה בכרטיס. שורות קבועות (ספוטיפיי, נטפליקס, קלוד) נבדקות בנפרד.</div></section>`;
+}
+// the card by category this month, with last month beside it (one series; the change is text, not a second color)
+function catsChart(){
+  const k=S.month,pk=shiftMonth(k,-1),sum=mk=>{const o={};S.credit.filter(d=>d.kind==='tx'&&d.date&&d.date.slice(0,7)===mk&&cSpent(d)>0).forEach(t=>{const c=t.cat||'other';o[c]=(o[c]||0)+cSpent(t)});return o};
+  const cur=sum(k),prev=sum(pk),rows=Object.entries(cur).sort((a,b)=>b[1]-a[1]);if(!rows.length)return '';
+  const mx=rows[0][1],tot=rows.reduce((a,[,v])=>a+v,0);
+  return `<h2 class="sec" style="margin-top:8px">לאן הלך הכסף בכרטיס · ${esc(monthLabel(k))}</h2><div class="small muted">לפי קטגוריה. הסיווג לפי שם העסק (שיטת סקיל הבנקים), ואפשר לתקן אותו בשיחה עם אריק.</div>
+    <section class="card chartcard mbars" role="list">${rows.map(([c,v],i)=>{const p=prev[c]||0,d=v-p;
+      return `<div class="mb" role="listitem" style="--i:${i}"><span class="tl"><b>${esc(CAT_HE[c]||c)}</b><span class="num">${ils(Math.round(v))}</span></span><span class="tbar cv" aria-hidden="true"><i style="width:${Math.max(2,v/mx*100)}%"></i></span><small class="num muted">${Math.round(v/tot*100)}% מהכרטיס${p?` · ${d>=0?'▲':'▼'} ${ils(Math.abs(Math.round(d)))} מול ${esc(monthLabel(pk))}`:''}</small></div>`}).join('')}</section>`;
 }
 // where the card money went this month, by business (one series: one hue, longest first)
 function merchantsChart(){
